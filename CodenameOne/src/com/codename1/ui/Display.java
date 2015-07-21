@@ -594,7 +594,7 @@ public final class Display {
                 INSTANCE.touchScreen = INSTANCE.impl.isTouchDevice();
                 // initialize the Codename One EDT which from now on will take all responsibility
                 // for the event delivery.
-                INSTANCE.edt = new CodenameOneThread(new RunnableWrapper(null, 3), "EDT");
+                INSTANCE.edt = INSTANCE.impl.createThread(new RunnableWrapper(null, 3), "EDT");
                 INSTANCE.impl.setThreadPriority(INSTANCE.edt, INSTANCE.impl.getEDTThreadPriority());
                 INSTANCE.edt.start();
             }
@@ -780,14 +780,14 @@ public final class Display {
             }
             backgroundTasks.add(r);
             if(backgroundThread == null) {
-                backgroundThread = new CodenameOneThread(new Runnable() {
+                backgroundThread = INSTANCE.impl.createThread(new Runnable() {
                     public void run() {
                         // using while true to avoid double lock optimization with synchronized block
-                        while(true) {
+                        while (true) {
                             Runnable nextTask = null;
-                            synchronized(lock) {
-                                if(backgroundTasks.size() > 0) {
-                                    nextTask = (Runnable)backgroundTasks.get(0);
+                            synchronized (lock) {
+                                if (backgroundTasks.size() > 0) {
+                                    nextTask = (Runnable) backgroundTasks.get(0);
                                 } else {
                                     backgroundThread = null;
                                     return;
@@ -797,7 +797,7 @@ public final class Display {
                             //preent a runtime exception to crash the 
                             //backgroundThread
                             try {
-                                nextTask.run();                                
+                                nextTask.run();
                             } catch (Throwable e) {
                                 e.printStackTrace();
                             }
@@ -3546,7 +3546,7 @@ public final class Display {
      * @return a thread instance which must be explicitly started!
      */
     public Thread startThread(Runnable r, String name) {
-        return new CodenameOneThread(r, name);
+        return INSTANCE.impl.createThread(r, name);
     }
 
     /**

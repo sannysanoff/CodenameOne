@@ -22,6 +22,7 @@
  */
 package com.codename1.impl.android;
 
+import com.codename1.impl.CodenameOneAndroidThread;
 import com.codename1.location.AndroidLocationManager;
 import android.app.*;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -6328,5 +6329,14 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
 
         return p;
     }
-    
+
+    @Override
+    public Thread createThread(Runnable r) {
+        return new CodenameOneAndroidThread(r, "unnamed");
+    }
+
+    @Override
+    public Thread createThread(Runnable r, String name) {
+        return new CodenameOneAndroidThread(r, name);
+    }
 }

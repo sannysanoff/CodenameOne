@@ -6004,4 +6004,12 @@ public abstract class CodenameOneImplementation {
             out.add(buf.toString());
         }
     }
+
+    public Thread createThread(Runnable r) {
+        return new Thread(r);
+    }
+
+    public Thread createThread(Runnable r, String name) {
+        return new Thread(r, name);
+    }
 }

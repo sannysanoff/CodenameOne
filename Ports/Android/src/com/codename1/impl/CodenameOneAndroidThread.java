@@ -39,18 +39,18 @@ import java.util.Hashtable;
  *
  * @author Shai Almog
  */
-public class CodenameOneThread extends Thread {
+public class CodenameOneAndroidThread extends Thread {
     private int[] stack =  new int[500];
     private int stackPointer;
     private Runnable r;
-    private static Class CODE = CodenameOneThread.class;
+    private static Class CODE = CodenameOneAndroidThread.class;
     private Hashtable exceptionStack = new Hashtable();
     public static int STACK_FRAME_SIZE = 65536;
     
     /**
      * Constructor accepting the runnable
      */
-    public CodenameOneThread(final Runnable r, String threadName) {
+    public CodenameOneAndroidThread(final Runnable r, String threadName) {
         super(Thread.currentThread().getThreadGroup(), new Runnable() {
             /**
              * Catches exception
@@ -96,7 +96,7 @@ public class CodenameOneThread extends Thread {
     public static void push(int method) {
         Thread t = Thread.currentThread();
         if(t.getClass() == CODE) {
-            CodenameOneThread c = (CodenameOneThread)t;
+            CodenameOneAndroidThread c = (CodenameOneAndroidThread)t;
             c.pushStack(method);
         }
     }
@@ -107,7 +107,7 @@ public class CodenameOneThread extends Thread {
     public static void pop() {
         Thread t = Thread.currentThread();
         if(t.getClass() == CODE) {
-            CodenameOneThread c = (CodenameOneThread)t;
+            CodenameOneAndroidThread c = (CodenameOneAndroidThread)t;
             c.popStack();
         }
     }
@@ -133,7 +133,7 @@ public class CodenameOneThread extends Thread {
     public static void storeStack(Throwable th, int currentStackFrame) {
         Thread t = Thread.currentThread();
         if(t.getClass() == CODE) {
-            CodenameOneThread c = (CodenameOneThread)t;
+            CodenameOneAndroidThread c = (CodenameOneAndroidThread)t;
             c.storeStackForException(th, currentStackFrame);
         }
     }
@@ -192,9 +192,9 @@ public class CodenameOneThread extends Thread {
     
     public static void handleException(Throwable err) {
         Thread t = Thread.currentThread();
-        if(t instanceof CodenameOneThread) {
+        if(t instanceof CodenameOneAndroidThread) {
             Log.p(err.toString());
-            Log.p(((CodenameOneThread)t).getStack(err));
+            Log.p(((CodenameOneAndroidThread)t).getStack(err));
             Preferences.set("$CN1Uncaught", true);
             CrashReport r = Display.getInstance().getCrashReporter();
             if(r != null) {
