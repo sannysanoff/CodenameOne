@@ -803,12 +803,15 @@ public class Transform {
      * @return A copy of the current transform.
      */
     public Transform copy(){
-        Transform out = new Transform(null);
-        out.setTransform(this);
-        return out;
-        
+        return copyTo(new Transform(null));
     }
     
+    public Transform copyTo(Transform out){
+        out.setTransform(this);
+        return out;
+
+    }
+
     /**
      * Checks if transforms are supported on this platform.  If this returns false,
      * you cannot use this class.

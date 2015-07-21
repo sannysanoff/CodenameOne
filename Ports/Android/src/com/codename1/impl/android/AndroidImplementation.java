@@ -40,13 +40,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.RectF;
-import android.graphics.Region;
 import android.graphics.Typeface;
-import android.graphics.Paint.Style;
 import android.graphics.Path;
-import android.graphics.PorterDuff.Mode;
-import android.graphics.PorterDuffXfermode;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.net.Uri;
@@ -56,7 +51,6 @@ import android.text.TextPaint;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -64,14 +58,12 @@ import android.view.Window;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import com.codename1.ui.BrowserComponent;
 
 import com.codename1.ui.Component;
 import com.codename1.ui.Font;
-import com.codename1.ui.Graphics;
 import com.codename1.ui.Image;
 import com.codename1.ui.PeerComponent;
 import com.codename1.ui.events.ActionEvent;
@@ -86,7 +78,6 @@ import java.util.Vector;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Matrix;
-import android.graphics.PixelFormat;
 import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Camera;
 import android.media.ExifInterface;
@@ -181,7 +172,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     static final int DROID_IMPL_KEY_VOLUME_DOWN = -23458;
     static final int DROID_IMPL_KEY_MUTE = -23459;
     static int[] leftSK = new int[]{DROID_IMPL_KEY_MENU};
-    CodenameOneSurface myView = null;
+    static CodenameOneSurface myView = null;
     private Paint defaultFont;
     private final char[] tmpchar = new char[1];
     private final Rect tmprect = new Rect();
@@ -812,7 +803,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
             if (resource.startsWith("/")) {
                 resource = resource.substring(1);
             }
-            return activity.getAssets().open(resource);
+                return activity.getAssets().open(resource);
         } catch (IOException ex) {
             Log.i("Codename One", "Resource not found: " + resource);
             return null;
@@ -6163,8 +6154,15 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         ag.drawPath(p, stroke);
         
     }
-    
-    
+
+    @Override
+    public void translate(Object graphics, int x, int y) {
+        AndroidGraphics ag = (AndroidGraphics)graphics;
+        Transform tra = ag.getTransform();
+        tra.translate(x, y);
+        ag.setTransform(tra);
+    }
+
 
     // BEGIN TRANSFORMATION METHODS---------------------------------------------------------
     
@@ -6172,7 +6170,6 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     
     @Override
     public boolean transformEqualsImpl(Transform t1, Transform t2) {
-        
         if ( t1 != null ){
             CN1Matrix4f m1 = (CN1Matrix4f)t1.getNativeTransform();
             CN1Matrix4f m2 = (CN1Matrix4f)t2.getNativeTransform();
@@ -6193,10 +6190,6 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         return true;
     }
     
-    
-    
-    
-
     @Override
     public Object makeTransformTranslation(float translateX, float translateY, float translateZ) {
         return CN1Matrix4f.makeTranslation(translateX, translateY, translateZ);
@@ -6304,25 +6297,26 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     }
     // END TRANSFORM STUFF
 
+    float[] tmpBuf6 = new float[6];
+
     private Path cn1ShapeToAndroidPath(com.codename1.ui.geom.Shape shape) {
         Path p = new Path();
         com.codename1.ui.geom.PathIterator it = shape.getPathIterator();
         //p.setWindingRule(it.getWindingRule() == com.codename1.ui.geom.PathIterator.WIND_EVEN_ODD ? GeneralPath.WIND_EVEN_ODD : GeneralPath.WIND_NON_ZERO);
-        float[] buf = new float[6];
         while (!it.isDone()) {
-            int type = it.currentSegment(buf);
+            int type = it.currentSegment(tmpBuf6);
             switch (type) {
                 case com.codename1.ui.geom.PathIterator.SEG_MOVETO:
-                    p.moveTo(buf[0], buf[1]);
+                    p.moveTo(tmpBuf6[0], tmpBuf6[1]);
                     break;
                 case com.codename1.ui.geom.PathIterator.SEG_LINETO:
-                    p.lineTo(buf[0], buf[1]);
+                    p.lineTo(tmpBuf6[0], tmpBuf6[1]);
                     break;
                 case com.codename1.ui.geom.PathIterator.SEG_QUADTO:
-                    p.quadTo(buf[0], buf[1], buf[2], buf[3]);
+                    p.quadTo(tmpBuf6[0], tmpBuf6[1], tmpBuf6[2], tmpBuf6[3]);
                     break;
                 case com.codename1.ui.geom.PathIterator.SEG_CUBICTO:
-                    p.cubicTo(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]);
+                    p.cubicTo(tmpBuf6[0], tmpBuf6[1], tmpBuf6[2], tmpBuf6[3], tmpBuf6[4], tmpBuf6[5]);
                     break;
                 case com.codename1.ui.geom.PathIterator.SEG_CLOSE:
                     p.close();

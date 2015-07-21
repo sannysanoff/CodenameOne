@@ -602,12 +602,16 @@ public final class Graphics {
     public void drawShape(Shape shape, Stroke stroke){
         if ( isShapeSupported()){
             if ( xTranslate != 0 || yTranslate != 0 ){
-                GeneralPath p = new GeneralPath();
-                Transform t = Transform.makeTranslation(xTranslate, yTranslate, 0);
-                p.append(shape.getPathIterator(t), true);
-                shape = p;
+//                GeneralPath p = new GeneralPath();
+//                Transform t = Transform.makeTranslation(xTranslate, yTranslate, 0);
+//                p.append(shape.getPathIterator(t), true);
+//                shape = p;
+                impl.translate(nativeGraphics, xTranslate, yTranslate);
+                impl.drawShape(nativeGraphics, shape, stroke);
+                impl.translate(nativeGraphics, -xTranslate, -yTranslate);
+            } else {
+                impl.drawShape(nativeGraphics, shape, stroke);
             }
-            impl.drawShape(nativeGraphics, shape, stroke);
         }
        
     }
