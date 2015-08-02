@@ -1,0 +1,1 @@
+JAVA_HOME=~/soft/jdk7 ant -Dfile.reference.CLDC11.jar=/home/san/soft/jdk7/jre/lib/rt.jar -f build.xml desktop 2>&1

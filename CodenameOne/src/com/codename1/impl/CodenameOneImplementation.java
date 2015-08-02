@@ -101,10 +101,10 @@ public abstract class CodenameOneImplementation {
     private int dragActivationY = 0;
     private int dragStartPercentage = 3;
     private Form currentForm;
-    private static Object displayLock;
-    private Animation[] paintQueue = new Animation[100];
-    private Animation[] paintQueueTemp = new Animation[100];
-    private int paintQueueFill = 0;
+    protected static Object displayLock;
+    protected Animation[] paintQueue = new Animation[100];
+    protected Animation[] paintQueueTemp = new Animation[100];
+    protected int paintQueueFill = 0;
     private Graphics codenameOneGraphics;
 
     private static boolean bidi;

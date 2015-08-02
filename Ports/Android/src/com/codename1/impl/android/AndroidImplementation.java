@@ -196,7 +196,8 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     private static int belowSpacing;
     public static boolean asyncView = false;
     public static boolean textureView = false;
-    
+    public static boolean simpleView = true;
+
     /**
      * This method in used internally for ads
      * @param above shown above the view
@@ -582,21 +583,27 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         relativeLayout.setFocusable(false);
 
         activity.getWindow().setBackgroundDrawable(null);
-        if(asyncView) {
-            if(android.os.Build.VERSION.SDK_INT < 14){
-                myView = new AndroidSurfaceView(activity, AndroidImplementation.this);        
-            } else {
-                int hardwareAcceleration = 16777216;
-                activity.getWindow().setFlags(hardwareAcceleration, hardwareAcceleration);
-                myView = new AndroidAsyncView(activity, AndroidImplementation.this);                
-            }
+        if (simpleView) {
+            myView = new AndroidSimpleView(activity, AndroidImplementation.this);
         } else {
-            if(textureView || android.os.Build.VERSION.SDK_INT == 18){
-                int hardwareAcceleration = 16777216;
-                activity.getWindow().setFlags(hardwareAcceleration, hardwareAcceleration);
-                myView = new AndroidTextureView(activity, AndroidImplementation.this);                
+            if (asyncView) {
+                if (android.os.Build.VERSION.SDK_INT < 14) {
+                    myView = new AndroidSurfaceView(activity, AndroidImplementation.this);
+                } else {
+                    int hardwareAcceleration = 16777216;
+                    activity.getWindow().setFlags(hardwareAcceleration, hardwareAcceleration);
+                    myView = new AndroidAsyncView(activity, AndroidImplementation.this);
+                }
             } else {
-                myView = new AndroidSurfaceView(activity, AndroidImplementation.this);        
+                if (textureView || android.os.Build.VERSION.SDK_INT == 18) {
+                    int hardwareAcceleration = 16777216;
+                    activity.getWindow().setFlags(hardwareAcceleration, hardwareAcceleration);
+                    myView = new AndroidTextureView(activity, AndroidImplementation.this);
+                } else {
+                    int hardwareAcceleration = 16777216;
+                    activity.getWindow().setFlags(hardwareAcceleration, hardwareAcceleration);
+                    myView = new AndroidSurfaceView(activity, AndroidImplementation.this);
+                }
             }
         }
         myView.getAndroidView().setVisibility(View.VISIBLE);
@@ -6339,4 +6346,5 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     public Thread createThread(Runnable r, String name) {
         return new CodenameOneAndroidThread(r, name);
     }
+
 }
