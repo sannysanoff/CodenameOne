@@ -33,6 +33,7 @@ import com.codename1.ui.Display;
  */
 public class FacebookImpl extends FacebookConnect {
     boolean loginCompleted;
+    boolean loginCancelled;
     private static IOSNative nativeInterface;
     public static void init(Object n) {
         FacebookConnect.implClass = FacebookImpl.class;
@@ -47,16 +48,21 @@ public class FacebookImpl extends FacebookConnect {
 
     @Override
     public void login() {
+        loginCompleted = false;
+        loginCancelled = false;
         nativeInterface.facebookLogin(this);
         Display.getInstance().invokeAndBlock(new Runnable() {
             public void run() {
-                while(!loginCompleted) {
+                while(!loginCompleted && !loginCancelled) {
                     try {
                         Thread.sleep(50);
                     } catch(InterruptedException ie) {}
                 }
             }
         });
+        if (loginCancelled) {
+            return;
+        }
         if(callback != null) {
             if(isLoggedIn()) {
                 FaceBookAccess.setToken(getToken());
@@ -100,4 +106,29 @@ public class FacebookImpl extends FacebookConnect {
     public boolean hasPublishPermissions(){
         return nativeInterface.hasPublishPermissions();
     }
+    
+    /**
+     * Opens and invite dialog to invite friends to the app
+     * https://developers.facebook.com/docs/app-invites
+     * 
+     * @param appLinkUrl App Link for what should be opened when the recipient 
+     * clicks on the install/play button on the app invite page.
+     * @param previewImageUrl url to an image to be used in the invite, can be null
+     */ 
+    @Override
+    public void inviteFriends(String appLinkUrl, String previewImageUrl){
+        nativeInterface.inviteFriends(appLinkUrl, previewImageUrl);
+    }
+    
+    /**
+     * Returns true if inviteFriends is implemented, it is supported on iOS and 
+     * Android
+     * 
+     * @return true if inviteFriends is implemented
+     */ 
+    @Override
+    public boolean isInviteFriendsSupported(){
+        return true;
+    }
+    
 }

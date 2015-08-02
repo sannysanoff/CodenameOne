@@ -78,6 +78,8 @@ public class FontImage extends Image {
     private Font fnt;
     private String text;
     private int rotated;
+    private int backgroundColor;
+    private byte backgroundOpacity;
     
     /**
      * Default factor for image size, icons without a given size are sized as defaultSize X default font height.
@@ -115,10 +117,12 @@ public class FontImage extends Image {
      */
     public static FontImage create(String text, Style s) {
         FontImage f = new FontImage();
+        f.backgroundOpacity = s.getBgTransparency();
+        f.backgroundColor = s.getBgColor();
         f.text = text;
         f.color = s.getFgColor();
-        int w = (int)(((float)Font.getDefaultFont().getHeight()) * defaultSize);
-        f.fnt = sizeFont(s.getFont(), w, f.padding);
+        f.fnt = s.getFont();
+        int w = Math.max(f.getHeight(), f.fnt.stringWidth(text)) + (f.padding * 2);
         f.width = w;
         f.height = w;
         return f;
@@ -165,20 +169,27 @@ public class FontImage extends Image {
     protected void drawImage(Graphics g, Object nativeGraphics, int x, int y) {
         int oldColor = g.getColor();
         Font oldFont = g.getFont();
+        
+        if(backgroundOpacity != 0) {
+            g.setColor(backgroundColor);
+            g.fillRect(x, y, width, height, (byte)backgroundOpacity);
+        }
+        
         g.setColor(color);
         g.setFont(fnt);
         int w = fnt.stringWidth(text);
+        int h = fnt.getHeight();
         int paddingPixels = Display.getInstance().convertToPixels(padding, true);
         if(rotated != 0) {
             int tX = g.getTranslateX();
             int tY = g.getTranslateY();
             g.translate(-tX, -tY);
-            g.rotate((float)Math.toRadians(rotated % 360), tX + x + width / 2, tY + y + height / 2 + paddingPixels);
-            g.drawString(text, tX + x + width / 2 - w / 2, tY + y + paddingPixels);
+            g.rotate((float)Math.toRadians(rotated % 360), tX + x + width / 2, tY + y + height / 2);
+            g.drawString(text, tX + x + width / 2 - w / 2, tY + y);
             g.resetAffine();
             g.translate(tX, tY);
         } else {
-            g.drawString(text, x + width / 2 - w / 2, y + paddingPixels);
+            g.drawString(text, x + width / 2 - w / 2, y + height / 2 - h / 2 );
         }
         g.setFont(oldFont);
         g.setColor(oldColor);
@@ -193,6 +204,12 @@ public class FontImage extends Image {
             return;
         }
         int oldColor = g.getColor();
+        
+        if(backgroundOpacity != 0) {
+            g.setColor(backgroundColor);
+            g.fillRect(x, y, w, h, (byte)backgroundOpacity);
+        }        
+        
         Font oldFont = g.getFont();
         Font t = sizeFont(fnt, Math.min(h, w), padding);
         g.setColor(color);
@@ -203,12 +220,12 @@ public class FontImage extends Image {
             int tX = g.getTranslateX();
             int tY = g.getTranslateY();
             g.translate(-tX, -tY);
-            g.rotate((float)Math.toRadians(rotated % 360), tX + x + w / 2, tY + y + h / 2 + paddingPixels);
-            g.drawString(text, tX + x + w / 2 - ww / 2, tY + y + paddingPixels);
+            g.rotate((float)Math.toRadians(rotated % 360), tX + x + w / 2, tY + y + h / 2);
+            g.drawString(text, tX + x + w / 2 - ww / 2, tY + y);
             g.resetAffine();
             g.translate(tX, tY);
         } else {
-            g.drawString(text, x + w / 2 - ww / 2, y + paddingPixels);
+            g.drawString(text, x + w / 2 - ww / 2, y);
         }
         g.setFont(oldFont);
         g.setColor(oldColor);

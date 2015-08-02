@@ -117,21 +117,16 @@ public class MorphTransition extends Transition {
             cc.placeholder = new Label();
             cc.placeholder.setVisible(false);
             Container destParent = cc.dest.getParent();
-            Object constraint = destParent.getLayout().getComponentConstraint(cc.dest);
-            destParent.removeComponent(cc.dest);
             cc.placeholder.setX(cc.dest.getX());
-            cc.placeholder.setY(cc.dest.getY() - destForm.getTitleArea().getHeight());
+            cc.placeholder.setY(cc.dest.getY() - destForm.getContentPane().getY());
             cc.placeholder.setWidth(cc.dest.getWidth());
             cc.placeholder.setHeight(cc.dest.getHeight());
             cc.placeholder.setPreferredSize(new Dimension(cc.dest.getWidth(), cc.dest.getHeight()));
-            if(constraint != null) {
-                destParent.addComponent(constraint, cc.placeholder);
-            } else {
-                destParent.addComponent(cc.placeholder);
-            }
+            destParent.replace(cc.dest, cc.placeholder, null);
             destForm.getLayeredPane().addComponent(cc.dest);
             cc.originalContainer = cc.source.getParent();
             cc.originalConstraint = cc.originalContainer.getLayout().getComponentConstraint(cc.source);
+            cc.originalOffset = cc.originalContainer.getComponentIndex(cc.source);
             cc.originalContainer.removeComponent(cc.source);
             cc.originalContainer.getComponentForm().getLayeredPane().addComponent(cc.source);
         }
@@ -170,20 +165,14 @@ public class MorphTransition extends Transition {
                         continue;
                     }
                     Container p = c.placeholder.getParent();
-                    Object constraint = p.getLayout().getComponentConstraint(c.placeholder);
-                    p.removeComponent(c.placeholder);
                     c.dest.getParent().removeComponent(c.dest);
-                    if(constraint != null) {
-                        p.addComponent(constraint, c.dest);
-                    } else {
-                        p.addComponent(c.dest);
-                    }
+                    p.replace(c.placeholder, c.dest, null);
 
                     c.source.getParent().removeComponent(c.source);
                     if(c.originalConstraint != null) {
-                        c.originalContainer.addComponent(c.originalConstraint, c.source);
+                        c.originalContainer.addComponent(c.originalOffset, c.originalConstraint, c.source);
                     } else {
-                        c.originalContainer.addComponent(c.source);
+                        c.originalContainer.addComponent(c.originalOffset, c.source);
                     }
                 }
                 
@@ -227,7 +216,10 @@ public class MorphTransition extends Transition {
             getSource().paintComponent(g);
 
             g.setAlpha(alpha);
-            getDestination().paintComponent(g);
+            byte bgT = getDestination().getUnselectedStyle().getBgTransparency();
+            getDestination().getUnselectedStyle().setBgTransparency(0);
+            getDestination().paintComponent(g, false);
+            getDestination().getUnselectedStyle().setBgTransparency(bgT);
             g.setAlpha(oldAlpha);
         } else {
             getDestination().paintComponent(g);
@@ -238,8 +230,8 @@ public class MorphTransition extends Transition {
         public CC(Component source, Component dest, Form sourceForm, Form destForm) {
             this.source = source;
             this.dest = dest;
-            int titleHeightSource = sourceForm.getTitleArea().getHeight();
-            int titleHeightDest = destForm.getTitleArea().getHeight();
+            int titleHeightSource = sourceForm.getContentPane().getY();
+            int titleHeightDest = sourceForm.getContentPane().getY();
             xMotion = Motion.createEaseInOutMotion(source.getAbsoluteX(), dest.getAbsoluteX(), duration);
             xMotion.start();
             yMotion = Motion.createEaseInOutMotion(source.getAbsoluteY() - titleHeightSource, dest.getAbsoluteY()  - titleHeightDest, duration);
@@ -259,5 +251,6 @@ public class MorphTransition extends Transition {
         Motion hMotion;
         Object originalConstraint;
         Container originalContainer;
+        int originalOffset;
     }
 }
