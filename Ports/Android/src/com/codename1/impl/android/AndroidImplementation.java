@@ -196,7 +196,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     private static int belowSpacing;
     public static boolean asyncView = false;
     public static boolean textureView = false;
-    public static boolean simpleView = true;
+    public static boolean simpleView = false;
 
     /**
      * This method in used internally for ads
@@ -461,7 +461,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         Display.getInstance().registerVirtualKeyboard(vkb);
         Display.getInstance().setDefaultVirtualKeyboard(vkb);
 
-        InPlaceEditView.endEdit();
+        InPlaceEditView.endEdit(false);
 
         activity.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 
@@ -720,7 +720,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
             @Override
             public void run() {
                 // Must be called from the UI thread
-                InPlaceEditView.endEdit();
+                InPlaceEditView.endEdit(false);
 
                 synchronized (flag) {
                     flag[0] = true;

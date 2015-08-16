@@ -639,7 +639,12 @@ public class TextArea extends Component {
         super.focusLostInternal();
         setHandlesInput(false);
     }
-    
+
+    @Override
+    public void paintBackgrounds(Graphics g) {
+        super.paintBackgrounds(g);
+    }
+
     /**
      * Returns the number of columns in the text area
      * 
@@ -1023,7 +1028,9 @@ public class TextArea extends Component {
     public void paint(Graphics g) {
         
         if(Display.getInstance().isNativeInputSupported() &&
-                Display.getInstance().isTextEditing(this)) {
+                Display.getInstance().isTextEditing(this))
+        {
+            System.out.println("OK");
             return;
         }
         

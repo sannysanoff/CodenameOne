@@ -62,7 +62,7 @@ public class AndroidKeyboard implements VirtualKeyboardInterface {
                 }
             }
         }else{
-            InPlaceEditView.endEdit();
+            InPlaceEditView.endEdit(false);
         }
 //        if(!show){
 //            impl.saveTextEditingState();
