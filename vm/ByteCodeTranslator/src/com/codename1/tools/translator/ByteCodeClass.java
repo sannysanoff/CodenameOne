@@ -86,6 +86,9 @@ public class ByteCodeClass {
     }
 
     public static void markDependencies(List<ByteCodeClass> lst) {
+        if (mainClass == null) {
+            throw new RuntimeException("Missing main class..");
+        }
         mainClass.markDependent(lst);
         for(ByteCodeClass bc : lst) {
             if(bc.clsName.equals("java_lang_Boolean")) {
@@ -1519,5 +1522,8 @@ public class ByteCodeClass {
         return usedByNative;
     }
 
-    
+    @Override
+    public String toString() {
+        return "[ByteCodeClass "+clsName+"]";
+    }
 }
