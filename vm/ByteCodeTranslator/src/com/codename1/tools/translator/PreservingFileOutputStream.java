@@ -2,6 +2,7 @@ package com.codename1.tools.translator;
 
 import java.io.*;
 import java.util.Arrays;
+import java.util.HashSet;
 
 /**
  * Created by admin on 8/17/15.
@@ -12,6 +13,7 @@ public class PreservingFileOutputStream extends OutputStream {
 
     static int total;
     static int preserved;
+    boolean equal;
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     File file;
@@ -28,13 +30,14 @@ public class PreservingFileOutputStream extends OutputStream {
 
     @Override
     public void close() throws IOException {
+        equal = false;
         if (file.exists() && file.length() == baos.size()) {
             byte[] oldCopy = new byte[baos.size()];
             FileInputStream fis = new FileInputStream(file);
             fis.read(oldCopy);
             fis.close();
             final byte[] thisCopy = baos.toByteArray();
-            boolean equal = true;
+            equal = true;
             for (int i = 0; i < thisCopy.length; i++) {
                 if (thisCopy[i] != oldCopy[i]) {
                     equal = false;
@@ -85,7 +88,7 @@ public class PreservingFileOutputStream extends OutputStream {
             }
         }
         if(ByteCodeTranslator.verbose) {
-            System.out.println("Producing: " + to.getName());
+            System.out.println("Producing(move): " + to.getName());
         }
         to.delete();
         return from.renameTo(to);
