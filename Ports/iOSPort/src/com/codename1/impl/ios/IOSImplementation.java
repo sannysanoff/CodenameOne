@@ -78,6 +78,8 @@ import com.codename1.io.Cookie;
 import com.codename1.io.Log;
 import com.codename1.io.Preferences;
 import com.codename1.media.MediaManager;
+import com.codename1.notifications.LocalNotification;
+import com.codename1.notifications.LocalNotificationCallback;
 import com.codename1.payment.RestoreCallback;
 import com.codename1.ui.Container;
 import com.codename1.ui.Dialog;
@@ -97,7 +99,7 @@ import java.io.ByteArrayOutputStream;
  */
 public class IOSImplementation extends CodenameOneImplementation {
     public static IOSNative nativeInstance = new IOSNative();
-    
+    private static LocalNotificationCallback localNotificationCallback;
     private static PurchaseCallback purchaseCallback;
     private static RestoreCallback restoreCallback;
     private int timeout = 120000;
@@ -118,6 +120,10 @@ public class IOSImplementation extends CodenameOneImplementation {
     
     private NativePathRenderer globalPathRenderer;
     private NativePathStroker globalPathStroker;
+    
+    private boolean isActive=false;
+    private final ArrayList<Runnable> onActiveListeners = new ArrayList<Runnable>();
+    
     
     /**
      * A pool that will cause java objects to be retained if they are passed 
@@ -4145,6 +4151,9 @@ public class IOSImplementation extends CodenameOneImplementation {
 
     @Override
     public String getProperty(String key, String defaultValue) {
+        if(key.equalsIgnoreCase("cn1_push_prefix")) {
+            return "ios";
+        }
         if(key.equalsIgnoreCase("Platform")) {
             return "iOS";
         }
@@ -4174,6 +4183,64 @@ public class IOSImplementation extends CodenameOneImplementation {
         if(key.equalsIgnoreCase("UDID")) {
             return nativeInstance.getUDID();
         }
+        if(key.equalsIgnoreCase("AppArg")) {
+            // We need special handling of AppArg to avoid race conditions.
+            // AppArg is guaranteed to be set by the time 
+            // applicationDidBecomeActive() is called, so in some cases
+            // calling AppArg inside the start() method of the lifecycle will
+            // get a stale value.
+            // See the lifecycle here:
+            // https://developer.apple.com/library/ios/documentation/iPhone/Conceptual/iPhoneOSProgrammingGuide/Inter-AppCommunication/Inter-AppCommunication.html#//apple_ref/doc/uid/TP40007072-CH6-SW13
+            if (!minimized && !isActive && Display.getInstance().isEdt()) {
+                // !minimized = applicationWillEnterForeground has already run
+                // !isActive = applicationDidBecomeActive hasn't been called yet.
+                // => We will do some "waiting" to give the AppArg a chance
+                // to be changed.
+                // We only defer access to AppArg if we are on the EDT
+                // to avoid a possible dead-lock when on the main thread
+                // The case we are concerned about is only when
+                // calling inside the start() method, so this will be
+                // on the EDT.
+                // In all other cases, this property should just return
+                // unhindered.
+                Display.getInstance().invokeAndBlock(new Runnable() {
+                    @Override
+                    public void run() {
+                        final Object lock = new Object();
+                        final boolean[] complete = new boolean[1];
+                        callOnActive(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                complete[0] = true;
+                                synchronized(lock) {
+                                    lock.notifyAll();
+                                }
+                            }
+
+                        });
+                        while (!complete[0]) {
+                            synchronized(lock) {
+                                try {
+                                    lock.wait(100); // Wait long enough for the url handler
+                                                    // to kick in.
+                                    // I think it's better just to skip and move on
+                                    // after 100ms rather than wait indefinitely just
+                                    // in case we are running in the background
+                                    break;
+                                } catch (InterruptedException ex) {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                });
+                   
+                return super.getProperty(key, defaultValue);
+            }
+            
+        }
+        
         return super.getProperty(key, defaultValue);
     }
 
@@ -5589,6 +5656,42 @@ public class IOSImplementation extends CodenameOneImplementation {
         pushCallback = callback;
     }
     
+    public static void setLocalNotificationCallback(LocalNotificationCallback callback) {
+        localNotificationCallback = callback;
+    }
+    
+    public static LocalNotificationCallback getLocalNotificationCallback() {
+        return localNotificationCallback;
+    }
+    
+    
+    public static void localNotificationReceived(final String notificationId) {
+        if (localNotificationCallback != null) {
+            Display.getInstance().callSerially(new Runnable() {
+
+                @Override
+                public void run() {
+                    if (getLocalNotificationCallback() != null) {
+                        getLocalNotificationCallback().localNotificationReceived(notificationId);
+                    }
+                }
+            });
+        } else { // could be a race condition against the native code... Retry in 2 seconds
+            new Thread() {
+                public void run() {
+                    try {
+                        Thread.sleep(1500);
+                    } catch (InterruptedException ex) {
+                    }
+                    // prevent infinite loop
+                    if(pushCallback != null) {
+                        localNotificationReceived(notificationId);
+                    }
+                }
+            }.start();
+        }
+    }
+    
     public static void setMainClass(Object main) {
         if(main instanceof PushCallback) {
             pushCallback = (PushCallback)main;
@@ -5598,6 +5701,9 @@ public class IOSImplementation extends CodenameOneImplementation {
         }
         if(main instanceof RestoreCallback) {
             restoreCallback = (RestoreCallback)main;
+        }
+        if (main instanceof LocalNotificationCallback) {
+            setLocalNotificationCallback((LocalNotificationCallback) main);
         }
     }        
     
@@ -5828,6 +5934,7 @@ public class IOSImplementation extends CodenameOneImplementation {
         if(instance.life != null) {
             instance.life.applicationWillResignActive();
         }
+        instance.isActive = false;
     }
     
     /**
@@ -5900,10 +6007,39 @@ public class IOSImplementation extends CodenameOneImplementation {
     }
     
     /**
+     * Calls the given runnable when the app is active.  If the app is already
+     * active, it will call it immediatly.  If not, it will be called in
+     * applicationDidBecomeActive().
+     * This is used for getting the AppArg property in a way that avoids
+     * race conditions.
+     * @param r 
+     */
+    private void callOnActive(Runnable r) {
+        synchronized(onActiveListeners) {
+            if (isActive) {
+                r.run();
+            } else {
+                onActiveListeners.add(r);
+            }
+        }
+    }
+    
+    /**
      * Called as part of the transition from the background to the inactive state; 
      * here you can undo many of the changes made on entering the background.
      */
     public static void applicationDidBecomeActive() {
+        ArrayList<Runnable> callbacks = null;
+        synchronized(instance.onActiveListeners) {
+            instance.isActive = true;
+            callbacks = new ArrayList<Runnable>(instance.onActiveListeners.size());
+        
+            callbacks.addAll(instance.onActiveListeners);
+            instance.onActiveListeners.clear();
+        }
+        for (Runnable callback : callbacks) {
+            callback.run();
+        }
         minimized = false;
         if(instance.life != null) {
             instance.life.applicationDidBecomeActive();
@@ -6371,6 +6507,27 @@ public class IOSImplementation extends CodenameOneImplementation {
         nativeInstance.splitString(source, separator, out);
     }
    
+    public void scheduleLocalNotification(LocalNotification n, long firstTime, int repeat) {
+        
+        nativeInstance.sendLocalNotification(
+                n.getId(),
+                n.getAlertTitle(),
+                n.getAlertBody(),
+                n.getAlertSound(),
+                n.getBadgeNumber(),
+                firstTime,
+                repeat
+        );
+        
+       
+    }
+
+   
+    
+    public void cancelLocalNotification(String id) {
+         nativeInstance.cancelLocalNotification(id);
+    }
+
 }
 
 

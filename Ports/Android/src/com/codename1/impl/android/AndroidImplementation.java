@@ -107,6 +107,7 @@ import com.codename1.io.*;
 import com.codename1.l10n.L10NManager;
 import com.codename1.location.LocationManager;
 import com.codename1.messaging.Message;
+import com.codename1.notifications.LocalNotification;
 import com.codename1.payment.Purchase;
 import com.codename1.push.PushCallback;
 import com.codename1.ui.*;
@@ -1397,6 +1398,11 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     }
 
     @Override
+    public void tileImage(Object graphics, Object img, int x, int y, int w, int h) {
+        ((AndroidGraphics) graphics).tileImage(img, x, y, w, h);
+    }
+
+    @Override
     public void drawLine(Object graphics, int x1, int y1, int x2, int y2) {
         ((AndroidGraphics) graphics).drawLine(x1, y1, x2, y2);
     }
@@ -1744,6 +1750,13 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
      * @inheritDoc
      */
     public String getProperty(String key, String defaultValue) {
+        if(key.equalsIgnoreCase("cn1_push_prefix")) {
+            boolean has = hasAndroidMarket();
+            if(has) {
+                return "gcm";
+            }
+            return defaultValue;
+        }
         if ("OS".equals(key)) {
             return "Android";
         }
@@ -6347,4 +6360,74 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         return new CodenameOneAndroidThread(r, name);
     }
 
+    public void scheduleLocalNotification(LocalNotification notif, long firstTime, int repeat) {
+        
+        Intent notificationIntent = new Intent(activity, LocalNotificationPublisher.class);
+        notificationIntent.setAction(activity.getApplicationInfo().packageName + "." + notif.getId());        
+        notificationIntent.putExtra(LocalNotificationPublisher.NOTIFICATION, createBundleFromNotification(notif));
+        
+        Intent contentIntent = new Intent();
+        contentIntent.setComponent(activity.getComponentName());
+        contentIntent.putExtra("LocalNotificationID", notif.getId());
+        PendingIntent pendingContentIntent = PendingIntent.getActivity(activity, 0, contentIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        notificationIntent.putExtra(LocalNotificationPublisher.NOTIFICATION_INTENT, pendingContentIntent);
+        
+        
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(activity, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        
+        AlarmManager alarmManager = (AlarmManager) activity.getSystemService(Context.ALARM_SERVICE);
+        if(repeat == LocalNotification.REPEAT_NONE){
+            alarmManager.set(AlarmManager.RTC_WAKEUP, firstTime, pendingIntent);
+            
+        }else if(repeat == LocalNotification.REPEAT_MINUTE){
+            
+            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, firstTime, 60*1000*1000, pendingIntent);
+            
+        }else if(repeat == LocalNotification.REPEAT_HOUR){
+            
+            alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstTime, AlarmManager.INTERVAL_HALF_HOUR, pendingIntent);
+            
+        }else if(repeat == LocalNotification.REPEAT_DAY){
+            
+            alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstTime, AlarmManager.INTERVAL_DAY, pendingIntent);
+            
+        }else if(repeat == LocalNotification.REPEAT_WEEK){
+            
+            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, firstTime, AlarmManager.INTERVAL_DAY * 7, pendingIntent);
+            
+        }
+    }
+
+    public void cancelLocalNotification(String notificationId) {
+        Intent notificationIntent = new Intent(activity, LocalNotificationPublisher.class);
+        notificationIntent.setAction(activity.getApplicationInfo().packageName + "." + notificationId);
+        
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(activity, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);        
+        AlarmManager alarmManager = (AlarmManager) activity.getSystemService(Context.ALARM_SERVICE);
+        alarmManager.cancel(pendingIntent);
+    }
+
+    static Bundle createBundleFromNotification(LocalNotification notif){
+        Bundle b = new Bundle();
+        b.putString("NOTIF_ID", notif.getId());
+        b.putString("NOTIF_TITLE", notif.getAlertTitle());
+        b.putString("NOTIF_BODY", notif.getAlertBody());
+        b.putString("NOTIF_SOUND", notif.getAlertSound());
+        b.putString("NOTIF_IMAGE", notif.getAlertImage());
+        b.putInt("NOTIF_NUMBER", notif.getBadgeNumber());
+        return b;
+    }
+    
+    static LocalNotification createNotificationFromBundle(Bundle b){
+        LocalNotification n = new LocalNotification();
+        n.setId(b.getString("NOTIF_ID"));
+        n.setAlertTitle(b.getString("NOTIF_TITLE"));
+        n.setAlertBody(b.getString("NOTIF_BODY"));
+        n.setAlertSound(b.getString("NOTIF_SOUND"));
+        n.setAlertImage(b.getString("NOTIF_IMAGE"));
+        n.setBadgeNumber(b.getInt("NOTIF_NUMBER"));
+        return n;
+    }
+    
 }

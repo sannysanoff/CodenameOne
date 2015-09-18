@@ -33,6 +33,7 @@ import com.codename1.ui.layouts.BoxLayout;
 import com.codename1.ui.layouts.FlowLayout;
 import com.codename1.ui.layouts.LayeredLayout;
 import com.codename1.ui.layouts.Layout;
+import com.codename1.ui.list.DefaultListCellRenderer;
 import com.codename1.ui.plaf.LookAndFeel;
 import com.codename1.ui.plaf.UIManager;
 import com.codename1.ui.util.Resources;
@@ -74,6 +75,10 @@ public class Toolbar extends Container {
     private boolean layered = false;
     
     private boolean initialized = false;
+    
+    private static boolean permanentSideMenu;
+    
+    private Container permanentSideMenuContainer;
 
     /**
      * Empty Constructor
@@ -115,6 +120,27 @@ public class Toolbar extends Container {
         }
     }
 
+
+    /**
+     * Creates a static side menu that doesn't fold instead of the standard sidemenu.
+     * This is common for tablet UI's where folding the side menu doesn't make as much sense.
+     * 
+     * @param p true to have a permanent side menu
+     */
+    public static void setPermanentSideMenu(boolean p) {
+        permanentSideMenu = p;
+    }
+
+    /**
+     * Creates a static side menu that doesn't fold instead of the standard sidemenu.
+     * This is common for tablet UI's where folding the side menu doesn't make as much sense.
+     * 
+     * @return true if we will use a permanent sidemenu
+     */
+    public static boolean isPermanentSideMenu() {
+        return permanentSideMenu;
+    }
+    
     /**
      * Sets the Toolbar title component. This method allow placing any component
      * in the Toolbar ceneter instead of the regular Label. Can be used to place
@@ -149,8 +175,37 @@ public class Toolbar extends Container {
      */
     public void addCommandToSideMenu(Command cmd) {
         checkIfInitialized();
-        sideMenu.addCommand(cmd);
-        sideMenu.installMenuBar();
+        if(permanentSideMenu) {
+            constructPermanentSideMenu();
+
+            Button b = new Button(cmd);
+            b.setEndsWith3Points(false);
+            Integer gap = (Integer)cmd.getClientProperty("iconGap");
+            if(gap != null) {
+                b.setGap(gap.intValue());
+            }
+            b.setTextPosition(Label.RIGHT);
+            String uiid = (String)cmd.getClientProperty("uiid");
+            if(uiid != null) {
+                b.setUIID(uiid);
+            } else {
+                b.setUIID("SideCommand");
+            }
+            permanentSideMenuContainer.addComponent(b);
+        } else {
+            sideMenu.addCommand(cmd);
+            sideMenu.installMenuBar();
+        }
+    }
+    
+    private void constructPermanentSideMenu() {
+        if(permanentSideMenuContainer == null) {
+            permanentSideMenuContainer = new Container(new BoxLayout(BoxLayout.Y_AXIS));
+            permanentSideMenuContainer.setUIID("SideNavigationPanel");
+            permanentSideMenuContainer.setScrollableY(true);
+            Form parent = getComponentForm();
+            parent.addComponentToForm(BorderLayout.WEST, permanentSideMenuContainer);
+        }
     }
 
     /**
@@ -163,10 +218,20 @@ public class Toolbar extends Container {
      */
     public void addComponentToSideMenu(Component cmp, Command cmd) {
         checkIfInitialized();
-        cmd.putClientProperty(SideMenuBar.COMMAND_SIDE_COMPONENT, cmp);
-        cmd.putClientProperty(SideMenuBar.COMMAND_ACTIONABLE, Boolean.TRUE);
-        sideMenu.addCommand(cmd);
-        sideMenu.installMenuBar();
+        if(permanentSideMenu) {
+            constructPermanentSideMenu();
+            Container cnt = new Container(new BorderLayout());
+            cnt.addComponent(BorderLayout.CENTER, cmp);
+            Button btn = new Button(cmd);
+            btn.setParent(cnt);
+            cnt.setLeadComponent(btn);
+            permanentSideMenuContainer.addComponent(cnt);
+        } else {
+            cmd.putClientProperty(SideMenuBar.COMMAND_SIDE_COMPONENT, cmp);
+            cmd.putClientProperty(SideMenuBar.COMMAND_ACTIONABLE, Boolean.TRUE);
+            sideMenu.addCommand(cmd);
+            sideMenu.installMenuBar();
+        }
     }
 
     /**
@@ -176,12 +241,17 @@ public class Toolbar extends Container {
      */
     public void addComponentToSideMenu(Component cmp) {
         checkIfInitialized();
-        Command cmd = new Command("");
-        cmd.putClientProperty(SideMenuBar.COMMAND_SIDE_COMPONENT, cmp);
-        cmd.putClientProperty(SideMenuBar.COMMAND_ACTIONABLE, Boolean.FALSE);
-        sideMenu.addCommand(cmd);
-        sideMenu.installMenuBar();
-    }
+        if(permanentSideMenu) {
+            constructPermanentSideMenu();
+            permanentSideMenuContainer.addComponent(cmp);
+        } else {
+            Command cmd = new Command("");
+            cmd.putClientProperty(SideMenuBar.COMMAND_SIDE_COMPONENT, cmp);
+            cmd.putClientProperty(SideMenuBar.COMMAND_ACTIONABLE, Boolean.FALSE);
+            sideMenu.addCommand(cmd);
+            sideMenu.installMenuBar();
+        }
+        }
 
     /**
      * Find the command component instance if such an instance exists
@@ -306,6 +376,7 @@ public class Toolbar extends Container {
         c = l.getRenderer().getListFocusComponent(l);
         c.setUIID("CommandFocus");
         l.setFixedSelection(List.FIXED_NONE_CYCLIC);
+        ((DefaultListCellRenderer)l.getRenderer()).setShowNumbers(false);
         return l;
     }
 
@@ -579,7 +650,7 @@ public class Toolbar extends Container {
         public int getCommandBehavior() {
             return Display.COMMAND_BEHAVIOR_ICS;
         }
-
+        
         @Override
         void synchronizeCommandsWithButtonsInBackbutton() {
             boolean hasSideCommands = false;

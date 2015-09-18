@@ -76,9 +76,21 @@ extern UIView *editingComponent;
         com_codename1_ui_Display_setProperty___java_lang_String_java_lang_String(CN1_THREAD_GET_STATE_PASS_ARG o, key, value);
     }
     com_codename1_impl_ios_IOSImplementation_callback__(CN1_THREAD_GET_STATE_PASS_SINGLE_ARG);
+    
+    if (launchOptions[UIApplicationLaunchOptionsLocalNotificationKey]) {
+        NSLog(@"Background notification received");
+        UILocalNotification *notification = launchOptions[UIApplicationLaunchOptionsLocalNotificationKey];
+        com_codename1_impl_ios_IOSImplementation_localNotificationReceived___java_lang_String(CN1_THREAD_GET_STATE_PASS_ARG fromNSString(CN1_THREAD_GET_STATE_PASS_ARG [notification.userInfo valueForKey:@"__ios_id__"]));
+        application.applicationIconBadgeNumber = 0;
+    }
+    
 #ifdef INCLUDE_CN1_PUSH
-    [[UIApplication sharedApplication] cancelAllLocalNotifications];
+    //[[UIApplication sharedApplication] cancelAllLocalNotifications]; // <-- WHY IS THIS HERE? -- removing it for now
     [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
+    if(launchOptions == nil) {
+        //afterDidFinishLaunchingWithOptionsMarkerEntry
+        return YES;
+    }
     NSDictionary* userInfo = [launchOptions valueForKey:@"UIApplicationLaunchOptionsRemoteNotificationKey"];
     if(userInfo == nil) {
         //afterDidFinishLaunchingWithOptionsMarkerEntry
@@ -228,7 +240,7 @@ extern UIView *editingComponent;
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
 #ifdef INCLUDE_CN1_PUSH
-    [[UIApplication sharedApplication] cancelAllLocalNotifications];
+    //[[UIApplication sharedApplication] cancelAllLocalNotifications]; //<--- Not sure why this is here.  Removing because it conflicts with local notifications
     [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
 #endif
     /*
@@ -277,6 +289,15 @@ extern void repaintUI();
 
 -(void)application:(UIApplication*)application didChangeStatusBarFrame:(CGRect)oldStatusBarFrame {
     repaintUI();
+}
+
+- (void)application:(UIApplication*)application didReceiveLocalNotification:(UILocalNotification*)notification {
+    NSLog(@"Received local notification while running: %@", notification);
+    if( [notification.userInfo valueForKey:@"__ios_id__"] != NULL)
+    {
+        NSString* alertValue = [notification.userInfo valueForKey:@"__ios_id__"];
+        com_codename1_impl_ios_IOSImplementation_localNotificationReceived___java_lang_String(CN1_THREAD_GET_STATE_PASS_ARG fromNSString(CN1_THREAD_GET_STATE_PASS_ARG alertValue));
+    }
 }
 
 #ifndef CN1_USE_ARC

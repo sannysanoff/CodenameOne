@@ -183,6 +183,7 @@ public class Component implements Animation, StyleListener {
     private Style pressedStyle;
     private Style selectedStyle;
     private Style disabledStyle;
+    private Style allStyles;
     private Container parent;
     private boolean focused = false;
     private boolean handlesInput = false;
@@ -332,6 +333,18 @@ public class Component implements Animation, StyleListener {
                 cc.sameWidth = c;
             }
         }
+    }
+    
+    /**
+     * Returns a "meta style" that allows setting styles once to all the different Style objects, the getters for this
+     * style will be meaningless and will return 0 values.
+     * @return a unified style object for the purpose of setting on object object instances
+     */
+    public Style getAllStyles() {
+        if(allStyles == null) {
+            allStyles = Style.createProxyStyle(getUnselectedStyle(), getSelectedStyle(), getPressedStyle(), getDisabledStyle());
+        }
+        return allStyles;
     }
     
     /**
@@ -2330,7 +2343,7 @@ public class Component implements Animation, StyleListener {
      * Invoked by subclasses interested in handling pinch to zoom events, if true is returned 
      * other drag events will not be broadcast
      * 
-     * @param the scaling of the pinch operation a number larger than 1 means scaling up and smaller than 1 means scaling down.
+     * @param scale the scaling of the pinch operation a number larger than 1 means scaling up and smaller than 1 means scaling down.
      * It is recommended that code would threshold the number (so a change between 1.0 and 1.02 shouldn't necessarily trigger zoom).
      * Notice that this number is relevant to current zoom levels and unaware of them so you should also enforce limits of maximum/minimum
      * zoom levels.
@@ -2884,8 +2897,16 @@ public class Component implements Animation, StyleListener {
             dragOverListener = null;
         }
     }
+    
+    /**
+     * Callback indicating that the drag has finished either via drop or by releasing the component
+     * @param x the x location 
+     * @param y the y location
+     */
+    protected void dragFinished(int x, int y) {
+    }
 
-    void dragFinished(int x, int y) {
+    void dragFinishedImpl(int x, int y) {
         if(dragAndDropInitialized && dragActivated) {
             Form p = getComponentForm();
             p.setDraggedComponent(null);
@@ -2930,6 +2951,7 @@ public class Component implements Animation, StyleListener {
         }
         dragActivated = false;
         dragAndDropInitialized = false;
+        dragFinished(x, y);
     }
 
     /**

@@ -42,6 +42,7 @@ import com.codename1.io.ConnectionRequest;
 import com.codename1.io.Preferences;
 import com.codename1.l10n.L10NManager;
 import com.codename1.media.Media;
+import com.codename1.notifications.LocalNotification;
 import com.codename1.payment.Purchase;
 import com.codename1.system.CrashReport;
 import com.codename1.ui.geom.Rectangle;
@@ -55,6 +56,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Timer;
 
 /**
  * Central class for the API that manages rendering/events and is used to place top
@@ -3182,6 +3184,7 @@ public final class Display {
      * @param flashLights enable/disable notification flashing
      * @param args additional arguments to the notification
      * @return a platform native object that allows modifying notification state
+     * @deprecated use scheduleLocalNotification instead
      */
     public Object notifyStatusBar(String tickerText, String contentTitle, 
         String contentBody, boolean vibrate, boolean flashLights, Hashtable args) {
@@ -3311,9 +3314,9 @@ public final class Display {
      * 
      * @param firstName the Contact firstName
      * @param familyName the Contact familyName
-     * @param workPhone the Contact work phone or null
+     * @param officePhone the Contact work phone or null
      * @param homePhone the Contact home phone or null
-     * @param mobilePhone the Contact mobile phone or null
+     * @param cellPhone the Contact mobile phone or null
      * @param email the Contact email or null
      * 
      * @return the contact id if creation succeeded or null  if failed
@@ -3709,4 +3712,51 @@ public final class Display {
     public void setMultiKeyMode(boolean multiKeyMode) {
         this.multiKeyMode = multiKeyMode;
     }
+    
+    /**
+     * Long pointer press is invoked after the given interval, this allows making long press events shorter/longer
+     * @param v time in milliseconds
+     */
+    public void setLongPointerPressInterval(int v) {
+        longPressInterval = v;
+    }
+
+    /**
+     * Long pointer press is invoked after the given interval, this allows making long press events shorter/longer
+     * @return time in milliseconds
+     */
+    public int getLongPointerPressInterval() {
+        return longPressInterval;
+    }
+    
+    /**
+     * Schedules a local notification to occur.
+     *
+     * @param n The notification to schedule.
+     * @param firstTime time in milliseconds when to schedule the notification
+     * @param repeat repeat one of the following: REPEAT_NONE, REPEAT_FIFTEEN_MINUTES, 
+     * REPEAT_HALF_HOUR, REPEAT_HOUR, REPEAT_DAY, REPEAT_WEEK
+     */
+    public void scheduleLocalNotification(LocalNotification n, long firstTime, int repeat) {
+        if (n.getId() == null || n.getId().length() == 0) {
+            throw new IllegalArgumentException("Notification ID must be set");
+        }
+        if(firstTime < System.currentTimeMillis()){
+            throw new IllegalArgumentException("Cannot schedule a notification to a past time");        
+        }
+        if (n.getAlertSound() != null && n.getAlertSound().length() > 0 && !n.getAlertSound().startsWith("/notification_sound") ) {
+            throw new IllegalArgumentException("Alert sound file name must start with the 'notification_sound' prefix");
+        }
+        impl.scheduleLocalNotification(n, firstTime, repeat);
+    }
+    
+    /**
+     * Cancels a local notification by ID.
+     * @param notificationId 
+     * @see com.codename1.notifications.LocalNotification
+     */
+    public void cancelLocalNotification(String notificationId) {
+        impl.cancelLocalNotification(notificationId);
+    }
+        
 }

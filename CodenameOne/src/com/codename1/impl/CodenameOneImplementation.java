@@ -42,6 +42,7 @@ import com.codename1.l10n.L10NManager;
 import com.codename1.location.LocationManager;
 import com.codename1.media.Media;
 import com.codename1.messaging.Message;
+import com.codename1.notifications.LocalNotification;
 import com.codename1.payment.Purchase;
 import com.codename1.payment.PurchaseCallback;
 import com.codename1.push.PushCallback;
@@ -1540,6 +1541,7 @@ public abstract class CodenameOneImplementation {
         int clipW = getClipWidth(graphics);
         int clipY = getClipY(graphics);
         int clipH = getClipHeight(graphics);
+        clipRect(graphics, x, y, w, h);
         for (int xPos = 0; xPos <= w; xPos += iW) {
             for (int yPos = 0; yPos < h; yPos += iH) {
                 int actualX = xPos + x;
@@ -1559,6 +1561,7 @@ public abstract class CodenameOneImplementation {
                 drawImage(graphics, img, actualX, actualY);
             }
         }
+        setClip(graphics, clipX, clipY, clipW, clipH);
         
     }
 
@@ -5253,7 +5256,6 @@ public abstract class CodenameOneImplementation {
         throw new RuntimeException("Transforms not supported");
     }
 
-    
     // END TRANSFORMATION METHODS--------------------------------------------------------------------
     
     
@@ -5621,6 +5623,7 @@ public abstract class CodenameOneImplementation {
      * @param flashLights enable/disable notification flashing
      * @param args additional arguments to the notification
      * @return a platform native object that allows modifying notification state
+     * @deprecated use scheduleLocalNotification instead
      */
     public Object notifyStatusBar(String tickerText, String contentTitle,
             String contentBody, boolean vibrate, boolean flashLights, Hashtable args) {
@@ -6012,4 +6015,12 @@ public abstract class CodenameOneImplementation {
     public Thread createThread(Runnable r, String name) {
         return new Thread(r, name);
     }
+    //METHODS FOR DEALING Local Notifications
+    public void scheduleLocalNotification(LocalNotification notif, long firstTime, int repeat) {
+    }
+
+    public void cancelLocalNotification(String notificationId) {
+    }
+    //ENDS METHODS FOR DEALING Local Notifications
+    
 }
