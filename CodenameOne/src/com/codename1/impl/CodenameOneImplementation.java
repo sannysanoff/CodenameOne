@@ -112,6 +112,7 @@ public abstract class CodenameOneImplementation {
     private String packageName;
     private static int pollingMillis = 3 * 60 * 60000;
     private Component editingText;
+    private String appArg;
     
     /**
      * Useful since the content of a single element touch event is often recycled
@@ -349,7 +350,15 @@ public abstract class CodenameOneImplementation {
             c.repaint();
         }
     }
-        
+      
+    public String getAppArg() {
+        return appArg;
+    }
+    
+    public void setAppArg(String arg) {
+        appArg = arg;
+    }
+    
     /**
      * Allows the implementation to refresh the text field
      */
@@ -1541,7 +1550,6 @@ public abstract class CodenameOneImplementation {
         int clipW = getClipWidth(graphics);
         int clipY = getClipY(graphics);
         int clipH = getClipHeight(graphics);
-        clipRect(graphics, x, y, w, h);
         for (int xPos = 0; xPos <= w; xPos += iW) {
             for (int yPos = 0; yPos < h; yPos += iH) {
                 int actualX = xPos + x;
@@ -1561,7 +1569,6 @@ public abstract class CodenameOneImplementation {
                 drawImage(graphics, img, actualX, actualY);
             }
         }
-        setClip(graphics, clipX, clipY, clipW, clipH);
         
     }
 

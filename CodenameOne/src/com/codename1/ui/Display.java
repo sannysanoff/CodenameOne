@@ -2713,6 +2713,10 @@ public final class Display {
      * @return the value of the property
      */
     public String getProperty(String key, String defaultValue) {
+        if ("AppArg".equals(key)) {
+            String out = impl.getAppArg();
+            return out == null ? defaultValue : out;
+        }
         if(localProperties != null) {
             String v = (String)localProperties.get(key);
             if(v != null) {
@@ -2731,6 +2735,10 @@ public final class Display {
      * @param value the value of the property
      */
     public void setProperty(String key, String value) {
+        if ("AppArg".equals(key)) {
+            impl.setAppArg(value);
+            return;
+        }
         if("blockOverdraw".equals(key)) {
             Container.blockOverdraw = true;
             return;
