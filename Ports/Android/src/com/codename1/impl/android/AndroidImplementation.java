@@ -22,6 +22,7 @@
  */
 package com.codename1.impl.android;
 
+import android.graphics.*;
 import com.codename1.impl.CodenameOneAndroidThread;
 import com.codename1.location.AndroidLocationManager;
 import android.app.*;
@@ -36,13 +37,6 @@ import android.webkit.CookieSyncManager;
 import android.content.*;
 import android.content.pm.*;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Rect;
-import android.graphics.Typeface;
-import android.graphics.Path;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.net.Uri;
@@ -70,6 +64,7 @@ import com.codename1.ui.PeerComponent;
 import com.codename1.ui.events.ActionEvent;
 import com.codename1.impl.CodenameOneImplementation;
 import com.codename1.impl.VirtualKeyboardInterface;
+import com.codename1.ui.geom.GeneralPath;
 import com.codename1.ui.plaf.UIManager;
 import com.codename1.ui.util.Resources;
 import java.lang.ref.SoftReference;
@@ -78,7 +73,6 @@ import java.net.URISyntaxException;
 import java.util.Vector;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Camera;
 import android.media.ExifInterface;
@@ -6165,6 +6159,21 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     public void fillShape(Object graphics, com.codename1.ui.geom.Shape shape) {
         AndroidGraphics ag = (AndroidGraphics)graphics;
         Path p = cn1ShapeToAndroidPath(shape);
+//        RectF bounds = new RectF();
+//        p.computeBounds(bounds, true);
+//        System.out.println("Painting: "+shape);
+//        if (bounds.width() == 0 && bounds.height() == 0 && shape instanceof GeneralPath) {
+//            System.out.println("Android Path: "+bounds.width()+" * "+bounds.height());
+//            System.out.println("Empty: "+p.isEmpty()+" "+shape.getBounds()+" points.len="+((GeneralPath) shape).points.length);
+//            p = cn1ShapeToAndroidPath(shape);
+//            p.computeBounds(bounds, true);
+//            if (bounds.width() == 0 && bounds.height() == 0) {
+//                System.out.println("Failure complete");
+//            }
+//
+//        } else {
+//            System.out.println("OK");
+//        }
         ag.fillPath(p);
     }
 

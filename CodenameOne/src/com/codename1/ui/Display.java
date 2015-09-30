@@ -952,7 +952,9 @@ public final class Display {
             while(impl.getCurrentForm() == null) {
                 synchronized(lock){
                     if(shouldEDTSleep()) {
+                        long l = System.currentTimeMillis();
                         lock.wait();
+                        //System.out.println("EDT loop slept (1) for: "+(System.currentTimeMillis() - l));
                     }
 
                     // paint transition or intro animations and don't do anything else if such
@@ -985,7 +987,9 @@ public final class Display {
                  synchronized(lock){
                      if(shouldEDTSleep()) {
                          impl.edtIdle(true);
+                         long l = System.currentTimeMillis();
                          lock.wait();
+                         //System.out.println("EDT loop slept (2) for: " + (System.currentTimeMillis() - l));
                          impl.edtIdle(false);
                      }
                  }
@@ -1030,14 +1034,19 @@ public final class Display {
                 if(!noSleep){
                     synchronized(lock){
                         impl.edtIdle(true);
-                        lock.wait(Math.max(1, framerateLock - (time)));
+                        long l = System.currentTimeMillis();
+                        long sleept = Math.max(1, framerateLock - (time));
+                        lock.wait(sleept);
+                        //System.out.println("EDT loop slept (3) for: " + (System.currentTimeMillis() - l)+" when specified "+sleept);
                         impl.edtIdle(false);
                     }
                 }
             } else {
                 // paint transition or intro animations and don't do anything else if such
                 // animations are in progress...
+                long l = System.currentTimeMillis();
                 paintTransitionAnimation();
+                //System.out.println("paintTransitionAnimation: "+(System.currentTimeMillis() - l));
                 return;
             }
         } catch(Exception ignor) {
@@ -1061,17 +1070,22 @@ public final class Display {
             }
             offset = handleEvent(offset);
         }
+
+        //System.out.println("Events processed at " + (System.currentTimeMillis() - currentTime));
         
         if(!impl.isInitialized()){
             return;
         }
         codenameOneGraphics.setGraphics(impl.getNativeGraphics());
+        int len = impl.paintQueueFill;
         impl.paintDirty();
+        //System.out.println("Dirty ("+len+")painted at " + (System.currentTimeMillis() - currentTime));
 
         // draw the animations
         Form current = impl.getCurrentForm();
         if(current != null){
             current.repaintAnimations();
+            //System.out.println("Animations repainted at " + (System.currentTimeMillis() - currentTime));
             // check key repeat events
             long t = System.currentTimeMillis();
             if(keyRepeatCharged && nextKeyRepeatEvent <= t) {
@@ -1088,6 +1102,7 @@ public final class Display {
             }
         }
         processSerialCalls();
+        //System.out.println("Serial calls ended at " + (System.currentTimeMillis() - currentTime));
         time = System.currentTimeMillis() - currentTime;
     }
 

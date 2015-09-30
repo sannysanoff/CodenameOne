@@ -103,9 +103,9 @@ public abstract class CodenameOneImplementation {
     private int dragStartPercentage = 3;
     private Form currentForm;
     protected static Object displayLock;
-    protected Animation[] paintQueue = new Animation[100];
+    public Animation[] paintQueue = new Animation[100];
     protected Animation[] paintQueueTemp = new Animation[100];
-    protected int paintQueueFill = 0;
+    public int paintQueueFill = 0;
     private Graphics codenameOneGraphics;
 
     private static boolean bidi;

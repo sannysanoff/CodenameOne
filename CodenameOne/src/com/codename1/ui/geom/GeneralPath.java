@@ -97,7 +97,7 @@ public final class GeneralPath implements Shape {
     /**
      * The points buffer
      */
-    private float[] points;
+    public float[] points;
 
     /**
      * The point's type buffer size
@@ -513,13 +513,19 @@ public final class GeneralPath implements Shape {
             float y2 = (float)(cy + ay + k2 * ax);
             final float x3 = (float)(cx + bx + k2 * by);
              float y3 = (float)(cy + by - k2 * bx);
-            if (ellipseScaleY != 0) {
+            if (ellipseScaleY != 0 && !Double.isInfinite(1/ellipseScaleY)) {
                 y2 = (float)(cy + (y2-cy)/ellipseScaleY);
                 y3 = (float)(cy + (y3-cy)/ellipseScaleY);
                 endY = (float)(cy + (endY-cy)/ellipseScaleY);
+//                if (Double.isInfinite(endY)) {
+//                    System.out.println(String.format("(3)endY=infinity! %f %f %f", cy, endY, ellipseScaleY));
+//                }
             }
             path.curveTo(x2, y2, x3, y3, endX, endY);
-            
+//            if (Double.isInfinite(endY)) {
+//                System.out.println(String.format("(4)endY=infinity! %f %f %f", cy, endY, ellipseScaleY));
+//            }
+
         } 
     }
     
@@ -632,6 +638,9 @@ public final class GeneralPath implements Shape {
                         //end = pointFromAngleRadians(center, radius, angle);
                         endX = cx + radius * Math.cos(angle);
                         endY = cy + radius * Math.sin(angle) * yScale;
+//                        if (Double.isInfinite(endY)) {
+//                            System.out.println("endY=INFINITY! enter args="+cx+","+cy+" "+startX+","+startY+" "+endX+","+endY+" " + radius + " " + angle + " " + yScale+ " "+sweep);
+//                        }
                         addBezierArcToPath(path, cx, cy, startX, startY, endX, endY);
                     }
                     
@@ -651,6 +660,9 @@ public final class GeneralPath implements Shape {
         } else {
             path.moveTo(startX, startY);
         }
+        if (Double.isInfinite(endY)) {
+            System.out.println("(2)endY=INFINITY! enter args=" + cx + "," + cy + " " + startX + "," + startY + " " + endX + "," + endY + " " + radius + " " + startAngleRadians + " " + yScale + " " + sweepAngleRadians);
+        }
         addBezierArcToPath(path, cx, cy, startX, startY, endX, endY);
         
     }
@@ -667,8 +679,8 @@ public final class GeneralPath implements Shape {
         double PI2 = Math.PI*2d;
         radians %= PI2;
         if (radians < 0d) { radians += PI2; }
-        if (radians == PI2) { radians = 0d; }
-        return radians;
+        if (radians >= PI2) { radians -= PI2; }
+        return Math.abs(radians);
     }
     
     /**
