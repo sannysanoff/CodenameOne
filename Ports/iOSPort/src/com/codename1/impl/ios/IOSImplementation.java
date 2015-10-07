@@ -712,6 +712,20 @@ public class IOSImplementation extends CodenameOneImplementation {
         } else {
             ns = getResourceNSData(path);
         }
+        if (ns == -1) {
+            Runtime.getRuntime().gc();
+            if(path.startsWith("file:")) {
+                ns = IOSImplementation.nativeInstance.createNSData(path);
+            } else {
+                ns = getResourceNSData(path);
+            }
+            if (ns == -1) {
+                System.out.println("%% Double fault in createImage() even after GC");
+                return null;
+            } else {
+                System.out.println("%% successful recovery in image allocation");
+            }
+        }
         NativeImage n = new NativeImage(path);
         n.peer = nativeInstance.createImageNSData(ns, widthHeight);
         n.width = widthHeight[0];
@@ -2138,6 +2152,7 @@ public class IOSImplementation extends CodenameOneImplementation {
         String type = t.nextToken();
         int val = nativeInstance.getResourceSize(name, type);
         if(val <= 0) {
+            System.out.println("Resource size is negative, "+name+" type="+type);
             return -1;
         }
         return IOSImplementation.nativeInstance.createNSDataResource(name, type);
