@@ -22,7 +22,6 @@
  * have any questions.
  */
 package com.codename1.ui;
-
 import com.codename1.codescan.CodeScanner;
 import com.codename1.contacts.Contact;
 import com.codename1.db.Database;
