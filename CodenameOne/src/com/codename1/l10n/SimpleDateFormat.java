@@ -530,7 +530,7 @@ public class SimpleDateFormat extends DateFormat {
                 startIndex += s.length();
             }
         }
-        TimeZone localTimezone = Calendar.getInstance().getTimeZone();
+        TimeZone localTimezone = timeZone != null ? timeZone : Calendar.getInstance().getTimeZone();
         calendar.setTimeZone(localTimezone);
 		// If timezone offset not part of date, the date passed will be treated
         // as if it's local timezone.
@@ -545,6 +545,12 @@ public class SimpleDateFormat extends DateFormat {
         }
         return calendar.getTime();
     }
+
+    public void setTimeZone(TimeZone timeZone) {
+        this.timeZone = timeZone;
+    }
+
+    TimeZone timeZone;
 
     /**
      * Parse a hour value. Depending on patternChar parameter, the hour can be

@@ -25,6 +25,7 @@ package com.codename1.tools.translator;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Attribute;
@@ -48,10 +49,19 @@ public class Parser extends ClassVisitor {
     private String clsName;
     private static String[] nativeSources;
     private static List<ByteCodeClass> classes = new ArrayList<ByteCodeClass>();
-    public static void parse(File sourceFile) throws Exception {
-        if(ByteCodeTranslator.verbose) {
-            System.out.println("Parsing: " + sourceFile.getAbsolutePath());
+    static HashMap<String,Boolean> usedByNative = new HashMap<>(10000);
+
+    static {
+        try {
+            ObjectInputStream ois = new ObjectInputStream(new FileInputStream("usedByNative.ser"));
+            usedByNative = (HashMap<String, Boolean>)ois.readObject();
+            ois.close();
+        } catch (IOException e) {
+        } catch (Exception e) {
+            System.out.println(e);
         }
+    }
+    public static void parse(File sourceFile) throws Exception {
         ClassReader r = new ClassReader(new FileInputStream(sourceFile)) {
             String clsName;
             @Override
@@ -421,6 +431,7 @@ public class Parser extends ClassVisitor {
             }
             int created = PreservingFileOutputStream.total - PreservingFileOutputStream.preserved;
             if(ByteCodeTranslator.verbose) System.out.println("Updated/created: "+created+" files");
+            Parser.saveCache();
         } catch(Throwable t) {
             System.out.println("Error while working with the class: " + file);
             t.printStackTrace();
@@ -432,7 +443,17 @@ public class Parser extends ClassVisitor {
             }
         }
     }
-    
+
+    private static void saveCache() {
+        try {
+            ObjectOutputStream fos = new ObjectOutputStream(new FileOutputStream("usedByNative.ser"));
+            fos.writeObject(usedByNative);
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private static void readNativeFiles(File outputDirectory) throws IOException {
         File[] mFiles = outputDirectory.listFiles(new FileFilter() {
             @Override
@@ -548,7 +569,7 @@ public class Parser extends ClassVisitor {
             eliminateUnusedMethods(depth + 1);
         }
     }
-    
+
     private static void usedByNativeCheck() {
         for(ByteCodeClass bc : classes) {
             //java_lang_Thread_runImpl___long
@@ -557,12 +578,24 @@ public class Parser extends ClassVisitor {
                 StringBuilder b = new StringBuilder();
                 mtd.appendFunctionPointer(b);
                 String str = b.toString();
-                
-                for(String s : nativeSources) {
-                    if(s.contains(str)) {
-                        mtd.setUsedByNative(true);
-                        break;
+                Boolean cached = usedByNative.get(str);
+                boolean found = false;
+                if (cached != null) {
+                    found = cached;
+                } else{
+                    for (String s : nativeSources) {
+                        if (s.contains(str)) {
+                            found = true;
+                            break;
+                        }
                     }
+                }
+                if (found) {
+                    mtd.setUsedByNative(true);
+                }
+                if (cached == null) {
+                    cached = found;
+                    usedByNative.put(str, cached);
                 }
             }
         }
@@ -584,14 +617,20 @@ public class Parser extends ClassVisitor {
         StringBuilder b = new StringBuilder();
         m.appendFunctionPointer(b);
         String str = b.toString();
-        for(String s : nativeSources) {
-            if(s.contains(str)) {
-                return true;
+        boolean found = false;
+        Boolean cached = usedByNative.get(str);
+        if (cached != null) {
+            found = cached;
+        } else {
+            for (String s : nativeSources) {
+                if (s.contains(str)) {
+                    found = true;
+                    break;
+                }
             }
+            usedByNative.put(str, found);
         }
-        
-        
-        return false;
+        return found;
     }
 
     private static void writeFile(String clsName, ByteCodeClass cls, File outputDir) throws Exception {

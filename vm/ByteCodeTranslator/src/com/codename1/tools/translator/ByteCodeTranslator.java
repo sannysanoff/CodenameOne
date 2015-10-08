@@ -154,7 +154,7 @@ public class ByteCodeTranslator {
         final String appVersion = args[6];
         final String appType = args[7];
         final String addFrameworks = args[8];
-        StringBuilder appFonts = new StringBuilder("\n");
+        final StringBuilder appFonts = new StringBuilder("\n");
         // we accept 3 arguments output type, input directory & output directory
         if(args[0].equalsIgnoreCase("csharp")) {
             output = OutputType.OUTPUT_TYPE_CSHARP;
@@ -279,7 +279,7 @@ public class ByteCodeTranslator {
             includeFrameworks.add("CoreMedia.framework");
             includeFrameworks.add("libz.dylib");
             includeFrameworks.add("MobileCoreServices.framework");
-            
+
             if(!addFrameworks.equalsIgnoreCase("none")) {
                 includeFrameworks.addAll(Arrays.asList(addFrameworks.split(";")));
             }
@@ -304,10 +304,10 @@ public class ByteCodeTranslator {
                 fileListEntry.append(file);
                 fileListEntry.append(" */ = {isa = PBXFileReference; lastKnownFileType = ");
                 fileListEntry.append(getFileType(file));
-                if(file.endsWith(".framework") || file.endsWith(".dylib") || file.endsWith(".a")) {
+                if(file.endsWith(".framework") || file.endsWith(".dylib") || file.endsWith(".a") || file.endsWith(".tbd")) {
                     fileListEntry.append("; name = \"");
                     fileListEntry.append(file);
-                    if(file.endsWith(".dylib")) {
+                    if(file.endsWith(".dylib") || file.endsWith(".tbd")) {
                         fileListEntry.append("\"; path = \"usr/lib/");
                         fileListEntry.append(file);
                         fileListEntry.append("\"; sourceTree = SDKROOT; };\n");

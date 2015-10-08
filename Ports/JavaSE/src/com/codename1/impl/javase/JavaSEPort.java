@@ -4876,16 +4876,24 @@ public class JavaSEPort extends CodenameOneImplementation {
     private Graphics2D getGraphics(Object nativeG) {
         if (nativeG instanceof Graphics2D) {
             Graphics2D g2d = (Graphics2D) nativeG;
-            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            initGraphics(g2d);
             return (Graphics2D) nativeG;
         }
         NativeScreenGraphics ng = (NativeScreenGraphics) nativeG;
         if (ng.sourceImage != null) {
-            return ng.sourceImage.createGraphics();
+            Graphics2D g2d = ng.sourceImage.createGraphics();
+            initGraphics(g2d);
+            return g2d;
         }
         Graphics2D g2d = canvas.getGraphics2D();
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        initGraphics(g2d);
         return g2d;
+    }
+
+    private void initGraphics(Graphics2D g2d) {
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
     }
 
     /**

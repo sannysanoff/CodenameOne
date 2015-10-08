@@ -1291,6 +1291,10 @@ public class ByteCodeClass {
         }
         if(baseInterfacesObject != null) {
             for(ByteCodeClass bc : baseInterfacesObject) {
+                if (bc == null) {
+                    System.out.println("Problem with class (not included in translation process?): "+this.getClsName());
+                    System.exit(1);
+                }
                 bc.fillVirtualMethodTable(virtualMethods, false);
             }
         }
