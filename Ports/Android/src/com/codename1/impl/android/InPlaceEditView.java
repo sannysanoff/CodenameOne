@@ -31,7 +31,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.ResultReceiver;
 import android.text.Editable;
 import android.text.InputFilter;
@@ -57,6 +56,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.FrameLayout;
 
 import com.codename1.ui.Component;
+import com.codename1.ui.Container;
 import com.codename1.ui.Display;
 import com.codename1.ui.Font;
 import com.codename1.ui.TextArea;
@@ -98,7 +98,6 @@ public class InPlaceEditView extends FrameLayout {
     private AndroidImplementation impl;
     private static long closedTime;
     private static boolean showVKB = false;
-    Handler handler;
 
     /**
      * Private constructor
@@ -116,7 +115,6 @@ public class InPlaceEditView extends FrameLayout {
         setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
         setFocusableInTouchMode(true);
         initInputTypeMap();
-        handler = new Handler(Looper.getMainLooper());
         setBackgroundDrawable(null);
     }
 
@@ -170,9 +168,8 @@ public class InPlaceEditView extends FrameLayout {
                 leaveVKBOpen = true;
             }
         }
-        endEdit(leaveVKBOpen);
         // When the user touches the screen outside the text-area, finish editing
-        //endEditing(REASON_TOUCH_OUTSIDE, leaveVKBOpen);
+        endEditing(REASON_TOUCH_OUTSIDE, leaveVKBOpen);
 
         // Return false so that the event will propagate to the underlying view
         // We don't want to consume this event
@@ -392,6 +389,7 @@ public class InPlaceEditView extends FrameLayout {
             }
             return;
         }
+        setVisibility(GONE);
         mLastEndEditReason = reason;
 
         // If the IME action is set to NEXT, do not hide the virtual keyboard
@@ -409,14 +407,7 @@ public class InPlaceEditView extends FrameLayout {
         
         mIsEditing = false;
         mLastEditText = mEditText;
-        final EditView toRemove = this.mEditText;
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                setVisibility(GONE);
-                removeView(toRemove);
-            }
-        }, 100);
+        removeView(mEditText);
         mEditText = null;
     }
 
@@ -470,20 +461,14 @@ public class InPlaceEditView extends FrameLayout {
         return (sInstance == null) ? REASON_UNDEFINED : sInstance.mLastEndEditReason;
     }
 
-    public static void endEdit(boolean leaveVKBOpen) {
+    public static void endEdit(boolean x) {
         if (sInstance != null) {
-            final InPlaceEditView inst = InPlaceEditView.sInstance;
-            inst.endEditing(REASON_UNDEFINED, false);
-            final ViewParent p = InPlaceEditView.sInstance.getParent();
+            sInstance.endEditing(REASON_UNDEFINED, false);
+            ViewParent p = sInstance.getParent();
             if (p != null) {
-                sInstance.handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        ((ViewGroup) p).removeView(inst);
-                    }
-                }, 100);
+                ((ViewGroup) p).removeView(sInstance);
             }
-            InPlaceEditView.sInstance = null;
+            sInstance = null;
         }
     }
 
