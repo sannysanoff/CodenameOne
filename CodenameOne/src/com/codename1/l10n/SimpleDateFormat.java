@@ -279,7 +279,7 @@ public class SimpleDateFormat extends DateFormat {
             return super.format(source, toAppendTo);
         }
         // format based on local timezone
-        Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
+        Calendar calendar = Calendar.getInstance(timeZone != null ? timeZone : TimeZone.getDefault());
         calendar.setTime(source);
         List<String> pattern = getPatternTokens();
         for (int i = 0; i < pattern.size(); i++) {
@@ -437,7 +437,7 @@ public class SimpleDateFormat extends DateFormat {
         }
         int startIndex = 0;
         // parse based on GMT timezone for handling offsets
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone(GMT));
+        Calendar calendar = Calendar.getInstance(timeZone != null ? timeZone : TimeZone.getTimeZone(GMT));
         int tzMinutes = -1;
         List<String> pattern = getPatternTokens();
         for (int i = 0; i < pattern.size(); i++) {
@@ -623,7 +623,7 @@ public class SimpleDateFormat extends DateFormat {
      * @return
      */
     int getDSTOffset(Calendar source) {
-        TimeZone localTimezone = Calendar.getInstance().getTimeZone();
+        TimeZone localTimezone = timeZone != null ? timeZone : Calendar.getInstance().getTimeZone();
         int rawOffset = localTimezone.getRawOffset() / MILLIS_TO_MINUTES;
         return getOffsetInMinutes(source, localTimezone) - rawOffset;
     }
