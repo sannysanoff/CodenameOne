@@ -2250,10 +2250,12 @@ public class Form extends Container {
             if (cmp.isFocusable() && cmp.isEnabled()) {
                 setFocused(cmp);
             }
-            cmp.pointerDragged(x, y);
-            cmp.repaint();
-            if(cmp.isStickyDrag()) {
-                stickyDrag = cmp;
+            if (cmp.isEnabled()) {
+                cmp.pointerDragged(x, y);
+                cmp.repaint();
+                if (cmp.isStickyDrag()) {
+                    stickyDrag = cmp;
+                }
             }
         }
     }
