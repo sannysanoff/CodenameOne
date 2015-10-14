@@ -4942,7 +4942,11 @@ JAVA_INT com_codename1_impl_ios_IOSNative_getSocketAvailableInput___long(CN1_THR
 JAVA_OBJECT com_codename1_impl_ios_IOSNative_readFromSocketStream___long(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject, JAVA_LONG socket) {
     POOL_BEGIN();
     SocketImpl* impl = (BRIDGE_CAST SocketImpl*)((void *)socket);
-    JAVA_OBJECT b = nsDataToByteArr([impl readFromStream]);
+    NSData *d = [impl readFromStream];
+    if (d == nil) {
+        return JAVA_NULL;
+    }
+    JAVA_OBJECT b = nsDataToByteArr(d);
     POOL_END();
     return b;
 }
@@ -6327,7 +6331,7 @@ JAVA_INT com_codename1_impl_ios_IOSNative_readNSFile___long(CN1_THREAD_STATE_MUL
 JAVA_VOID com_codename1_impl_ios_IOSNative_sendLocalNotification___java_lang_String_java_lang_String_java_lang_String_java_lang_String_int_long_int( CN1_THREAD_STATE_MULTI_ARG
     JAVA_OBJECT me, JAVA_OBJECT notificationId, JAVA_OBJECT alertTitle, JAVA_OBJECT alertBody, JAVA_OBJECT alertSound, JAVA_INT badgeNumber, JAVA_LONG fireDate, JAVA_INT repeatType
                                                                                                                                                                      ) {
-    
+    /*
     UILocalNotification *notification = [[UILocalNotification alloc] init];
     NSString * msg = [NSString string];
     NSString *tmpStr;
@@ -6353,11 +6357,6 @@ JAVA_VOID com_codename1_impl_ios_IOSNative_sendLocalNotification___java_lang_Str
 #endif
     msg = tmpStr;
     notification.alertBody = msg;
-
-    //if ([notification respondsToSelector:@selector(alertTitle)]) {
-        //[notification setValue:toNSString(CN1_THREAD_STATE_PASS_ARG alertTitle) forKey:@"alertTitle"];
-        notification.alertTitle = toNSString(CN1_THREAD_STATE_PASS_ARG alertTitle);
-    //}
 
     notification.soundName= toNSString(CN1_THREAD_STATE_PASS_ARG alertSound);
     notification.fireDate = [NSDate dateWithTimeIntervalSince1970: fireDate/1000 + 1];
@@ -6402,7 +6401,7 @@ JAVA_VOID com_codename1_impl_ios_IOSNative_sendLocalNotification___java_lang_Str
         
         [[UIApplication sharedApplication] scheduleLocalNotification: notification];
         
-    });
+    });*/
 }
 
 JAVA_VOID com_codename1_impl_ios_IOSNative_cancelLocalNotification___java_lang_String(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT me, JAVA_OBJECT notificationId) {

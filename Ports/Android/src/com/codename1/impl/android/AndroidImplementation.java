@@ -1382,6 +1382,11 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     public void drawImage(Object graphics, Object img, int x, int y) {
         ((AndroidGraphics) graphics).drawImage(img, x, y);
     }
+    
+    @Override
+    public void tileImage(Object graphics, Object img, int x, int y, int w, int h) {
+        ((AndroidGraphics) graphics).tileImage(img, x, y, w, h);
+    }
 
     public boolean isScaledImageDrawingSupported() {
         return true;
@@ -1781,6 +1786,10 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
                 } else {
                     String encodedPath = u.getEncodedPath();
                     if (encodedPath != null && encodedPath.length() > 0) {
+                        String query = u.getQuery();
+                        if(query != null && query.length() > 0){
+                            encodedPath += "?" + query;
+                        }
                         return encodedPath;
                     }
                     return u.toString();
