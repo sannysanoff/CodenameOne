@@ -417,21 +417,11 @@ public class Parser extends ClassVisitor {
             if(ByteCodeTranslator.verbose) System.out.println("Load natives..");
             readNativeFiles(outputDirectory);
 
-            for(int i=0; i<classes.size(); i++) {
-                if (classes.get(i).getClsName().contains("Painter")) {
-                    System.out.println("Ok1: "+classes.get(i).getClsName());
-                }
-            }
             // loop over methods and start eliminating the body of unused methods
             if(ByteCodeTranslator.verbose) System.out.println("Eliminate unused..");
             if (!ByteCodeTranslator.draft)
                 eliminateUnusedMethods();
 
-            for(int i=0; i<classes.size(); i++) {
-                if (classes.get(i).getClsName().contains("Painter")) {
-                    System.out.println("Ok2: "+classes.get(i).getClsName());
-                }
-            }
             if(ByteCodeTranslator.verbose) System.out.println("Generate common header..");
             generateClassAndMethodIndexHeader(outputDirectory);
             if(ByteCodeTranslator.verbose) System.out.println("Generate all classes..");

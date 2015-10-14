@@ -1910,6 +1910,7 @@ public class IOSImplementation extends CodenameOneImplementation {
          */
         void add(Shape s, Stroke stroke, TextureAlphaMask mask){
             String shapeID = getShapeID(s, stroke);
+            //System.out.println("Adding shape texture for: "+shapeID);
             textures.put(shapeID, Display.getInstance().createSoftWeakRef(mask));
             
         }
