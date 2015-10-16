@@ -23,16 +23,7 @@
 
 package com.codename1.tools.translator;
 
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -126,8 +117,10 @@ public class ByteCodeTranslator {
                 if (!modified) {
                     destFile.setLastModified(savedModified);
                 }
-            } else {
+            } else if (f.exists()) {
                 retval |= copy(new FileInputStream(f), new PreservingFileOutputStream(new File(destFile, f.getName())));
+            } else {
+                throw new FileNotFoundException(f.getPath());
             }
         }
         return retval;
