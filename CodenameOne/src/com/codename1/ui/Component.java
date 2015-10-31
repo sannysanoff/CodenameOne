@@ -914,7 +914,7 @@ public class Component implements Animation, StyleListener {
      * 
      * @param parent the parent container
      */
-    void setParent(Container parent) {
+    protected void setParent(Container parent) {
         this.parent = parent;
     }
 

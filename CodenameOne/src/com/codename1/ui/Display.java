@@ -1289,8 +1289,7 @@ public final class Display {
             throw new IllegalStateException("Initialize must be invoked before setCurrent!");
         }
         Form current = impl.getCurrentForm();
-        
-        
+
         if(autoFoldVKBOnFormSwitch && !(newForm instanceof Dialog)) {
             setShowVirtualKeyboard(false);
         }
