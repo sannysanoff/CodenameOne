@@ -203,8 +203,8 @@ static GLuint getOGLProgram(){
     glVertexAttribPointer(vertexCoordAtt, 2, GL_FLOAT, GL_FALSE, 0, vertexes);
     GLErrorLog;
 
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    GLErrorLog;
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);	// fixed by orig authors
+    //GLErrorLog;
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     GLErrorLog;
