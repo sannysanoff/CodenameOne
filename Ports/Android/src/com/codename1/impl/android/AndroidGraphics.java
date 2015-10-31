@@ -149,18 +149,16 @@ class AndroidGraphics {
         canvas.restore();
     }
 
-    float[] mMatrix3x3 = new float[9];
-
     private Matrix getTransformMatrix(){
         return getTransformMatrix(new Matrix());
     }
-
-    public Matrix tmpMatrix = new Matrix();
 
     private void concatTransformMatrix(Canvas canvas){
         canvas.concat(getTransformMatrix(tmpMatrix));
     }
 
+    float[] mMatrix3x3 = new float[9];
+    
     public void tileImage(Object img, int x, int y, int w, int h) {
         Bitmap b = (Bitmap) img;
         Rect dest = new Rect();
@@ -178,6 +176,8 @@ class AndroidGraphics {
         canvas.drawRect(dest, tilePainter);
         canvas.restore();
     }
+
+    private Matrix tmpMatrix = new Matrix();
 
     private Matrix getTransformMatrix(Matrix destMatrix){
         if ( transformDirty ){
