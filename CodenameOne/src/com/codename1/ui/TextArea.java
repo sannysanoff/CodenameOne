@@ -395,8 +395,6 @@ public class TextArea extends Component {
             }
         }
         super.setWidth(width);
-        //getRowStrings();
-        
     }
 
     
@@ -430,6 +428,20 @@ public class TextArea extends Component {
      */
     public String getText() {
         return text;
+    }
+    
+    /**
+     * Convenience method for numeric text fields, returns the value as a number or invalid if the value in the 
+     * text field isn't a number
+     * @param invalid in case the text isn't an integer this number will be returned
+     * @return the int value of the text field
+     */
+    public int getAsInt(int invalid) {
+        try {
+            return Integer.parseInt(text);
+        } catch(NumberFormatException e) {
+            return invalid;
+        }
     }
     
     /**
@@ -844,7 +856,6 @@ public class TextArea extends Component {
         }
         
         int minCharactersInRow = Math.max(1, textAreaWidth / charWidth);
-        int rowIndex=0;
         int from=0;
         int to=from+minCharactersInRow;
         int textLength=text.length;
@@ -998,7 +1009,6 @@ public class TextArea extends Component {
             //adding minCharactersInRow doesn't work if what is left is less
             //then minCharactersInRow
             to=from;//+minCharactersInRow;
-            rowIndex++;
         }
         if(text[text.length -1 ] == '\n'){
             rowStrings.add("");

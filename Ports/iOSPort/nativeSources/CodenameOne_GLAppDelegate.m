@@ -84,6 +84,11 @@ extern UIView *editingComponent;
         application.applicationIconBadgeNumber = 0;
     }
     
+    id locationValue = [launchOptions objectForKey:UIApplicationLaunchOptionsLocationKey];
+    if (locationValue) {
+        com_codename1_impl_ios_IOSImplementation_appDidLaunchWithLocation__(CN1_THREAD_GET_STATE_PASS_SINGLE_ARG);
+    }
+    
 #ifdef INCLUDE_CN1_PUSH
     //[[UIApplication sharedApplication] cancelAllLocalNotifications]; // <-- WHY IS THIS HERE? -- removing it for now
     [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
@@ -240,8 +245,7 @@ extern UIView *editingComponent;
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
 #ifdef INCLUDE_CN1_PUSH
-    //[[UIApplication sharedApplication] cancelAllLocalNotifications]; //<--- Not sure why this is here.  Removing because it conflicts with local notifications
-    [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
+     [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
 #endif
     /*
      Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.

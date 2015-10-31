@@ -145,6 +145,7 @@ public class AutoCompleteTextField extends TextField {
         Form f = getComponentForm();
         boolean v = filter.getSize() > 0 && getText().length() >= minimumLength;
         if(v != popup.isVisible()) {
+            popup.getComponentAt(0).setScrollY(0);
             popup.setVisible(v);
             popup.setEnabled(v);
             f.repaint();
@@ -175,6 +176,7 @@ public class AutoCompleteTextField extends TextField {
         if(filter != null && popup != null) {
             boolean v = filter.getSize() > 0 && text.length() >= minimumLength;
             if(v != popup.isVisible()) {
+                popup.getComponentAt(0).setScrollY(0);
                 popup.setVisible(v);
                 popup.setEnabled(v);
 
@@ -317,6 +319,11 @@ public class AutoCompleteTextField extends TextField {
             popupHeight = Math.min(popupHeight, y - f.getTitleArea().getHeight());
             topMargin =  y - f.getTitleArea().getHeight() - popupHeight;
         }
+        if(f.getToolbar() != null) {
+            // we need to add the status bar which is now missing from the titlebar entry
+            Style s = getUIManager().getComponentStyle("StatusBar");
+            topMargin += s.getPadding(TOP) + s.getPadding(BOTTOM);
+        }
         popup.getUnselectedStyle().setMargin(TOP, Math.max(0, topMargin));
         popup.getSelectedStyle().setMargin(TOP, Math.max(0, topMargin));                    
         popup.setPreferredH(popupHeight);
@@ -371,6 +378,7 @@ public class AutoCompleteTextField extends TextField {
                 }
             } else {
                 if (contains(evt.getX(), evt.getY())) {
+                    popup.getComponentAt(0).setScrollY(0);
                     popup.setVisible(true);
                     popup.setEnabled(true);
                     evt.consume();

@@ -2494,11 +2494,11 @@ CLLocationManager* com_codename1_impl_ios_IOSNative_createCLLocation = nil;
 JAVA_LONG com_codename1_impl_ios_IOSNative_createCLLocation__(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject) {
     dispatch_sync(dispatch_get_main_queue(), ^{
         com_codename1_impl_ios_IOSNative_createCLLocation = [[CLLocationManager alloc] init];
-        if ([com_codename1_impl_ios_IOSNative_createCLLocation respondsToSelector:@selector     (requestWhenInUseAuthorization)]) {
+        if ([com_codename1_impl_ios_IOSNative_createCLLocation respondsToSelector:@selector     (CN1_REQUEST_LOCATION_AUTH)]) {
 #ifdef IOS8_LOCATION_WARNING
             IOS8_LOCATION_WARNING
 #endif
-            [com_codename1_impl_ios_IOSNative_createCLLocation requestWhenInUseAuthorization];
+            [com_codename1_impl_ios_IOSNative_createCLLocation CN1_REQUEST_LOCATION_AUTH];
         }
     });
     CLLocationManager* c = com_codename1_impl_ios_IOSNative_createCLLocation;
@@ -2691,15 +2691,72 @@ JAVA_BOOLEAN com_codename1_impl_ios_IOSNative_isGoodLocation___long(CN1_THREAD_S
     return 1;
 }
 
-void com_codename1_impl_ios_IOSNative_startUpdatingLocation___long(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject, JAVA_LONG peer) {
+void com_codename1_impl_ios_IOSNative_startUpdatingLocation___long_int(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject, JAVA_LONG peer, JAVA_INT priority) {
     CLLocationManager* l = (BRIDGE_CAST CLLocationManager*)((void *)peer);
     l.delegate = [CodenameOne_GLViewController instance];
+    switch (priority) {
+        case 0 : // HIGH PRIORITY
+            l.desiredAccuracy = kCLLocationAccuracyBest;
+            l.distanceFilter = kCLDistanceFilterNone;
+            break;
+        case 1: // MEDIUM PRIORITY
+            l.desiredAccuracy = kCLLocationAccuracyHundredMeters;
+            l.distanceFilter = 100;
+            break;
+        case 2 : // LOW PRIORITY
+            l.desiredAccuracy = kCLLocationAccuracyThreeKilometers;
+            l.distanceFilter = 3000;
+            break;
+            
+        default : 
+            l.desiredAccuracy = kCLLocationAccuracyHundredMeters;
+            l.distanceFilter = kCLDistanceFilterNone;
+            break;
+    }
     [l startUpdatingLocation];
 }
 
 void com_codename1_impl_ios_IOSNative_stopUpdatingLocation___long(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject, JAVA_LONG peer) {
     CLLocationManager* l = (BRIDGE_CAST CLLocationManager*)((void *)peer);
     [l stopUpdatingLocation];
+}
+
+void com_codename1_impl_ios_IOSNative_startUpdatingBackgroundLocation___long(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject, JAVA_LONG peer) {
+    CLLocationManager* l = (BRIDGE_CAST CLLocationManager*)((void *)peer);
+    l.delegate = [CodenameOne_GLViewController instance];
+    
+    [l startMonitoringSignificantLocationChanges];
+}
+
+void com_codename1_impl_ios_IOSNative_stopUpdatingBackgroundLocation___long(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject, JAVA_LONG peer) {
+    CLLocationManager* l = (BRIDGE_CAST CLLocationManager*)((void *)peer);
+    [l stopMonitoringSignificantLocationChanges];
+}
+
+
+//native void addGeofencing(long peer, double lat, double lng, double radius, long expiration, String id);
+void com_codename1_impl_ios_IOSNative_addGeofencing___long_double_double_double_long_java_lang_String(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObj, JAVA_LONG peer, JAVA_DOUBLE lat, JAVA_DOUBLE lng, JAVA_DOUBLE radius, JAVA_LONG expires, JAVA_OBJECT geoId) {
+    CLLocationManager* l = (BRIDGE_CAST CLLocationManager*)((void *)peer);
+    l.delegate = [CodenameOne_GLViewController instance];
+    CLLocationCoordinate2D center = CLLocationCoordinate2DMake(lat, lng);
+    CLRegion *region = [[CLCircularRegion alloc]initWithCenter:center
+                                                    radius:radius
+                                                identifier:toNSString(CN1_THREAD_GET_STATE_PASS_ARG geoId)];
+    [l startMonitoringForRegion:region];
+#ifndef CN1_USE_ARC
+    [region release];
+#endif
+}
+
+
+//    native void removeGeofencing(String id);
+void com_codename1_impl_ios_IOSNative_removeGeofencing___long_java_lang_String(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject, JAVA_LONG peer, JAVA_OBJECT geoId) {
+    CLLocationManager* l = (BRIDGE_CAST CLLocationManager*)((void *)peer);
+    for (CLRegion *region in [l monitoredRegions]) {
+        if ([[region identifier] isEqualToString:toNSString(CN1_THREAD_GET_STATE_PASS_ARG geoId)]) {
+            [l stopMonitoringForRegion:region];
+        }
+    }
 }
 
 ABAddressBookRef globalAddressBook = nil;
@@ -4942,7 +4999,11 @@ JAVA_INT com_codename1_impl_ios_IOSNative_getSocketAvailableInput___long(CN1_THR
 JAVA_OBJECT com_codename1_impl_ios_IOSNative_readFromSocketStream___long(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject, JAVA_LONG socket) {
     POOL_BEGIN();
     SocketImpl* impl = (BRIDGE_CAST SocketImpl*)((void *)socket);
-    JAVA_OBJECT b = nsDataToByteArr([impl readFromStream]);
+    NSData *d = [impl readFromStream];
+    if (d == nil) {
+        return JAVA_NULL;
+    }
+    JAVA_OBJECT b = nsDataToByteArr(d);
     POOL_END();
     return b;
 }
@@ -6327,7 +6388,7 @@ JAVA_INT com_codename1_impl_ios_IOSNative_readNSFile___long(CN1_THREAD_STATE_MUL
 JAVA_VOID com_codename1_impl_ios_IOSNative_sendLocalNotification___java_lang_String_java_lang_String_java_lang_String_java_lang_String_int_long_int( CN1_THREAD_STATE_MULTI_ARG
     JAVA_OBJECT me, JAVA_OBJECT notificationId, JAVA_OBJECT alertTitle, JAVA_OBJECT alertBody, JAVA_OBJECT alertSound, JAVA_INT badgeNumber, JAVA_LONG fireDate, JAVA_INT repeatType
                                                                                                                                                                      ) {
-    
+    /*
     UILocalNotification *notification = [[UILocalNotification alloc] init];
     NSString * msg = [NSString string];
     NSString *tmpStr;
@@ -6353,11 +6414,6 @@ JAVA_VOID com_codename1_impl_ios_IOSNative_sendLocalNotification___java_lang_Str
 #endif
     msg = tmpStr;
     notification.alertBody = msg;
-
-    //if ([notification respondsToSelector:@selector(alertTitle)]) {
-        //[notification setValue:toNSString(CN1_THREAD_STATE_PASS_ARG alertTitle) forKey:@"alertTitle"];
-        notification.alertTitle = toNSString(CN1_THREAD_STATE_PASS_ARG alertTitle);
-    //}
 
     notification.soundName= toNSString(CN1_THREAD_STATE_PASS_ARG alertSound);
     notification.fireDate = [NSDate dateWithTimeIntervalSince1970: fireDate/1000 + 1];
@@ -6402,7 +6458,7 @@ JAVA_VOID com_codename1_impl_ios_IOSNative_sendLocalNotification___java_lang_Str
         
         [[UIApplication sharedApplication] scheduleLocalNotification: notification];
         
-    });
+    });*/
 }
 
 JAVA_VOID com_codename1_impl_ios_IOSNative_cancelLocalNotification___java_lang_String(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT me, JAVA_OBJECT notificationId) {

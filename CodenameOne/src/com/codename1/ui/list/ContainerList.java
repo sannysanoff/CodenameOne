@@ -74,7 +74,7 @@ public class ContainerList extends Container {
     public ContainerList(ListModel m) {
         init(m);
     }
-
+    
     private void init(ListModel m) {
         setModel(m);
         setUIID("ContainerList");
@@ -102,6 +102,7 @@ public class ContainerList extends Container {
         for(int iter = 0 ; iter < getComponentCount() ; iter++) {
             getComponentAt(iter).setShouldCalcPreferredSize(true);
         }
+        setScrollSize(null);
         if(isInitialized()) {
             revalidate();
         }
@@ -445,7 +446,13 @@ public class ContainerList extends Container {
                 fireActionEvent(new ActionEvent(ContainerList.this, keyCode));
             }
         }
-        
+                
+        @Override
+        public Dimension getPreferredSize() {
+            ContainerList.this.setScrollSize(null);
+            return calcPreferredSize();
+        }
+
         public Dimension calcPreferredSize() {
             Component c = renderer.getCellRendererComponent(ContainerList.this, model, model.getItemAt(offset), offset, hasFocus());
             if(getWidth() <= 0) {
