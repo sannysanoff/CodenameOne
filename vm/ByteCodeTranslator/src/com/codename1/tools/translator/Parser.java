@@ -48,7 +48,7 @@ public class Parser extends ClassVisitor {
     private ByteCodeClass cls;
     private String clsName;
     private static String[] nativeSources;
-    private static List<ByteCodeClass> classes = new ArrayList<ByteCodeClass>();
+    public static List<ByteCodeClass> classes = new ArrayList<ByteCodeClass>();
     static HashMap<String,Boolean> usedByNative = new HashMap<>(10000);
 
     static {

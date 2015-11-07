@@ -64,7 +64,7 @@ public class Image {
     }
 
     /** Creates a new instance of ImageImpl */
-    Image(int[] imageArray, int w, int h) {
+    public Image(int[] imageArray, int w, int h) {
         this(Display.getInstance().getImplementation().createImage(imageArray, w, h));
     }
 

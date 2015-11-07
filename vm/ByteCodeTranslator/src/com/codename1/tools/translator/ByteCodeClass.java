@@ -1292,7 +1292,8 @@ public class ByteCodeClass {
         if(baseInterfacesObject != null) {
             for(ByteCodeClass bc : baseInterfacesObject) {
                 if (bc == null) {
-                    System.out.println("Problem with class (not included in translation process?): "+this.getClsName());
+                    System.err.println("ERROR: Problem with class (not included in translation process?): "+this.getClsName());
+                    System.err.println("Sometimes it happens when JRE emulation is not compiled");
                     System.exit(1);
                 }
                 bc.fillVirtualMethodTable(virtualMethods, false);
