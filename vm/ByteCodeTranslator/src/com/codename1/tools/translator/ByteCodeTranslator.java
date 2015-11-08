@@ -198,6 +198,8 @@ public class ByteCodeTranslator {
             
             b.execute(sources, srcRoot);
 
+            System.out.println("Parsed classes: "+Parser.classes.size());
+
             File cn1Globals = new File(srcRoot, "cn1_globals.h");
             copy(ByteCodeTranslator.class.getResourceAsStream("/cn1_globals.h"), new PreservingFileOutputStream(cn1Globals));
             File cn1GlobalsM = new File(srcRoot, "cn1_globals.m");
