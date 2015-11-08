@@ -97,12 +97,11 @@ public class DateFormat extends Format {
 	 * @throws IllegalArgumentException of the source can not be formatted.
 	 */
 	String format(Object obj, StringBuffer toAppendTo) throws IllegalArgumentException {
-                if(obj instanceof Long) {
-                    obj = new Date(((Long)obj).longValue());
-                }
 		Date source = null;
 		if (obj instanceof Date) {
 			source = (Date) obj;
+		} else if(obj instanceof Long) {
+			obj = new Date((Long) obj);
 		} else if (obj instanceof String) {
 			try {
 				source = parse((String) obj);

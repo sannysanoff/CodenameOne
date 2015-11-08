@@ -101,6 +101,7 @@ public class AndroidSurfaceView extends SurfaceView implements CodenameOneSurfac
     }
 
 
+
     public void flushGraphics(Rect rect) {
         if (!created) {
             return;
@@ -130,8 +131,6 @@ public class AndroidSurfaceView extends SurfaceView implements CodenameOneSurfac
         cn1View.d(canvas);
         super.onDraw(canvas);
     }
-    
-    
 
     public void flushGraphics() {
         if (!created) {

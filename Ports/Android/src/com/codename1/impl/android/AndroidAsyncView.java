@@ -91,8 +91,11 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
         setBackgroundDrawable(null);
     }
 
+    StringBuffer sb = new StringBuffer();
+
     @Override
     protected void onDraw(Canvas c) {
+        long l = System.currentTimeMillis();
         boolean paintOnBuffer = paintViewOnBuffer || 
                 implementation.isEditingText() || 
                 InPlaceEditView.isKeyboardShowing() || 
@@ -106,10 +109,21 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
         for (AsyncOp o : renderingOperations) {
             o.executeWithClip(g);
         }
-        renderingOperations.clear();
+        synchronized (this) {
+            if (renderingOperations.size() > 0) {
+                renderingOperations.clear();
+                notify();
+            }
+        }
 
         if (paintOnBuffer) {
             cn1View.d(c);
+        }
+        l = System.currentTimeMillis() - l;
+        sb.append(" OD="+l);
+        if (sb.length() > 80) {
+            System.out.println("AsyncViewPaint.onDraw: "+sb.toString());
+            sb.setLength(0);
         }
     }
 
@@ -149,25 +163,40 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
         });
     }
 
+    long lastFlush = System.currentTimeMillis();
+
     @Override
     public void flushGraphics(Rect rect) {
+        long ctm = System.currentTimeMillis();
+        long since = ctm - lastFlush;
+        lastFlush = ctm;
+        sb.append(" FG,"+since);
         //Log.d(Display.getInstance().getProperty("AppName", "CodenameOne"), "Flush graphics invoked with pending: " + pendingRenderingOperations.size() + " and current " + renderingOperations.size());
 
         // we might have pending entries in the rendering queue
         int counter = 0;
-        while (!renderingOperations.isEmpty()) {
-            try {
-                Thread.sleep(5);
-
-                // don't let the EDT die here
-                counter++;
-                if (counter > 10) {
-                    //Log.d(Display.getInstance().getProperty("AppName", "CodenameOne"), "Flush graphics timed out!!!");
-                    return;
+        synchronized (this) {
+            while (!renderingOperations.isEmpty()) {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-            } catch (InterruptedException err) {
             }
         }
+//        while (!renderingOperations.isEmpty()) {
+//            try {
+//                Thread.sleep(5);
+//
+//                // don't let the EDT die here
+//                counter++;
+//                if (counter > 10) {
+//                    //Log.d(Display.getInstance().getProperty("AppName", "CodenameOne"), "Flush graphics timed out!!!");
+//                    return;
+//                }
+//            } catch (InterruptedException err) {
+//            }
+//        }
         ArrayList<AsyncOp> tmp = renderingOperations;
         renderingOperations = pendingRenderingOperations;
         pendingRenderingOperations = tmp;
