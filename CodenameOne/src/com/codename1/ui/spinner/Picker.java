@@ -60,7 +60,7 @@ public class Picker extends Button {
         setUIID("TextField");
         addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
-                if(Display.getInstance().isNativePickerTypeSupported(type)) {
+                if(!Display.getInstance().getPlatformName().equals("ios") &&  Display.getInstance().isNativePickerTypeSupported(type)) {
                     setEnabled(false);
                     Object val = Display.getInstance().showNativePicker(type, Picker.this, value, metaData);
                     if(val != null) {
