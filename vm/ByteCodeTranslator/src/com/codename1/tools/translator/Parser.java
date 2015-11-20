@@ -62,6 +62,7 @@ public class Parser extends ClassVisitor {
         }
     }
     public static void parse(File sourceFile) throws Exception {
+        System.out.println(sourceFile.getName());
         ClassReader r = new ClassReader(new FileInputStream(sourceFile)) {
             String clsName;
             @Override
