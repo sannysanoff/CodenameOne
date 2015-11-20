@@ -574,6 +574,7 @@ public class SimpleDateFormat extends DateFormat {
      */
     void validateNumber(int i, int ofs, String name, int min, int max) throws ParseException {
         if (i < min || i > max) {
+            System.out.println("Validating number FAIL: "+name+": min="+min+" max="+max+" ofs="+ofs+" i="+i);
             throwInvalid(name, ofs);
         }
     }
@@ -724,7 +725,7 @@ public class SimpleDateFormat extends DateFormat {
         int year = parseNumber(source, ofs, "year", -1, -1);
         int len = source.length();
         int tokenLen = token.length();
-        int thisYear = Calendar.getInstance().get(Calendar.YEAR);
+        int thisYear = getCurrentYear();
         if ((len == 2) && (tokenLen < 3)) {
             int c = (thisYear / 100) * 100;
             year += c;
@@ -734,6 +735,13 @@ public class SimpleDateFormat extends DateFormat {
         }
         validateNumber(year, ofs, "year", 1000, thisYear + 1000);
         return year;
+    }
+
+    int currentYear = -1;
+    private int getCurrentYear() {
+        if (currentYear == -1)
+            currentYear = Calendar.getInstance().get(Calendar.YEAR);
+        return currentYear;
     }
 
     /**
