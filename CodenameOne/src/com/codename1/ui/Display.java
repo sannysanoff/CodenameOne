@@ -1685,14 +1685,19 @@ public final class Display {
             if (this.dropEvents) {
                 return;
             }
-            inputEventStack[inputEventStackPointer] = type;
-            inputEventStackPointer++;
-            inputEventStack[inputEventStackPointer] = x;
-            inputEventStackPointer++;
-            inputEventStack[inputEventStackPointer] = y;
-            inputEventStackPointer++;
-            inputEventStack[inputEventStackPointer] = (int)(System.currentTimeMillis() - displayInitTime);
-            inputEventStackPointer++;
+            try {
+                inputEventStack[inputEventStackPointer] = type;
+                inputEventStackPointer++;
+                inputEventStack[inputEventStackPointer] = x;
+                inputEventStackPointer++;
+                inputEventStack[inputEventStackPointer] = y;
+                inputEventStackPointer++;
+                inputEventStack[inputEventStackPointer] = (int)(System.currentTimeMillis() - displayInitTime);
+                inputEventStackPointer++;
+            } catch(ArrayIndexOutOfBoundsException err) {
+                Log.p("EDT performance is very slow triggering this exception!");
+                Log.e(err);
+            }
             lock.notify();
         }        
     }
@@ -3783,5 +3788,27 @@ public final class Display {
     public void cancelLocalNotification(String notificationId) {
         impl.cancelLocalNotification(notificationId);
     }
-        
+
+    /**
+     * Allows detecting development mode so debugging code and special cases can be used to simplify flow
+     * @return true if we are running in the simulator, false otherwise
+     */
+    public boolean isSimulator() {
+        return impl.isSimulator();
+    }
+
+    /**
+     * Creates an audio media that can be played in the background.
+     * 
+     * @param uri the uri of the media can start with jar://, file://, http:// 
+     * (can also use rtsp:// if supported on the platform)
+     * 
+     * @return Media a Media Object that can be used to control the playback 
+     * of the media or null if background playing is not supported on the platform
+     * 
+     * @throws IOException if creation of media from the given URI has failed
+     */ 
+    public Media createBackgroundMedia(String uri) throws IOException{
+        return impl.createBackgroundMedia(uri);
+    }
 }

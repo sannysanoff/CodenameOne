@@ -69,7 +69,7 @@ public class Form extends Container {
 
     private Painter glassPane;
     private Container layeredPane;
-    private Container contentPane = new Container(new FlowLayout());
+    private Container contentPane;
     Container titleArea = new Container(new BorderLayout());
     private Label title = new Label("", "Title");
     private MenuBar menuBar;
@@ -155,7 +155,17 @@ public class Form extends Container {
      * Default constructor creates a simple form
      */
     public Form() {
+        this(new FlowLayout());
+    }
+    
+    /**
+     * Constructor that accepts a layout
+     * 
+     * @param contentPaneLayout the layout for the content pane
+     */
+    public Form(Layout contentPaneLayout) {
         super(new BorderLayout());
+        contentPane = new Container(contentPaneLayout);
         setUIID("Form");
         // forms/dialogs are not visible by default
         setVisible(false);
@@ -889,6 +899,17 @@ public class Form extends Container {
         this();
         setTitle(title);
 //        this.title.setText(title);
+    }
+
+    /**
+     * Sets the title after invoking the constructor
+     * 
+     * @param title the form title
+     * @param contentPaneLayout the layout for the content pane
+     */
+    public Form(String title, Layout contentPaneLayout) {
+        this(contentPaneLayout);
+        setTitle(title);
     }
 
     /**
@@ -1689,6 +1710,17 @@ public class Form extends Container {
     void disposeImpl() {
         if (previousForm != null) {
             boolean clearPrevious = Display.getInstance().getCurrent() == this;
+            if (!clearPrevious) {
+                Form f = Display.getInstance().getCurrent();
+                while (f != null) {
+                    if (f.previousForm == this) {
+                        f.previousForm = previousForm;
+                        previousForm = null;
+                        return;
+                    }
+                    f = f.previousForm;
+                }
+            }
             previousForm.tint = false;
 
             if (previousForm instanceof Dialog) {

@@ -2723,6 +2723,15 @@ public abstract class CodenameOneImplementation {
     }
 
     /**
+     * Indicates whether the implementation supports loading a font "natively" to handle one of the common
+     * native prefixes
+     * @return true if the "native:" prefix is supported by loadTrueTypeFont
+     */
+    public boolean isNativeFontSchemeSupported() {
+        return false;
+    }
+    
+    /**
      * Creates a font based on this truetype font with the given pixel, <b>WARNING</b>! This method
      * will only work in the case of truetype fonts!
      * @param font the native font instance
@@ -3358,6 +3367,21 @@ public abstract class CodenameOneImplementation {
      * @throws java.io.IOException if the URI access fails
      */
     public Media createMedia(InputStream stream, String mimeType, Runnable onCompletion) throws IOException {
+        return null;
+    }
+    
+    /**
+     * Creates an audio media that can be played in the background.
+     * 
+     * @param uri the uri of the media can start with jar://, file://, http:// 
+     * (can also use rtsp:// if supported on the platform)
+     * 
+     * @return Media a Media Object that can be used to control the playback 
+     * of the media or null if background playing is not supported on the platform
+     * 
+     * @throws IOException if creation of media from the given URI has failed
+     */ 
+    public Media createBackgroundMedia(String uri) throws IOException {
         return null;
     }
 
@@ -5947,6 +5971,17 @@ public abstract class CodenameOneImplementation {
     public void writeToSocketStream(Object socket, byte[] data) {
     }
     
+    private void mkdirs(FileSystemStorage fs, String path) {
+        int lastPos = path.lastIndexOf('/');
+        if (lastPos >= 0) {
+            mkdirs(fs, path.substring(0, lastPos));
+        }
+        if (!fs.exists(path)) {
+            mkdir(path);
+        }
+        
+    }
+    
     /**
      * Installs a tar file from the build server into the file system storage so it can be used with respect for hierarchy
      */
@@ -5969,7 +6004,7 @@ public abstract class CodenameOneImplementation {
                     String path = tardir + name;
                     String dir = path.substring(0,path.lastIndexOf('/'));
                     if (!fs.exists(dir)) {
-                        fs.mkdir(dir);
+                        mkdirs(fs, dir);
                     }
 
                     OutputStream os = fs.openOutputStream(tardir + name);
@@ -6023,6 +6058,14 @@ public abstract class CodenameOneImplementation {
     public Thread createThread(Runnable r, String name) {
         return new Thread(r, name);
     }
+    /**
+     * Allows detecting development mode so debugging code and special cases can be used to simplify flow
+     * @return true if we are running in the simulator, false otherwise
+     */
+    public boolean isSimulator() {
+        return false;
+    }
+    
     //METHODS FOR DEALING Local Notifications
     public void scheduleLocalNotification(LocalNotification notif, long firstTime, int repeat) {
     }

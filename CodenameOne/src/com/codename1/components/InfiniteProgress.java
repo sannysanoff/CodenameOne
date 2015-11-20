@@ -25,11 +25,11 @@ package com.codename1.components;
 import com.codename1.ui.Component;
 import com.codename1.ui.Dialog;
 import com.codename1.ui.Display;
+import com.codename1.ui.FontImage;
 import com.codename1.ui.Form;
 import com.codename1.ui.Graphics;
 import com.codename1.ui.Image;
 import com.codename1.ui.animations.CommonTransitions;
-import com.codename1.ui.animations.Motion;
 import com.codename1.ui.geom.Dimension;
 import com.codename1.ui.layouts.BorderLayout;
 import com.codename1.ui.plaf.Style;
@@ -64,9 +64,12 @@ public class InfiniteProgress extends Component {
             f = new Form();
             f.show();
         }
-        int i = f.getTintColor();
-        f.setTintColor(tintColor);
+        if (f.getClientProperty("isInfiniteProgress") == null) {
+            f.setTintColor(tintColor);
+        } 
         Dialog d = new Dialog();
+        d.putClientProperty("isInfiniteProgress", true);
+        d.setTintColor(0x0);
         d.setDialogUIID("Container");
         d.setLayout(new BorderLayout());
         d.addComponent(BorderLayout.CENTER, this);
@@ -99,6 +102,9 @@ public class InfiniteProgress extends Component {
      * @inheritDoc
      */
     public boolean animate() {
+        if (Display.getInstance().getCurrent() != this.getComponentForm()) {
+            return false;
+        }
         // reduce repaint thrushing of the UI from the infinite progress
         boolean val = super.animate() || tick % 4 == 0;
         tick++;
@@ -111,6 +117,13 @@ public class InfiniteProgress extends Component {
     protected Dimension calcPreferredSize() {
         if(animation == null) {
             animation = UIManager.getInstance().getThemeImageConstant("infiniteImage");
+            if(animation == null) {
+                int size = Display.getInstance().convertToPixels(12, true);
+                FontImage fi = FontImage.createFixed("" + FontImage.MATERIAL_REFRESH, 
+                        FontImage.getMaterialDesignFont(), 0x777777, size, size);
+                fi.setPadding(0);
+                animation = fi;
+            }
         }
         if(animation == null) {
             return new Dimension(100, 100);
@@ -119,11 +132,14 @@ public class InfiniteProgress extends Component {
         return new Dimension(s.getPadding(LEFT) + s.getPadding(RIGHT) + animation.getWidth(), 
                 s.getPadding(TOP) + s.getPadding(BOTTOM) + animation.getHeight());
     }
-    
+
     /**
      * @inheritDoc
      */
     public void paint(Graphics g) {
+        if (Display.getInstance().getCurrent() != this.getComponentForm()) {
+            return;
+        }
         super.paint(g);
         if(animation == null) {
             return;

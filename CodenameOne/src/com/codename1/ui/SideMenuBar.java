@@ -155,8 +155,8 @@ public class SideMenuBar extends MenuBar {
         if (b != null && !b.transitionRunning) {
             b.parent.addShowListener(new ActionListener() {
                 public void actionPerformed(ActionEvent evt) {
-                    callback.run();
                     b.parent.removeShowListener(this);
+                    callback.run();
                 }
             });
             b.closeMenu();
@@ -220,7 +220,7 @@ public class SideMenuBar extends MenuBar {
         if (i != null) {
             ob.setIcon(i);
         } else {
-            ob.setIcon(Resources.getSystemResource().getImage("mobile-menu.png"));
+            FontImage.setMaterialIcon(ob, FontImage.MATERIAL_MENU);
         }
         Image p = (Image) uim.getThemeImageConstant("sideMenuPressImage");
         if (p != null) {
@@ -789,7 +789,7 @@ public class SideMenuBar extends MenuBar {
             if (i != null) {
                 rightSideButton.setIcon(i);
             } else {
-                rightSideButton.setIcon(Resources.getSystemResource().getImage("mobile-menu.png"));
+                FontImage.setMaterialIcon(rightSideButton, FontImage.MATERIAL_MENU);
             }
             Image p = (Image) uim.getThemeImageConstant("rightSideMenuPressImage");
             if (p != null) {
@@ -916,6 +916,10 @@ public class SideMenuBar extends MenuBar {
      * @return the Component to display on the navigation
      */
     protected Container createSideNavigationComponent(Vector commands, String placement) {
+        return createSideNavigationPanel(commands, placement);
+    }
+    
+    Container createSideNavigationPanel(Vector commands, String placement) {
         Container menu = new Container(new BoxLayout(BoxLayout.Y_AXIS));
         if (getUIManager().isThemeConstant("paintsTitleBarBool", false)) {
             Container bar = new Container();
@@ -996,6 +1000,7 @@ public class SideMenuBar extends MenuBar {
             return main;
         }
     }
+    
 
     /**
      * @inheritDoc

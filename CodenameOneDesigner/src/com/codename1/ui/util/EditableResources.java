@@ -679,7 +679,12 @@ public class EditableResources extends Resources implements TreeModel {
                                     for(com.codename1.ui.util.xml.Font b : d.getFont()) {
                                         if("ttf".equals(b.getType())) {
                                             com.codename1.ui.Font system = com.codename1.ui.Font.createSystemFont(b.getFace().intValue(), b.getStyle().intValue(), b.getSize().intValue());
-                                            EditorTTFFont t = new EditorTTFFont(new File(f.getParentFile(), b.getName()), b.getSizeSettings().intValue(), b.getActualSize().floatValue(), system);
+                                            EditorTTFFont t;
+                                            if(b.getName().startsWith("native:")) {
+                                                t = new EditorTTFFont(b.getName(), b.getSizeSettings().intValue(), b.getActualSize().floatValue(), system);
+                                            } else {
+                                                t = new EditorTTFFont(new File(f.getParentFile(), b.getName()), b.getSizeSettings().intValue(), b.getActualSize().floatValue(), system);
+                                            }
                                             theme.put(b.getKey(), t);
                                             continue;
                                         }
@@ -1182,14 +1187,23 @@ public class EditableResources extends Resources implements TreeModel {
                                     bw.write("        <font key=\"" + key + "\" type=\"named\" "
                                             + "name=\"" + findId(f) + "\" />\n");
                                 } else {
-                                    if(f instanceof EditorTTFFont && ((EditorTTFFont)f).getFontFile() != null) {
+                                    if(f instanceof EditorTTFFont && (((EditorTTFFont)f).getFontFile() != null || ((EditorTTFFont)f).getNativeFontName() != null)) {
                                         EditorTTFFont ed = (EditorTTFFont)f;
+                                        String fname;
+                                        String ffName;
+                                        if(((EditorTTFFont)f).getNativeFontName() != null) {
+                                            fname = ((EditorTTFFont)f).getNativeFontName();
+                                            ffName = fname;
+                                        } else {
+                                            fname = ed.getFontFile().getName();
+                                            ffName = ((java.awt.Font)ed.getNativeFont()).getPSName();
+                                        }
                                         bw.write("        <font key=\"" + key + "\" type=\"ttf\" "
                                                 + "face=\"" + f.getFace() + "\" "
                                                 + "style=\"" + f.getStyle() + "\" "
                                                 + "size=\"" + f.getSize() + "\" "
-                                                + "name=\"" + ed.getFontFile().getName() + "\" "
-                                                + "family=\"" + ((java.awt.Font)ed.getNativeFont()).getPSName()+ "\" "
+                                                + "name=\"" + fname + "\" "
+                                                + "family=\"" + ffName+ "\" "
                                                 + "sizeSettings=\"" + ed.getSizeSetting() + "\" "
                                                 + "actualSize=\"" + ed.getActualSize() + "\" />\n");
                                     } else {
@@ -1785,8 +1799,11 @@ public class EditableResources extends Resources implements TreeModel {
     
     com.codename1.ui.Font createTrueTypeFont(com.codename1.ui.Font f, String fontName, String fileName, float fontSize, int sizeSetting) {
         // workaround for NPE in case of people doing stupid things like moving the res file.
-        if(ResourceEditorView.getLoadedFile() == null) {
+        if(ResourceEditorView.getLoadedFile() == null && !fileName.startsWith("native:")) {
             return f;
+        }
+        if(fileName.startsWith("native:")) {
+            return new EditorTTFFont(fileName, sizeSetting, fontSize, f);            
         }
         File fontFile = new File(ResourceEditorView.getLoadedFile().getParentFile(), fileName);
         if(fontFile.exists()) {
@@ -1867,11 +1884,16 @@ public class EditableResources extends Resources implements TreeModel {
                     output.writeByte(f.getFace());
                     output.writeByte(f.getStyle());
                     output.writeByte(f.getSize());
-                    if(f instanceof EditorTTFFont && ((EditorTTFFont)f).getFontFile() != null) {
+                    if(f instanceof EditorTTFFont && (((EditorTTFFont)f).getFontFile() != null || ((EditorTTFFont)f).getNativeFontName() != null)) {
                         output.writeBoolean(true);
                         EditorTTFFont ed = (EditorTTFFont)f;
-                        output.writeUTF(ed.getFontFile().getName());
-                        output.writeUTF(((java.awt.Font)ed.getNativeFont()).getPSName());
+                        if(ed.getNativeFontName() != null) {
+                            output.writeUTF(ed.getNativeFontName());
+                            output.writeUTF(ed.getNativeFontName());
+                        } else {
+                            output.writeUTF(ed.getFontFile().getName());
+                            output.writeUTF(((java.awt.Font)ed.getNativeFont()).getPSName());
+                        }
                         output.writeInt(ed.getSizeSetting());
                         output.writeFloat(ed.getActualSize());
                     } else {
