@@ -276,6 +276,7 @@ public class ByteCodeTranslator {
             includeFrameworks.add("CoreMedia.framework");
             includeFrameworks.add("libz.dylib");
             includeFrameworks.add("MobileCoreServices.framework");
+            includeFrameworks.add("CFNetwork.framework");
 
             if(!addFrameworks.equalsIgnoreCase("none")) {
                 includeFrameworks.addAll(Arrays.asList(addFrameworks.split(";")));
