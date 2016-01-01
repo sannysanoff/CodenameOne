@@ -23,6 +23,7 @@
 package com.codename1.impl.android;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
@@ -41,6 +42,7 @@ import com.codename1.ui.TextField;
 import com.codename1.ui.geom.Rectangle;
 import java.util.ArrayList;
 import com.codename1.ui.Transform;
+import com.codename1.ui.plaf.Style;
 
 public class AndroidAsyncView extends View implements CodenameOneSurface {
 
@@ -78,7 +80,7 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
     private final AndroidGraphics internalGraphics;
     private final AndroidImplementation implementation;
     private boolean paintViewOnBuffer = false;
-    
+
     public AndroidAsyncView(Activity activity, AndroidImplementation implementation) {
         super(activity);
         setId(2001);
@@ -91,14 +93,11 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
         setBackgroundDrawable(null);
     }
 
-    StringBuffer sb = new StringBuffer();
-
     @Override
     protected void onDraw(Canvas c) {
-        long l = System.currentTimeMillis();
-        boolean paintOnBuffer = paintViewOnBuffer || 
-                implementation.isEditingText() || 
-                InPlaceEditView.isKeyboardShowing() || 
+        boolean paintOnBuffer = paintViewOnBuffer ||
+                implementation.isEditingText() ||
+                InPlaceEditView.isKeyboardShowing() ||
                 implementation.nativePeers.size() > 0;
 
         internalGraphics.setCanvasNoSave(c);
@@ -109,21 +108,13 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
         for (AsyncOp o : renderingOperations) {
             o.executeWithClip(g);
         }
-        synchronized (this) {
-            if (renderingOperations.size() > 0) {
-                renderingOperations.clear();
-                notify();
-            }
-        }
+        renderingOperations.clear();
 
         if (paintOnBuffer) {
             cn1View.d(c);
         }
-        l = System.currentTimeMillis() - l;
-        sb.append(" OD="+l);
-        if (sb.length() > 80) {
-            System.out.println("AsyncViewPaint.onDraw: "+sb.toString());
-            sb.setLength(0);
+        if (implementation.isAsyncEditMode() && implementation.isEditingText()) {
+            InPlaceEditView.reLayoutEdit();
         }
     }
 
@@ -163,40 +154,25 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
         });
     }
 
-    long lastFlush = System.currentTimeMillis();
-
     @Override
     public void flushGraphics(Rect rect) {
-        long ctm = System.currentTimeMillis();
-        long since = ctm - lastFlush;
-        lastFlush = ctm;
-        sb.append(" FG,"+since);
         //Log.d(Display.getInstance().getProperty("AppName", "CodenameOne"), "Flush graphics invoked with pending: " + pendingRenderingOperations.size() + " and current " + renderingOperations.size());
 
         // we might have pending entries in the rendering queue
         int counter = 0;
-        synchronized (this) {
-            while (!renderingOperations.isEmpty()) {
-                try {
-                    wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+        while (!renderingOperations.isEmpty()) {
+            try {
+                Thread.sleep(5);
+
+                // don't let the EDT die here
+                counter++;
+                if (counter > 10) {
+                    //Log.d(Display.getInstance().getProperty("AppName", "CodenameOne"), "Flush graphics timed out!!!");
+                    return;
                 }
+            } catch (InterruptedException err) {
             }
         }
-//        while (!renderingOperations.isEmpty()) {
-//            try {
-//                Thread.sleep(5);
-//
-//                // don't let the EDT die here
-//                counter++;
-//                if (counter > 10) {
-//                    //Log.d(Display.getInstance().getProperty("AppName", "CodenameOne"), "Flush graphics timed out!!!");
-//                    return;
-//                }
-//            } catch (InterruptedException err) {
-//            }
-//        }
         ArrayList<AsyncOp> tmp = renderingOperations;
         renderingOperations = pendingRenderingOperations;
         pendingRenderingOperations = tmp;
@@ -293,7 +269,7 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
         private int color;
         private Paint imagePaint = new Paint();
         private Transform transform;
-        
+
 
         AsyncGraphics(AndroidImplementation impl) {
             super(impl, null);
@@ -439,6 +415,96 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
         }
 
         @Override
+        public void fillRect(final int x, final int y, final int w, final int h, byte alpha) {
+            if (alpha == 0) {
+                return;
+            }
+            final int preAlpha = this.alpha;
+            final int al = alpha & 0xff;
+            final int col = color;
+            pendingRenderingOperations.add(new AsyncOp(clip) {
+                @Override
+                public void execute(AndroidGraphics underlying) {
+                    underlying.setColor(col);
+                    underlying.setAlpha(al);
+                    underlying.fillRect(x, y, w, h);
+                    underlying.setAlpha(preAlpha);
+                }
+            });
+        }
+
+        @Override
+        public void fillLinearGradient(final int startColor, final int endColor, final int x, final int y, final int width, final int height, final boolean horizontal) {
+            if (alpha == 0) {
+                return;
+            }
+            pendingRenderingOperations.add(new AsyncOp(clip) {
+                @Override
+                public void execute(AndroidGraphics underlying) {
+                    underlying.fillLinearGradient(startColor, endColor, x, y, width, height, horizontal);
+                }
+            });
+        }
+
+        @Override
+        public void fillRectRadialGradient(final int startColor, final int endColor, final int x, final int y,
+                                           final int width, final int height, final float relativeX, final float relativeY, final float relativeSize) {
+            if (alpha == 0) {
+                return;
+            }
+            pendingRenderingOperations.add(new AsyncOp(clip) {
+                @Override
+                public void execute(AndroidGraphics underlying) {
+                    underlying.fillRectRadialGradient(startColor, endColor, x, y, width, height, relativeX, relativeY, relativeSize);
+                }
+            });
+        }
+
+        @Override
+        public void fillRadialGradient(final int startColor, final int endColor, final int x, final int y, final int width, final int height) {
+            if (alpha == 0) {
+                return;
+            }
+            pendingRenderingOperations.add(new AsyncOp(clip) {
+                @Override
+                public void execute(AndroidGraphics underlying) {
+                    underlying.fillRadialGradient(startColor, endColor, x, y, width, height);
+                }
+            });
+        }
+
+        @Override
+        public void paintComponentBackground(final int x, final int y, final int width, final int height, final Style s) {
+            if (alpha == 0 || width <= 0 || height <= 0) {
+                return;
+            }
+            pendingRenderingOperations.add(new AsyncOp(clip) {
+                @Override
+                public void execute(AndroidGraphics underlying) {
+                    underlying.paintComponentBackground(x, y, width, height, s);
+                }
+            });
+        }
+
+        @Override
+        public void drawLabelComponent(final int cmpX, final int cmpY, final int cmpHeight, final int cmpWidth, final Style style, final String text,
+                                       final Bitmap icon, final Bitmap stateIcon, final int preserveSpaceForState, final int gap, final boolean rtl, final boolean isOppositeSide,
+                                       final int textPosition, final int stringWidth, final boolean isTickerRunning, final int tickerShiftText, final boolean endsWith3Points, final int valign) {
+            if (clip == null) {
+                clip = new Rectangle(cmpX, cmpY, cmpWidth, cmpHeight);
+            } else {
+                clip = clip.intersection(cmpX, cmpY, cmpWidth, cmpHeight);
+            }
+            pendingRenderingOperations.add(new AsyncOp(clip) {
+                @Override
+                public void execute(AndroidGraphics underlying) {
+                    underlying.drawLabelComponent(cmpX, cmpY, cmpHeight, cmpWidth, style, text, icon, stateIcon, preserveSpaceForState,
+                            gap, rtl, isOppositeSide, textPosition, stringWidth, isTickerRunning, tickerShiftText, endsWith3Points, valign);
+                }
+            });
+        }
+
+        @Override
         public void fillArc(final int x, final int y, final int width, final int height, final int startAngle, final int arcAngle) {
             final int alph = alpha;
             final int col = color;
@@ -469,18 +535,14 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
         @Override
         public void drawString(final String str, final int x, final int y) {
             final int col = this.color;
-            final float size = getFont().getTextSize();
-            final Typeface type = getFont().getTypeface();
+            final CodenameOneTextPaint font = (CodenameOneTextPaint)getFont();
             final int alph = this.alpha;
             pendingRenderingOperations.add(new AsyncOp(clip) {
                 @Override
                 public void execute(AndroidGraphics underlying) {
-                    Paint p = underlying.getFont();
-                    p.setTypeface(type);
-                    p.setTextSize(size);
-                    p.setAntiAlias(true);
-                    p.setColor(col);
-                    p.setAlpha(alph);                    
+                    underlying.setFont(font);
+                    font.setColor(col);
+                    font.setAlpha(alph);
                     underlying.drawString(str, x, y);
                 }
             });
@@ -583,7 +645,7 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
                 }
             });
         }
-        
+
         @Override
         public void drawImage(final Object img, final int x, final int y, final int w, final int h) {
             final int alph = alpha;
@@ -617,7 +679,7 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
         public void drawPath(final Path p, final Stroke stroke) {
             final int alph = alpha;
             final int col = color;
-            
+
             pendingRenderingOperations.add(new AsyncOp(clip) {
                 @Override
                 public void execute(AndroidGraphics underlying) {
@@ -631,7 +693,7 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
         public void fillPath(final Path p) {
             final int alph = alpha;
             final int col = color;
-            
+
             pendingRenderingOperations.add(new AsyncOp(clip) {
                 @Override
                 public void execute(AndroidGraphics underlying) {
@@ -641,8 +703,8 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
                     underlying.fillPath(p);
                 }
             });
-        } 
-        
+        }
+
         public void setTransform(final Transform transform) {
             this.transform = transform;
             pendingRenderingOperations.add(new AsyncOp(clip) {
@@ -674,7 +736,7 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
         }
 
         @Override
-        void setFont(final Paint font) {
+        void setFont(final CodenameOneTextPaint font) {
             super.setFont(font);
         }
 
@@ -692,17 +754,17 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
     public boolean alwaysRepaintAll() {
         return true;
     }
-    
+
     @Override
     protected void onFocusChanged(boolean gainFocus, int direction, Rect previouslyFocusedRect) {
         super.onFocusChanged(gainFocus, direction, previouslyFocusedRect);
         //do not let other views steal the focus from the main view
         if(!gainFocus && implementation.hasViewAboveBelow()){
-            requestFocus(); 
+            requestFocus();
             if(implementation.getCurrentForm() != null){
-                implementation.getCurrentForm().repaint();                
+                implementation.getCurrentForm().repaint();
             }
         }
     }
-    
+
 }

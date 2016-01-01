@@ -616,7 +616,7 @@ public class TextArea extends Component {
         } else {
             super.pointerReleased(x, y);
             if (isEditable() && isEnabled() && !isCellRenderer()) {
-                if(Display.getInstance().getImplementation().isNativeInputImmediate()) {
+                if(Display.impl.isNativeInputImmediate()) {
                     editString();
                     return;
                 }
@@ -1125,7 +1125,9 @@ public class TextArea extends Component {
      * @inheritDoc
      */
     void onEditComplete(String text) {
-        setText(text);
+        if (!Display.getInstance().getImplementation().isAsyncEditMode()) {
+            setText(text);
+        }
         if(getParent() != null) {
             getParent().revalidate();
         }
@@ -1652,5 +1654,43 @@ public class TextArea extends Component {
         return endsWith3Points;
     }
     
+
+    /**
+     * Launches the text field editing, notice that calling this in a callSerially is generally considered good practice
+     */
+    public void startEditing() {
+        if(!Display.getInstance().isTextEditing(this)) {
+            Display.getInstance().editString(this, maxSize, constraint, text);
+        }
+    }
+
+    /**
+     * Launches the text field editing in a callserially call
+     */
+    public void startEditingAsync() {
+        if(!Display.getInstance().isTextEditing(this)) {
+            Display.getInstance().callSerially(new Runnable() {
+                public void run() {
+                    Display.getInstance().editString(TextArea.this, maxSize, constraint, text);
+                }
+            });
+        }
+    }
     
+    /**
+     * Indicates whether we are currently editing this text area
+     * @return true if Display.getInstance().isTextEditing(this)
+     */
+    public boolean isEditing() {
+        return Display.getInstance().isTextEditing(this);
+    }
+    
+    /**
+     * Stops text editing of this field if it is being edited
+     */
+    public void stopEditing() {
+        if(isEditing()) {
+            Display.getInstance().stopEditing(this);
+        }
+    }
 }

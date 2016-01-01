@@ -153,6 +153,15 @@ public class Toolbar extends Container {
         titleComponent = titleCmp;
         addComponent(BorderLayout.CENTER, titleComponent);
     }
+    
+    /**
+     * Returns the Toolbar title Component.
+     * 
+     * @return the Toolbar title component
+     */ 
+    public Component getTitleComponent(){
+        return titleComponent;
+    }
 
     /**
      * Adds a Command to the overflow menu
@@ -200,9 +209,7 @@ public class Toolbar extends Container {
     
     private void constructPermanentSideMenu() {
         if(permanentSideMenuContainer == null) {
-            permanentSideMenuContainer = new Container(new BoxLayout(BoxLayout.Y_AXIS));
-            permanentSideMenuContainer.setUIID("SideNavigationPanel");
-            permanentSideMenuContainer.setScrollableY(true);
+            permanentSideMenuContainer = constructSideNavigationComponent();
             Form parent = getComponentForm();
             parent.addComponentToForm(BorderLayout.WEST, permanentSideMenuContainer);
         }
@@ -251,7 +258,7 @@ public class Toolbar extends Container {
             sideMenu.addCommand(cmd);
             sideMenu.installMenuBar();
         }
-        }
+    }
 
     /**
      * Find the command component instance if such an instance exists
@@ -537,6 +544,13 @@ public class Toolbar extends Container {
         return sideMenu.createSideNavigationPanel(commands, placement);
     }
     
+    /**
+     * Creates an empty side navigation panel.
+     */ 
+    protected Container constructSideNavigationComponent(){
+        return sideMenu.constructSideNavigationPanel();
+    }
+    
 
     class ToolbarSideMenu extends SideMenuBar {
 
@@ -544,7 +558,11 @@ public class Toolbar extends Container {
         protected Container createSideNavigationComponent(Vector commands, String placement) {
             return Toolbar.this.createSideNavigationComponent(commands, placement);
         }
-
+        
+        @Override
+        protected Container constructSideNavigationComponent(){
+            return Toolbar.this.constructSideNavigationComponent();
+        }
         
         @Override
         protected Container getTitleAreaContainer() {
@@ -553,7 +571,7 @@ public class Toolbar extends Container {
 
         @Override
         protected Component getTitleComponent() {
-            return titleComponent;
+            return Toolbar.this.getTitleComponent();
         }
 
         @Override
@@ -602,7 +620,7 @@ public class Toolbar extends Container {
             if (overflowCommands != null && overflowCommands.size() > 0) {
                 Image i = (Image) UIManager.getInstance().getThemeImageConstant("menuImage");
                 if (i == null) {
-                    i = Resources.getSystemResource().getImage("of_menu.png");
+                    i = FontImage.createMaterial(FontImage.MATERIAL_MORE_VERT, UIManager.getInstance().getComponentStyle("TitleCommand"));
                 }
                 menuButton = sideMenu.createTouchCommandButton(new Command("", i) {
 

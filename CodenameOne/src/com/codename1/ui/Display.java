@@ -365,7 +365,7 @@ public final class Display {
 
     static int transitionDelay = -1;
 
-    private CodenameOneImplementation impl;
+    static CodenameOneImplementation impl;
 
     private boolean codenameOneRunning = false;
 
@@ -1058,6 +1058,7 @@ public final class Display {
         synchronized(lock) {
             inputEventStackPointerTmp = inputEventStackPointer;
             inputEventStackPointer = 0;
+            lastDragOffset = -1;
             int[] qt = inputEventStackTmp;
             inputEventStackTmp = inputEventStack;
             inputEventStack = qt;
@@ -1067,6 +1068,7 @@ public final class Display {
         while(offset < inputEventStackPointerTmp) {            
             if(offset == inputEventStackPointer) {
                 inputEventStackPointer = 0;
+                lastDragOffset = -1;
             }
             offset = handleEvent(offset);
         }
@@ -1301,6 +1303,7 @@ public final class Display {
         if(current == newForm){
             current.revalidate();
             current.repaint();
+            current.onShowCompletedImpl();
             return;
         }
         
@@ -1679,6 +1682,37 @@ public final class Display {
             lock.notify();
         }        
     }
+    
+    private int lastDragOffset;
+    private void addPointerDragEventWithTimestamp(int x, int y) {
+        synchronized(lock) {
+            if (this.dropEvents) {
+                return;
+            }
+            try {
+                if(lastDragOffset > -1) {
+                    inputEventStack[lastDragOffset] = x;
+                    inputEventStack[lastDragOffset + 1] = y;
+                    inputEventStack[lastDragOffset + 2] = (int)(System.currentTimeMillis() - displayInitTime);
+                } else {
+                    inputEventStack[inputEventStackPointer] = POINTER_DRAGGED;
+                    inputEventStackPointer++;
+                    lastDragOffset = inputEventStackPointer;
+                    inputEventStack[inputEventStackPointer] = x;
+                    inputEventStackPointer++;
+                    inputEventStack[inputEventStackPointer] = y;
+                    inputEventStackPointer++;
+                    inputEventStack[inputEventStackPointer] = (int)(System.currentTimeMillis() - displayInitTime);
+                    inputEventStackPointer++;
+                }
+            } catch(ArrayIndexOutOfBoundsException err) {
+                Log.p("EDT performance is very slow triggering this exception!");
+                Log.e(err);
+            }
+            lock.notify();
+        }        
+    }
+    
 
     private void addPointerEventWithTimestamp(int type, int x, int y) {
         synchronized(lock) {
@@ -1714,7 +1748,7 @@ public final class Display {
         }
         longPointerCharged = false;
         if(x.length == 1) {
-            addPointerEventWithTimestamp(POINTER_DRAGGED, x[0], y[0]);
+            addPointerDragEventWithTimestamp(x[0], y[0]);
         } else {
             addPointerEvent(POINTER_DRAGGED_MULTI, x, y);
         }
@@ -3418,7 +3452,7 @@ public final class Display {
      * 
      * @param text String to share.
      * @param image file path to the image or null
-     * @param mime type of the image or null if no image to share
+     * @param mimeType type of the image or null if no image to share
      * @param sourceRect The source rectangle of the button that originated the share request.  This is used on
      * some platforms to provide a hint as to where the share dialog overlay should pop up.  Particularly,
      * on the iPad with iOS 8 and higher.
@@ -3655,6 +3689,7 @@ public final class Display {
     /**
      * Returns the native implementation of the code scanner or null
      * @return code scanner instance
+     * @deprecated Use the cn1-codescanner cn1lib.
      */
     public CodeScanner getCodeScanner() {
         if(!hasCamera()) {

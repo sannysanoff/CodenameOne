@@ -66,7 +66,8 @@ import java.util.HashMap;
  * @author Chen Fishbein
  */
 public class Form extends Container {
-
+    private boolean globalAnimationLock;
+    static int activePeerCount;
     private Painter glassPane;
     private Container layeredPane;
     private Container contentPane;
@@ -75,6 +76,8 @@ public class Form extends Container {
     private MenuBar menuBar;
     private Component dragged;
     ArrayList<Component> buttonsAwatingRelease;
+    
+    private AnimationManager animMananger = new AnimationManager(this);
     
     /**
      * Indicates whether lists and containers should scroll only via focus and thus "jump" when
@@ -150,6 +153,11 @@ public class Form extends Container {
     private Component stickyDrag;
     private boolean dragStopFlag;
     private Toolbar toolbar;
+    
+    /**
+     * A text component that will receive focus and start editing immediately as the form is shown
+     */
+    private TextArea editOnShow;
             
     /**
      * Default constructor creates a simple form
@@ -211,9 +219,19 @@ public class Form extends Container {
         if(bottomPaddingMode) {
             return 0;
         }
-        return Display.getInstance().getImplementation().getInvisibleAreaUnderVKB();
+        return Display.impl.getInvisibleAreaUnderVKB();
     }
         
+    /**
+     * Returns the animation manager instance responsible for this form, this can be used to track/queue
+     * animations
+     * 
+     * @return the animation manager
+     */
+    public AnimationManager getAnimationManager() {
+        return animMananger;
+    }
+    
     /**
      * Toggles the way the virtual keyboard behaves, enabling this mode shrinks the screen but makes editing
      * possible when working with text fields that aren't in a scrollable container.
@@ -305,6 +323,29 @@ public class Form extends Container {
         return getContentPane().isAlwaysTensile();
     }
 
+    /**
+     * Allows grabbing a flag that is used by convention to indicate that you are running an exclusive animation.
+     * This is used by some code to prevent collision between optional animation
+     * 
+     * @return whether the lock was acquired or not
+     * @deprecated this is effectively invalidated by the newer animation framework
+     */
+    public boolean grabAnimationLock() {
+        if(globalAnimationLock) {
+            return false;
+        }
+        globalAnimationLock = true;
+        return true;
+    }
+    
+    /**
+     * Invoke this to release the animation lock that was grabbed in grabAnimationLock
+     * @deprecated this is effectively invalidated by the newer animation framework
+     */
+    public void releaseAnimationLock() {
+        globalAnimationLock = false;
+    }
+    
     /**
      * @inheritDoc
      */
@@ -924,14 +965,59 @@ public class Form extends Container {
     /**
      * This method returns the layered pane of the Form, the layered pane is laid
      * on top of the content pane and is created lazily upon calling this method the layer
-     * will be created.
+     * will be created. This is equivalent to getLayeredPane(null, false).
      * 
      * @return the LayeredPane
      */ 
     public Container getLayeredPane() {
+        return getLayeredPane(null, false);
+    }
+    
+    /**
+     * Returns the layered pane for the class and if one doesn't exist a new one is created dynamically and returned
+     * @param c the class with which this layered pane is associated, null for the global layered pane which
+     * is always on the bottom
+     * @param top if created this indicates whether the layered pane should be added on top or bottom
+     * @return the layered pane instance
+     */
+    public Container getLayeredPane(Class c, boolean top) {
+        if(c == null) {
+             for(Component cmp : getLayeredPaneImpl()) {
+                 if(cmp.getClientProperty("cn1$_cls") == null) {
+                     return (Container)cmp;
+                 }
+             } 
+        }
+        String n = c.getName();
+        for(Component cmp : getLayeredPaneImpl()) {
+            if(n.equals(cmp.getClientProperty("cn1$_cls"))) {
+                return (Container)cmp;
+            }
+        } 
+        Container cnt = new Container();
+        if(top) {
+            getLayeredPaneImpl().add(cnt);
+        } else {
+            getLayeredPaneImpl().addComponent(0, cnt);            
+        }
+        cnt.putClientProperty("cn1$_cls", n);
+        return cnt;
+    }
+    
+    /**
+     * This method returns the layered pane of the Form, the layered pane is laid
+     * on top of the content pane and is created lazily upon calling this method the layer
+     * will be created.
+     * 
+     * @return the LayeredPane
+     */ 
+    private Container getLayeredPaneImpl() {
         if(layeredPane == null){
             Container parent = new Container(new LayeredLayout());
-            layeredPane = new Container(new FlowLayout());
+            layeredPane = new Container(new LayeredLayout());
+            
+            // adds the global layered pane
+            layeredPane.add(new Container());
             removeComponentFromForm(contentPane);
             addComponentToForm(BorderLayout.CENTER, parent);
             parent.addComponent(contentPane);
@@ -981,7 +1067,7 @@ public class Form extends Container {
         int b = Display.getInstance().getCommandBehavior();
         if (b == Display.COMMAND_BEHAVIOR_ICS) {
             if (getTitleComponent().getIcon() == null) {
-                Image i = Display.getInstance().getImplementation().getApplicationIconImage();
+                Image i = Display.impl.getApplicationIconImage();
                 if (i != null) {
                     int h = getTitleComponent().getStyle().getFont().getHeight();
                     i = i.scaled(h, h);
@@ -997,6 +1083,11 @@ public class Form extends Container {
      * @param title the form title
      */
     public void setTitle(String title) {
+        if(toolbar != null){
+            toolbar.setTitle(title);
+            return;
+        }
+            
         this.title.setText(title);
 
         if (!Display.getInstance().isNativeTitle()) {
@@ -1206,6 +1297,9 @@ public class Form extends Container {
         if (internalAnimatableComponents != null) {
             loopAnimations(internalAnimatableComponents, animatableComponents);
         }
+        if(animMananger != null) {
+            animMananger.updateAnimations();
+        }
     }
 
     private void loopAnimations(ArrayList<Animation> v, ArrayList<Animation> notIn) {
@@ -1244,7 +1338,8 @@ public class Form extends Container {
      */
     boolean hasAnimations() {
         return (animatableComponents != null && animatableComponents.size() > 0)
-                || (internalAnimatableComponents != null && internalAnimatableComponents.size() > 0);
+                || (internalAnimatableComponents != null && internalAnimatableComponents.size() > 0) 
+                || (animMananger != null && animMananger.isAnimating());
     }
 
     /**
@@ -1467,7 +1562,7 @@ public class Form extends Container {
      * Displays the current form on the screen
      */
     public void show() {
-        Display.getInstance().getImplementation().onShow(this);
+        Display.impl.onShow(this);
         show(false);
     }
 
@@ -1501,6 +1596,7 @@ public class Form extends Container {
      */
     void deinitializeImpl() {
         super.deinitializeImpl();
+        animMananger.flush();
         buttonsAwatingRelease = null;
         dragged = null;
     }
@@ -1512,7 +1608,7 @@ public class Form extends Container {
         super.initComponentImpl();
         dragged = null;
         if (Display.getInstance().isNativeCommands()) {
-            Display.getInstance().getImplementation().setNativeCommands(menuBar.getCommands());
+            Display.impl.setNativeCommands(menuBar.getCommands());
         }
         if (getParent() != null) {
             getParent().getComponentForm().registerAnimated(this);
@@ -1572,6 +1668,9 @@ public class Form extends Container {
         onShowCompleted();
         if (showListener != null) {
             showListener.fireActionEvent(new ActionEvent(this));
+        }
+        if(editOnShow != null) {
+            editOnShow.startEditingAsync();
         }
     }
 
@@ -3034,12 +3133,23 @@ public class Form extends Container {
      * Sets the Form Toolbar
      * 
      * @param toolbar 
+     * @deprecated use setToolbar instead (lower case b)
      */
     public void setToolBar(Toolbar toolbar){
         this.toolbar =toolbar;
         setMenuBar(toolbar.getMenuBar());
     }
 
+    /**
+     * Sets the Form Toolbar
+     * 
+     * @param toolbar 
+     */
+    public void setToolbar(Toolbar toolbar){
+        this.toolbar =toolbar;
+        setMenuBar(toolbar.getMenuBar());
+    }
+    
     /**
      * Gets the Form Toolbar if exists or null
      * 
@@ -3128,5 +3238,21 @@ public class Form extends Container {
             return null;
         }
         return super.setPropertyValue(name, value);
+    }
+
+    /**
+     * A text component that will receive focus and start editing immediately as the form is shown
+     * @return the component instance
+     */
+    public TextArea getEditOnShow() {
+        return editOnShow;
+    }
+
+    /**
+     * A text component that will receive focus and start editing immediately as the form is shown
+     * @param editOnShow text component to edit when the form is shown
+     */
+    public void setEditOnShow(TextArea editOnShow) {
+        this.editOnShow = editOnShow;
     }
 }

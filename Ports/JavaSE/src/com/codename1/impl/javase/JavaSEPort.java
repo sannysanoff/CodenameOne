@@ -160,6 +160,7 @@ import org.w3c.dom.NodeList;
 public class JavaSEPort extends CodenameOneImplementation {
 
     public final static boolean IS_MAC;
+    private static boolean isIOS;
     public static boolean blockNativeBrowser;
     private static final boolean isWindows;
     private static String fontFaceSystem;
@@ -1341,6 +1342,7 @@ public class JavaSEPort extends CodenameOneImplementation {
             }
             Display.getInstance().setProperty("User-Agent", ua);
 
+            isIOS = props.getProperty("systemFontFamily", "Arial").toLowerCase().contains("helvetica");
             setFontFaces(props.getProperty("systemFontFamily", "Arial"),
                     props.getProperty("proportionalFontFamily", "SansSerif"),
                     props.getProperty("monospaceFontFamily", "Monospaced"));
@@ -3900,6 +3902,9 @@ public class JavaSEPort extends CodenameOneImplementation {
      * @inheritDoc
      */
     public void setAlpha(Object graphics, int alpha) {
+        if(alpha > 255 || alpha < 0) {
+            throw new IllegalArgumentException("Invalid value for alpha: " + alpha);
+        }
         checkEDT();
         Graphics2D nativeGraphics = getGraphics(graphics);
         float a = ((float) alpha) / 255.0f;
@@ -4128,12 +4133,56 @@ public class JavaSEPort extends CodenameOneImplementation {
     public boolean isNativeFontSchemeSupported() {
         return true;
     }
+
+    private String nativeFontName(String fontName) {
+        if(fontName != null && fontName.startsWith("native:")) {
+            if("native:MainThin".equals(fontName)) {
+                return "HelveticaNeue-UltraLight";
+            }
+            if("native:MainLight".equals(fontName)) {
+                return "HelveticaNeue-Light";
+            }
+            if("native:MainRegular".equals(fontName)) {
+                return "HelveticaNeue-Medium";
+            }
+            
+            if("native:MainBold".equals(fontName)) {
+                return "HelveticaNeue-Bold";
+            }
+            
+            if("native:MainBlack".equals(fontName)) {
+                return "HelveticaNeue-CondensedBlack";
+            }
+            
+            if("native:ItalicThin".equals(fontName)) {
+                return "HelveticaNeue-UltraLightItalic";
+            }
+            
+            if("native:ItalicLight".equals(fontName)) {
+                return "HelveticaNeue-LightItalic";
+            }
+            
+            if("native:ItalicRegular".equals(fontName)) {
+                return "HelveticaNeue-MediumItalic";
+            }
+            
+            if("native:ItalicBold".equals(fontName) || "native:ItalicBlack".equals(fontName)) {
+                return "HelveticaNeue-BoldItalic";
+            }
+        }            
+        return null;
+    }
     
     @Override
     public Object loadTrueTypeFont(String fontName, String fileName) {
         File fontFile = null;
         try {
             if(fontName.startsWith("native:")) {
+                if(IS_MAC && isIOS) {
+                    String nn = nativeFontName(fontName);
+                    java.awt.Font nf = new java.awt.Font(nn, java.awt.Font.PLAIN, medianFontSize);
+                    return nf;
+                }
                 String res; 
                 switch(fontName) {
                     case "native:MainThin":
@@ -4991,31 +5040,6 @@ public class JavaSEPort extends CodenameOneImplementation {
         return super.isBuiltinSoundAvailable(soundIdentifier);
     }
 
-    /**
-     * @inheritDoc
-     */
-    public Media createBackgroundMedia(String uri) throws IOException {
-        if(uri.startsWith("jar://")){
-            uri = uri.substring(6);
-            if(!uri.startsWith("/")){
-                uri = "/" + uri;
-            }
-            InputStream is = getResourceAsStream(this.getClass(), uri);
-            String mime = "";
-            if(uri.endsWith(".mp3")){
-                mime = "audio/mp3";
-            }else if(uri.endsWith(".wav")){
-                mime = "audio/x-wav";            
-            }else if(uri.endsWith(".amr")){
-                mime = "audio/amr";            
-            }else if(uri.endsWith(".3gp")){
-                mime = "audio/3gpp";            
-            }
-
-            return createMedia(is, mime, null);
-        }
-        return createMedia(uri, false, null);
-    }
     
     /**
      * Plays the sound in the given URI which is partially platform specific.
@@ -5497,7 +5521,13 @@ public class JavaSEPort extends CodenameOneImplementation {
                     nr.setResponseHeaders(headers);
                     nr.setResponseBody("");
                 }
-                InputStream i = new BufferedInputStream(con.getInputStream()) {
+                InputStream is;
+                if(con.getResponseCode() >= 200 && con.getResponseCode() < 300){
+                    is = con.getInputStream();
+                }else{
+                    is = con.getErrorStream();
+                }
+                InputStream i = new BufferedInputStream(is) {
 
                     public synchronized int read(byte b[], int off, int len)
                             throws IOException {
@@ -5964,6 +5994,10 @@ public class JavaSEPort extends CodenameOneImplementation {
         Contact contact = getContactById(id);
         c.setId(contact.getId());
         c.setDisplayName(contact.getDisplayName());
+        
+        if(includesPicture){
+            c.setPhoto(contact.getPhoto());
+        }
         
         if (includesFullName) {
             c.setFirstName(contact.getFirstName());
@@ -7299,13 +7333,20 @@ public class JavaSEPort extends CodenameOneImplementation {
     
     private Hashtable initContacts() {
         Hashtable retVal = new Hashtable();
-
+        
+        Image img = null;
+        try {
+            img = Image.createImage(getClass().getResourceAsStream("/com/codename1/impl/javase/user.jpg"));
+        } catch (IOException ex) {
+        }
+        
         Contact contact = new Contact();
         contact.setId("1");
 
         contact.setDisplayName("Chen Fishbein");
         contact.setFirstName("Chen");
         contact.setFamilyName("Fishbein");
+        contact.setPhoto(img);
 
         Hashtable phones = new Hashtable();
         phones.put("mobile", "+111111");
@@ -7330,6 +7371,7 @@ public class JavaSEPort extends CodenameOneImplementation {
         contact.setDisplayName("Shai Almog");
         contact.setFirstName("Shai");
         contact.setFamilyName("Almog");
+        contact.setPhoto(img);
 
         phones = new Hashtable();
         phones.put("mobile", "+111111");
@@ -7400,6 +7442,7 @@ public class JavaSEPort extends CodenameOneImplementation {
         contact.setDisplayName("Kenny McCormick");
         contact.setFirstName("Kenny");
         contact.setFamilyName("McCormick");
+        contact.setPhoto(img);
 
 
         phones = new Hashtable();

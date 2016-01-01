@@ -22,8 +22,6 @@
  */
 package com.codename1.impl.android;
 
-import android.graphics.*;
-import com.codename1.impl.CodenameOneAndroidThread;
 import com.codename1.location.AndroidLocationManager;
 import android.app.*;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -49,7 +47,6 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Vibrator;
 import android.telephony.TelephonyManager;
-import android.text.TextPaint;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
@@ -71,7 +68,6 @@ import com.codename1.ui.PeerComponent;
 import com.codename1.ui.events.ActionEvent;
 import com.codename1.impl.CodenameOneImplementation;
 import com.codename1.impl.VirtualKeyboardInterface;
-import com.codename1.ui.geom.GeneralPath;
 import com.codename1.ui.plaf.UIManager;
 import com.codename1.ui.util.Resources;
 import java.lang.ref.SoftReference;
@@ -123,6 +119,7 @@ import com.codename1.ui.animations.Animation;
 import com.codename1.ui.events.ActionListener;
 import com.codename1.ui.geom.Rectangle;
 import com.codename1.ui.layouts.BorderLayout;
+import com.codename1.ui.plaf.Style;
 import com.codename1.ui.util.EventDispatcher;
 import java.io.File;
 import java.io.FileDescriptor;
@@ -180,8 +177,8 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     static final int DROID_IMPL_KEY_VOLUME_DOWN = -23458;
     static final int DROID_IMPL_KEY_MUTE = -23459;
     static int[] leftSK = new int[]{DROID_IMPL_KEY_MENU};
-    static CodenameOneSurface myView = null;
-    private Paint defaultFont;
+    CodenameOneSurface myView = null;
+    private CodenameOneTextPaint defaultFont;
     private final char[] tmpchar = new char[1];
     private final Rect tmprect = new Rect();
     protected int defaultFontHeight;
@@ -201,11 +198,11 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     private static View viewAbove;
     private static int aboveSpacing;
     private static int belowSpacing;
-    public static boolean asyncView = true;
+    public static boolean asyncView = false;
     public static boolean textureView = false;
-    public static boolean simpleView = false;
-    private Media background; 
-
+    private Media background;
+    private boolean asyncEditMode = false;
+    
     /**
      * This method in used internally for ads
      * @param above shown above the view
@@ -456,7 +453,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         this.defaultFontHeight = this.translatePixelForDPI(defaultFontPixelHeight);
 
 
-        this.defaultFont = (Paint) ((NativeFont) this.createFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_MEDIUM)).font;
+        this.defaultFont = (CodenameOneTextPaint) ((NativeFont) this.createFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_MEDIUM)).font;
         Display.getInstance().setTransitionYield(-1);
         
         initSurface();
@@ -469,7 +466,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         Display.getInstance().registerVirtualKeyboard(vkb);
         Display.getInstance().setDefaultVirtualKeyboard(vkb);
 
-        InPlaceEditView.endEdit(false);
+        InPlaceEditView.endEdit();
 
         activity.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 
@@ -538,6 +535,8 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
                 return Display.DENSITY_HIGH;
             case DisplayMetrics.DENSITY_XHIGH:
                 return Display.DENSITY_VERY_HIGH;
+            case 400: // DisplayMetrics.DENSITY_400
+            case 420: // DisplayMetrics.DENSITY_420
             case 480: // DisplayMetrics.DENSITY_XXHIGH
                 return Display.DENSITY_HD;
             case 560: // DisplayMetrics.DENSITY_560
@@ -591,27 +590,21 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         relativeLayout.setFocusable(false);
 
         activity.getWindow().setBackgroundDrawable(null);
-        if (simpleView) {
-            myView = new AndroidSimpleView(activity, AndroidImplementation.this);
-        } else {
-            if (asyncView) {
-                if (android.os.Build.VERSION.SDK_INT < 14) {
-                    myView = new AndroidSurfaceView(activity, AndroidImplementation.this);
-                } else {
-                    int hardwareAcceleration = 16777216;
-                    activity.getWindow().setFlags(hardwareAcceleration, hardwareAcceleration);
-                    myView = new AndroidAsyncView(activity, AndroidImplementation.this);
-                }
+        if(asyncView) {
+            if(android.os.Build.VERSION.SDK_INT < 14){
+                myView = new AndroidSurfaceView(activity, AndroidImplementation.this);        
             } else {
-                if (textureView || android.os.Build.VERSION.SDK_INT == 18) {
-                    int hardwareAcceleration = 16777216;
-                    activity.getWindow().setFlags(hardwareAcceleration, hardwareAcceleration);
-                    myView = new AndroidTextureView(activity, AndroidImplementation.this);
-                } else {
-                    int hardwareAcceleration = 16777216;
-                    activity.getWindow().setFlags(hardwareAcceleration, hardwareAcceleration);
-                    myView = new AndroidSurfaceView(activity, AndroidImplementation.this);
-                }
+                int hardwareAcceleration = 16777216;
+                activity.getWindow().setFlags(hardwareAcceleration, hardwareAcceleration);
+                myView = new AndroidAsyncView(activity, AndroidImplementation.this);                
+            }
+        } else {
+            if(textureView || android.os.Build.VERSION.SDK_INT == 18){
+                int hardwareAcceleration = 16777216;
+                activity.getWindow().setFlags(hardwareAcceleration, hardwareAcceleration);
+                myView = new AndroidTextureView(activity, AndroidImplementation.this);                
+            } else {
+                myView = new AndroidSurfaceView(activity, AndroidImplementation.this);        
             }
         }
         myView.getAndroidView().setVisibility(View.VISIBLE);
@@ -709,16 +702,46 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         if (keyCode > 0 && getKeyboardType() == Display.KEYBOARD_TYPE_QWERTY) {
             text += (char) keyCode;
         }
-        Display display = Display.getInstance();
-        String userInput = InPlaceEditView.edit(this, cmp, constraint);
-        display.onEditingComplete(cmp, userInput);
+        InPlaceEditView.edit(this, cmp, constraint);
     }
 
     protected boolean editInProgress() {
         return InPlaceEditView.isEditing();
     }
 
-    public static void stopEditing(){
+    @Override
+    public boolean isAsyncEditMode() {
+        return asyncEditMode;
+    }
+
+    void setAsyncEditMode(boolean async) {
+        asyncEditMode = async;
+    }
+    
+    void callHideTextEditor() {
+        super.hideTextEditor();
+    }
+
+    @Override
+    public void hideTextEditor() {
+        InPlaceEditView.hideActiveTextEditor();
+    }
+
+    @Override
+    public boolean isEditingText(Component c) {
+        if (InPlaceEditView.isActiveTextEditorHidden()) {
+            return false;
+        }
+        return super.isEditingText(c);
+    }
+
+    
+    
+    public static void stopEditing() {
+        stopEditing(false);
+    }
+    
+    public static void stopEditing(final boolean forceVKBClose){
         final boolean[] flag = new boolean[]{false};
 
         // InPlaceEditView.endEdit must be called from the UI thread.
@@ -728,7 +751,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
             @Override
             public void run() {
                 // Must be called from the UI thread
-                InPlaceEditView.endEdit(false);
+                InPlaceEditView.stopEdit(forceVKBClose);
 
                 synchronized (flag) {
                     flag[0] = true;
@@ -752,6 +775,11 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     @Override
     public void saveTextEditingState() {
         stopEditing();
+    }
+    
+    @Override
+    public void stopTextEditing() {    
+        saveTextEditingState();
     }
 
     protected void setLastSizeChangedWH(int w, int h) {
@@ -819,7 +847,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
             if (resource.startsWith("/")) {
                 resource = resource.substring(1);
             }
-                return activity.getAssets().open(resource);
+            return activity.getAssets().open(resource);
         } catch (IOException ex) {
             Log.i("Codename One", "Resource not found: " + resource);
             return null;
@@ -914,17 +942,20 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
             font = this.defaultFont;
         }
         if (font instanceof NativeFont) {
-            ((AndroidGraphics) graphics).setFont((Paint) ((NativeFont) font).font);
+            ((AndroidGraphics) graphics).setFont((CodenameOneTextPaint) ((NativeFont) font).font);
         } else {
-            ((AndroidGraphics) graphics).setFont((Paint) font);
+            ((AndroidGraphics) graphics).setFont((CodenameOneTextPaint) font);
         }
     }
 
     @Override
     public int getHeight(Object nativeFont) {
-        Paint font = (nativeFont == null ? this.defaultFont
-                : (Paint) ((NativeFont) nativeFont).font);
-        return font.getFontMetricsInt(font.getFontMetricsInt());
+        CodenameOneTextPaint font = (nativeFont == null ? this.defaultFont
+                : (CodenameOneTextPaint) ((NativeFont) nativeFont).font);
+        if(font.fontHeight < 0) {
+            font.fontHeight = font.getFontMetricsInt(font.getFontMetricsInt());
+        }
+        return font.fontHeight;
     }
 
     @Override
@@ -1029,22 +1060,27 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     public Object loadTrueTypeFont(String fontName, String fileName) {
         if(fontName.startsWith("native:")) {
             Typeface t = fontToRoboto(fontName);
-            TextPaint newPaint = new TextPaint();
+            int fontStyle = com.codename1.ui.Font.STYLE_PLAIN;
+            if(t.isBold()) {
+                fontStyle |= com.codename1.ui.Font.STYLE_BOLD;
+            }
+            if(t.isItalic()) {
+                fontStyle |= com.codename1.ui.Font.STYLE_ITALIC;
+            }
+            CodenameOneTextPaint newPaint = new CodenameOneTextPaint(t);
             newPaint.setAntiAlias(true);
             newPaint.setSubpixelText(true);
-            newPaint.setTypeface(t);
-            return new NativeFont(com.codename1.ui.Font.FACE_SYSTEM, 
-                    com.codename1.ui.Font.STYLE_PLAIN, com.codename1.ui.Font.SIZE_MEDIUM, newPaint, fileName, 0, 0);
+            return new NativeFont(com.codename1.ui.Font.FACE_SYSTEM, fontStyle,
+                    com.codename1.ui.Font.SIZE_MEDIUM, newPaint, fileName, 0, 0);
         }
         Typeface t = Typeface.createFromAsset(activity.getAssets(), fileName);
         if(t == null) {
             throw new RuntimeException("Font not found: " + fileName);
         }
-        TextPaint newPaint = new TextPaint();
+        CodenameOneTextPaint newPaint = new CodenameOneTextPaint(t);
         newPaint.setAntiAlias(true);
         newPaint.setSubpixelText(true);
-        newPaint.setTypeface(t);
-        return new NativeFont(com.codename1.ui.Font.FACE_SYSTEM, 
+        return new NativeFont(com.codename1.ui.Font.FACE_SYSTEM,
                 com.codename1.ui.Font.STYLE_PLAIN, com.codename1.ui.Font.SIZE_MEDIUM, newPaint, fileName, 0, 0);
     }
     
@@ -1090,29 +1126,26 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     @Override
     public Object deriveTrueTypeFont(Object font, float size, int weight) {
         NativeFont fnt = (NativeFont)font;
-        TextPaint paint = (TextPaint)fnt.font;
+        CodenameOneTextPaint paint = (CodenameOneTextPaint)fnt.font;
         paint.setAntiAlias(true);
         Typeface type = paint.getTypeface();
         int fontstyle = Typeface.NORMAL;
-        if ((weight & Font.STYLE_BOLD) != 0) {
+        if ((weight & Font.STYLE_BOLD) != 0 || type.isBold()) {
             fontstyle |= Typeface.BOLD;
         }
-        if ((weight & Font.STYLE_ITALIC) != 0) {
+        if ((weight & Font.STYLE_ITALIC) != 0 || type.isItalic()) {
             fontstyle |= Typeface.ITALIC;
         }
         type = Typeface.create(type, fontstyle);
-        TextPaint newPaint = new TextPaint();
-        newPaint.setTypeface(type);
+        CodenameOneTextPaint newPaint = new CodenameOneTextPaint(type);
         newPaint.setTextSize(size);
         newPaint.setAntiAlias(true);
-        NativeFont n = new NativeFont(com.codename1.ui.Font.FACE_SYSTEM, com.codename1.ui.Font.STYLE_PLAIN, com.codename1.ui.Font.SIZE_MEDIUM, newPaint, fnt.fileName, size, weight);
+        NativeFont n = new NativeFont(com.codename1.ui.Font.FACE_SYSTEM, weight, com.codename1.ui.Font.SIZE_MEDIUM, newPaint, fnt.fileName, size, weight);
         return n;
     }
 
     @Override
     public Object createFont(int face, int style, int size) {
-        Paint font = new TextPaint();
-        font.setAntiAlias(true);
         Typeface typeface = null;
         switch (face) {
             case Font.FACE_MONOSPACE:
@@ -1144,7 +1177,8 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
                 break;
         }
 
-        font.setTypeface(Typeface.create(typeface, fontstyle));
+        Paint font = new CodenameOneTextPaint(Typeface.create(typeface, fontstyle));
+        font.setAntiAlias(true);
         font.setUnderlineText((style & Font.STYLE_UNDERLINED) != 0);
         font.setTextSize(height);
         return new NativeFont(face, style, size, font);
@@ -1162,8 +1196,6 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     public Object loadNativeFont(String lookup) {
         try {
             lookup = lookup.split(";")[0];
-            Paint font = new TextPaint();
-            font.setAntiAlias(true);
             int typeface = Typeface.NORMAL;
             String familyName = lookup.substring(0, lookup.indexOf("-"));
             String style = lookup.substring(lookup.indexOf("-") + 1, lookup.lastIndexOf("-"));
@@ -1176,7 +1208,8 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
             } else if (style.equals("bold")) {
                 typeface = Typeface.BOLD;
             }
-            font.setTypeface(Typeface.create(familyName, typeface));
+            Paint font = new CodenameOneTextPaint(Typeface.create(familyName, typeface));
+            font.setAntiAlias(true);
             font.setTextSize(Integer.parseInt(size));
             return new NativeFont(0, 0, 0, font);
         } catch (Exception err) {
@@ -1206,8 +1239,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
 
     @Override
     public Object getDefaultFont() {
-        TextPaint paint = new TextPaint();
-        paint.set(this.defaultFont);
+        CodenameOneTextPaint paint = new CodenameOneTextPaint(this.defaultFont);
         return new NativeFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_MEDIUM, paint);
     }
 
@@ -1529,6 +1561,40 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         ((AndroidGraphics) graphics).fillRect(x, y, width, height);
     }
 
+    @Override
+    public void fillRect(Object graphics, int x, int y, int w, int h, byte alpha) {
+        ((AndroidGraphics) graphics).fillRect(x, y, w, h, alpha);
+    }
+
+    @Override
+    public void paintComponentBackground(Object graphics, int x, int y, int width, int height, Style s) {
+        ((AndroidGraphics) graphics).paintComponentBackground(x, y, width, height, s);
+    }
+
+    @Override
+    public void fillLinearGradient(Object graphics, int startColor, int endColor, int x, int y, int width, int height, boolean horizontal) {
+        ((AndroidGraphics)graphics).fillLinearGradient(startColor, endColor, x, y, width, height, horizontal);
+    }
+
+    @Override
+    public void fillRectRadialGradient(Object graphics, int startColor, int endColor, int x, int y, int width, int height, float relativeX, float relativeY, float relativeSize) {
+        ((AndroidGraphics)graphics).fillRectRadialGradient(startColor, endColor, x, y, width, height, relativeX, relativeY, relativeSize);
+    }
+
+    @Override
+    public void fillRadialGradient(Object graphics, int startColor, int endColor, int x, int y, int width, int height) {
+        ((AndroidGraphics)graphics).fillRadialGradient(startColor, endColor, x, y, width, height);
+    }
+        
+
+    /*@Override
+    public void drawLabelComponent(Object nativeGraphics, int cmpX, int cmpY, int cmpHeight, int cmpWidth, Style style, String text, Object icon, Object stateIcon, int preserveSpaceForState, int gap, boolean rtl, boolean isOppositeSide, int textPosition, int stringWidth, boolean isTickerRunning, int tickerShiftText, boolean endsWith3Points, int valign) {
+        ((AndroidGraphics)nativeGraphics).drawLabelComponent(cmpX, cmpY, cmpHeight, cmpWidth, style, text, 
+                (Bitmap)icon, (Bitmap)stateIcon, preserveSpaceForState, gap, rtl, isOppositeSide, textPosition, stringWidth, 
+                isTickerRunning, tickerShiftText, endsWith3Points, valign);
+    }*/
+
+   
     @Override
     public void fillRoundRect(Object graphics, int x, int y, int width,
             int height, int arcWidth, int arcHeight) {
@@ -1938,6 +2004,9 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         }
         if("OSVer".equals(key)) {
             return "" + android.os.Build.VERSION.RELEASE;
+        }
+        if("DeviceName".equals(key)) {
+            return "" + android.os.Build.MODEL;
         }
         try {
             if ("IMEI".equals(key) || "UDID".equals(key)) {
@@ -4385,12 +4454,20 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     public void sendSMS(final String phoneNumber, final String message, boolean i) throws IOException {
 //        PendingIntent deliveredPI = PendingIntent.getBroadcast(activity, 0,
 //                new Intent("SMS_DELIVERED"), 0);
-        if(i) {
-            Intent smsIntent = new Intent(Intent.ACTION_VIEW);
-            smsIntent.setType("vnd.android-dir/mms-sms");
-            smsIntent.putExtra("address", phoneNumber);
-            smsIntent.putExtra("sms_body",message);
+        if(i) {            
+            Intent smsIntent = null;
+            if(android.os.Build.VERSION.SDK_INT < 19){
+                smsIntent = new Intent(Intent.ACTION_VIEW);
+                smsIntent.setType("vnd.android-dir/mms-sms");
+                smsIntent.putExtra("address", phoneNumber);
+                smsIntent.putExtra("sms_body",message);
+            }else{
+                smsIntent = new Intent(Intent.ACTION_SENDTO);
+                smsIntent.setData(Uri.parse("smsto:" + Uri.encode(phoneNumber)));   
+                smsIntent.putExtra("sms_body", message); 
+            }
             activity.startActivity(smsIntent);            
+            
         } else {
             SmsManager sms = SmsManager.getDefault();
             ArrayList<String> parts = sms.divideMessage(message);
@@ -5356,7 +5433,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
             flushGraphics();
         }
         if(InPlaceEditView.isKeyboardShowing()){
-            stopEditing();
+            stopEditing(true);
         }
         super.setCurrentForm(f);
         if (isNativeTitle() &&  !(f instanceof Dialog)) {
@@ -6287,21 +6364,6 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     public void fillShape(Object graphics, com.codename1.ui.geom.Shape shape) {
         AndroidGraphics ag = (AndroidGraphics)graphics;
         Path p = cn1ShapeToAndroidPath(shape);
-//        RectF bounds = new RectF();
-//        p.computeBounds(bounds, true);
-//        System.out.println("Painting: "+shape);
-//        if (bounds.width() == 0 && bounds.height() == 0 && shape instanceof GeneralPath) {
-//            System.out.println("Android Path: "+bounds.width()+" * "+bounds.height());
-//            System.out.println("Empty: "+p.isEmpty()+" "+shape.getBounds()+" points.len="+((GeneralPath) shape).points.length);
-//            p = cn1ShapeToAndroidPath(shape);
-//            p.computeBounds(bounds, true);
-//            if (bounds.width() == 0 && bounds.height() == 0) {
-//                System.out.println("Failure complete");
-//            }
-//
-//        } else {
-//            System.out.println("OK");
-//        }
         ag.fillPath(p);
     }
 
@@ -6312,15 +6374,8 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         ag.drawPath(p, stroke);
         
     }
-
-    @Override
-    public void translate(Object graphics, int x, int y) {
-        AndroidGraphics ag = (AndroidGraphics)graphics;
-        Transform tra = ag.getTransform();
-        tra.translate(x, y);
-        ag.setTransform(tra);
-    }
-
+    
+    
 
     // BEGIN TRANSFORMATION METHODS---------------------------------------------------------
     
@@ -6328,6 +6383,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     
     @Override
     public boolean transformEqualsImpl(Transform t1, Transform t2) {
+        
         if ( t1 != null ){
             CN1Matrix4f m1 = (CN1Matrix4f)t1.getNativeTransform();
             CN1Matrix4f m2 = (CN1Matrix4f)t2.getNativeTransform();
@@ -6348,6 +6404,10 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         return true;
     }
     
+    
+    
+    
+
     @Override
     public Object makeTransformTranslation(float translateX, float translateY, float translateZ) {
         return CN1Matrix4f.makeTranslation(translateX, translateY, translateZ);
@@ -6455,26 +6515,25 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     }
     // END TRANSFORM STUFF
 
-    float[] tmpBuf6 = new float[6];
-
     private Path cn1ShapeToAndroidPath(com.codename1.ui.geom.Shape shape) {
         Path p = new Path();
         com.codename1.ui.geom.PathIterator it = shape.getPathIterator();
         //p.setWindingRule(it.getWindingRule() == com.codename1.ui.geom.PathIterator.WIND_EVEN_ODD ? GeneralPath.WIND_EVEN_ODD : GeneralPath.WIND_NON_ZERO);
+        float[] buf = new float[6];
         while (!it.isDone()) {
-            int type = it.currentSegment(tmpBuf6);
+            int type = it.currentSegment(buf);
             switch (type) {
                 case com.codename1.ui.geom.PathIterator.SEG_MOVETO:
-                    p.moveTo(tmpBuf6[0], tmpBuf6[1]);
+                    p.moveTo(buf[0], buf[1]);
                     break;
                 case com.codename1.ui.geom.PathIterator.SEG_LINETO:
-                    p.lineTo(tmpBuf6[0], tmpBuf6[1]);
+                    p.lineTo(buf[0], buf[1]);
                     break;
                 case com.codename1.ui.geom.PathIterator.SEG_QUADTO:
-                    p.quadTo(tmpBuf6[0], tmpBuf6[1], tmpBuf6[2], tmpBuf6[3]);
+                    p.quadTo(buf[0], buf[1], buf[2], buf[3]);
                     break;
                 case com.codename1.ui.geom.PathIterator.SEG_CUBICTO:
-                    p.cubicTo(tmpBuf6[0], tmpBuf6[1], tmpBuf6[2], tmpBuf6[3], tmpBuf6[4], tmpBuf6[5]);
+                    p.cubicTo(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]);
                     break;
                 case com.codename1.ui.geom.PathIterator.SEG_CLOSE:
                     p.close();
@@ -6485,16 +6544,6 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         }
 
         return p;
-    }
-
-    @Override
-    public Thread createThread(Runnable r) {
-        return new CodenameOneAndroidThread(r, "unnamed");
-    }
-
-    @Override
-    public Thread createThread(Runnable r, String name) {
-        return new CodenameOneAndroidThread(r, name);
     }
 
     public void scheduleLocalNotification(LocalNotification notif, long firstTime, int repeat) {
