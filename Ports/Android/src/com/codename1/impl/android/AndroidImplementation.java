@@ -198,7 +198,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     private static View viewAbove;
     private static int aboveSpacing;
     private static int belowSpacing;
-    public static boolean asyncView = false;
+    public static boolean asyncView = true;
     public static boolean textureView = false;
     private Media background;
     private boolean asyncEditMode = false;
