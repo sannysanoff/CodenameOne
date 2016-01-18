@@ -63,7 +63,8 @@ public class Parser extends ClassVisitor {
     }
     public static void parse(File sourceFile) throws Exception {
         System.out.println(sourceFile.getName());
-        ClassReader r = new ClassReader(new FileInputStream(sourceFile)) {
+        FileInputStream fis = new FileInputStream(sourceFile);
+        ClassReader r = new ClassReader(fis) {
             String clsName;
             @Override
             protected Label readLabel(int offset, Label[] labels) {
@@ -87,6 +88,7 @@ public class Parser extends ClassVisitor {
         r.accept(p, ClassReader.EXPAND_FRAMES);
         
         classes.add(p.cls);
+        fis.close();
     }
     
     private static ByteCodeClass getClassByName(String name) {
