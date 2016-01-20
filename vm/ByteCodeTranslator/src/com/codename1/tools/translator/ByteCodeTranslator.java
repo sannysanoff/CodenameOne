@@ -26,6 +26,7 @@ package com.codename1.tools.translator;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -176,7 +177,7 @@ public class ByteCodeTranslator {
             File root = new File(dest, "dist");
             root.mkdirs();
             System.out.println("Root is: " + root.getAbsolutePath());
-            File srcRoot = new File(root, appName + "-src");
+            final File srcRoot = new File(root, appName + "-src");
             srcRoot.mkdirs();
             System.out.println("srcRoot is: " + srcRoot.getAbsolutePath() );
             
@@ -191,7 +192,7 @@ public class ByteCodeTranslator {
             copy(ByteCodeTranslator.class.getResourceAsStream("/Icons.json"), new PreservingFileOutputStream(new File(appIconAppiconset, "Contents.json")));
             
             
-            File xcproj = new File(root, appName + ".xcodeproj");
+            final File xcproj = new File(root, appName + ".xcodeproj");
             xcproj.mkdirs();
             File projectXCworkspace = new File(xcproj, "project.xcworkspace");
             projectXCworkspace.mkdirs();
@@ -250,6 +251,9 @@ public class ByteCodeTranslator {
             noArcFiles.add("CVZBarReaderViewController.m");
             noArcFiles.add("OpenUDID.m");
             
+            List<String> arcFiles = new ArrayList<String>();
+            arcFiles.add("SRWebSocket.m");
+
             List<String> includeFrameworks = new ArrayList<String>();
             includeFrameworks.add("libiconv.dylib");
             //includeFrameworks.add("AdSupport.framework");
@@ -287,6 +291,20 @@ public class ByteCodeTranslator {
             ArrayList<String> arr = new ArrayList<String>();
             arr.addAll(includeFrameworks);
             arr.addAll(Arrays.asList(sourceFiles));
+
+            // comparation is done so that long files are compiled first, to avoid case when
+            // one long file takes 1 cpu while others are idle at the end.
+            arr.sort(new Comparator<String>() {
+                @Override
+                public int compare(String o1, String o2) {
+                    File f1 = new File(srcRoot, o1);
+                    File f2 = new File(srcRoot, o2);
+                    long l1 = f1.exists() ? f1.length() : 0;
+                    long l2 = f2.exists() ? f2.length() : 0;
+                    long rv = l2 - l1;
+                    return rv > 0  ? 1 : (rv < 0 ? -1 : 0);
+                }
+            });
             
             for(String file : arr) {
                 if (file.endsWith(PreservingFileOutputStream.NEW_SUFFIX)) {
@@ -347,7 +365,12 @@ public class ByteCodeTranslator {
                 if(noArcFiles.contains(file)) {
                     fileOneEntry.append(" */; settings = {COMPILER_FLAGS = \"-fno-objc-arc\"; }; };\n");                
                 } else {
-                    fileOneEntry.append(" */; };\n");                
+                    if(arcFiles.contains(file)) {
+
+                        fileOneEntry.append(" */; settings = {COMPILER_FLAGS = \"-fobjc-arc\"; }; };\n");
+                    } else {
+                        fileOneEntry.append(" */; };\n");
+                    }
                 }
                 
                 if(file.endsWith(".m") || file.endsWith(".c") || file.endsWith(".cpp") || file.endsWith(".hh") || file.endsWith(".hpp") || 

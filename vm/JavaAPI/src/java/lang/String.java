@@ -823,6 +823,10 @@ public final class String implements java.lang.CharSequence, Comparable<String> 
         return Long.toString(l);
     }
 
+    public boolean isEmpty() {
+        return value.length == 0;
+    }
+
     /**
      * Returns the string representation of the Object argument.
      */
