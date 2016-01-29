@@ -107,7 +107,7 @@ public abstract class PushNotificationService extends Service implements PushCal
             notif.flags |= Notification.FLAG_AUTO_CANCEL;
             notif.when = System.currentTimeMillis();
             notif.defaults = Notification.DEFAULT_ALL;
-            notif.setLatestEventInfo(this, value, "", contentIntent);
+            //notif.setLatestEventInfo(this, value, "", contentIntent);
             nm.notify((int)System.currentTimeMillis(), notif);
         }
     }

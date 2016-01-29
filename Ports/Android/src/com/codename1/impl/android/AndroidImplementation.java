@@ -4526,7 +4526,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         notificationIntent.setComponent(activity.getComponentName());
         PendingIntent contentIntent = PendingIntent.getActivity(activity, 0, notificationIntent, 0);
 
-        notification.setLatestEventInfo(activity, contentTitle, contentBody, contentIntent);
+        //notification.setLatestEventInfo(activity, contentTitle, contentBody, contentIntent);
         notificationManager.notify(notifyId, notification);
         return new Integer(notifyId);
     }

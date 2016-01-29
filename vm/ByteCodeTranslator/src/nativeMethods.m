@@ -326,45 +326,50 @@ JAVA_OBJECT java_lang_Throwable_getStack___R_java_lang_String(CODENAME_ONE_THREA
     JAVA_OBJECT bld = __NEW_INSTANCE_java_lang_StringBuilder(threadStateData);
     JAVA_OBJECT classObj = java_lang_Object_getClass___R_java_lang_Class(threadStateData, me);
     JAVA_OBJECT className = java_lang_Class_getName___R_java_lang_String(threadStateData, classObj);
-    java_lang_StringBuilder_append___java_lang_String_R_java_lang_StringBuilder(threadStateData, bld, className);
-    if(newline == JAVA_NULL) {
-        newline = newStringFromCString(threadStateData, "\n");
-        newline->__codenameOneReferenceCount = 999999;
-        dot = newStringFromCString(threadStateData, ".");
-        dot->__codenameOneReferenceCount = 999999;
-        colon = newStringFromCString(threadStateData, ":");
-        colon->__codenameOneReferenceCount = 999999;
-        indent = newStringFromCString(threadStateData, "    at ");
-        indent->__codenameOneReferenceCount = 999999;
-        removeObjectFromHeapCollection(threadStateData, newline);
-        removeObjectFromHeapCollection(threadStateData, dot);
-        removeObjectFromHeapCollection(threadStateData, colon);
-        removeObjectFromHeapCollection(threadStateData, indent);
-        removeObjectFromHeapCollection(threadStateData, ((struct obj__java_lang_String*)newline)->java_lang_String_value);
-        removeObjectFromHeapCollection(threadStateData, ((struct obj__java_lang_String*)dot)->java_lang_String_value);
-        removeObjectFromHeapCollection(threadStateData, ((struct obj__java_lang_String*)colon)->java_lang_String_value);
-        removeObjectFromHeapCollection(threadStateData, ((struct obj__java_lang_String*)indent)->java_lang_String_value);
-    }
-    java_lang_StringBuilder_append___java_lang_String_R_java_lang_StringBuilder(threadStateData, bld, newline);
-
-    for(int iter = threadStateData->callStackOffset - 1 ; iter >= 0 ; iter--) {
-        java_lang_StringBuilder_append___java_lang_String_R_java_lang_StringBuilder(threadStateData, bld, indent);
-
-        int classId = threadStateData->callStackClass[iter];
-        int methodId = threadStateData->callStackMethod[iter];
-        int line = threadStateData->callStackLine[iter];
-        
-        java_lang_StringBuilder_append___java_lang_String_R_java_lang_StringBuilder(threadStateData, bld, STRING_FROM_CONSTANT_POOL_OFFSET(classId));
-
-        java_lang_StringBuilder_append___java_lang_String_R_java_lang_StringBuilder(threadStateData, bld, dot);
-
-        java_lang_StringBuilder_append___java_lang_String_R_java_lang_StringBuilder(threadStateData, bld, STRING_FROM_CONSTANT_POOL_OFFSET(methodId));
-
-        java_lang_StringBuilder_append___java_lang_String_R_java_lang_StringBuilder(threadStateData, bld, colon);
-
-        java_lang_StringBuilder_append___int_R_java_lang_StringBuilder(threadStateData, bld, line);
-        
+    const char *clsName = stringToUTF8(threadStateData, className);
+    if (strstr(clsName, "NoStackTrace")) {
+        // do nothing
+    } else {
+        java_lang_StringBuilder_append___java_lang_String_R_java_lang_StringBuilder(threadStateData, bld, className);
+        if(newline == JAVA_NULL) {
+            newline = newStringFromCString(threadStateData, "\n");
+            newline->__codenameOneReferenceCount = 999999;
+            dot = newStringFromCString(threadStateData, ".");
+            dot->__codenameOneReferenceCount = 999999;
+            colon = newStringFromCString(threadStateData, ":");
+            colon->__codenameOneReferenceCount = 999999;
+            indent = newStringFromCString(threadStateData, "    at ");
+            indent->__codenameOneReferenceCount = 999999;
+            removeObjectFromHeapCollection(threadStateData, newline);
+            removeObjectFromHeapCollection(threadStateData, dot);
+            removeObjectFromHeapCollection(threadStateData, colon);
+            removeObjectFromHeapCollection(threadStateData, indent);
+            removeObjectFromHeapCollection(threadStateData, ((struct obj__java_lang_String*)newline)->java_lang_String_value);
+            removeObjectFromHeapCollection(threadStateData, ((struct obj__java_lang_String*)dot)->java_lang_String_value);
+            removeObjectFromHeapCollection(threadStateData, ((struct obj__java_lang_String*)colon)->java_lang_String_value);
+            removeObjectFromHeapCollection(threadStateData, ((struct obj__java_lang_String*)indent)->java_lang_String_value);
+        }
         java_lang_StringBuilder_append___java_lang_String_R_java_lang_StringBuilder(threadStateData, bld, newline);
+        
+        for(int iter = threadStateData->callStackOffset - 1 ; iter >= 0 ; iter--) {
+            java_lang_StringBuilder_append___java_lang_String_R_java_lang_StringBuilder(threadStateData, bld, indent);
+            
+            int classId = threadStateData->callStackClass[iter];
+            int methodId = threadStateData->callStackMethod[iter];
+            int line = threadStateData->callStackLine[iter];
+            
+            java_lang_StringBuilder_append___java_lang_String_R_java_lang_StringBuilder(threadStateData, bld, STRING_FROM_CONSTANT_POOL_OFFSET(classId));
+            
+            java_lang_StringBuilder_append___java_lang_String_R_java_lang_StringBuilder(threadStateData, bld, dot);
+            
+            java_lang_StringBuilder_append___java_lang_String_R_java_lang_StringBuilder(threadStateData, bld, STRING_FROM_CONSTANT_POOL_OFFSET(methodId));
+            
+            java_lang_StringBuilder_append___java_lang_String_R_java_lang_StringBuilder(threadStateData, bld, colon);
+            
+            java_lang_StringBuilder_append___int_R_java_lang_StringBuilder(threadStateData, bld, line);
+            
+            java_lang_StringBuilder_append___java_lang_String_R_java_lang_StringBuilder(threadStateData, bld, newline);
+        }
     }
     JAVA_OBJECT o = java_lang_StringBuilder_toString___R_java_lang_String(threadStateData, bld);
     o->__codenameOneReferenceCount = 0;

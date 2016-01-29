@@ -30,7 +30,7 @@ import com.codename1.payment.Purchase;
 import com.codename1.payment.PurchaseCallback;
 import com.codename1.ui.Display;
 // ZOOZMARKER_START
-import com.zooz.android.lib.CheckoutActivity;
+//import com.zooz.android.lib.CheckoutActivity;
 // ZOOZMARKER_END
 
 /**
@@ -102,6 +102,7 @@ public class ZoozPurchase extends Purchase implements IntentResultListener, Runn
     // ZOOZMARKER_START    
     @Override
     public String pay(double amount, String currency) {
+        /*
         Intent intent = new Intent(activity, CheckoutActivity.class);
 
         String zoozAppKey = Display.getInstance().getProperty("ZoozAppKey", "");
@@ -137,12 +138,15 @@ public class ZoozPurchase extends Purchase implements IntentResultListener, Runn
             }
         });
         return purchaseId;
+        */
+        return null;
     }
     // ZOOZMARKER_END
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-    // ZOOZMARKER_START    
+        /*
+    // ZOOZMARKER_START
         if(resultCode == Activity.RESULT_OK){
             failMessage = null;
             purchaseId = data.getStringExtra(CheckoutActivity.ZOOZ_TRANSACTION_ID);
@@ -165,6 +169,7 @@ public class ZoozPurchase extends Purchase implements IntentResultListener, Runn
             notify();
         }
     // ZOOZMARKER_END
+        */
     }
     
     @Override
