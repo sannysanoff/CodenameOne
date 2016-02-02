@@ -256,7 +256,10 @@ public class ByteCodeTranslator {
 
             List<String> includeFrameworks = new ArrayList<String>();
             includeFrameworks.add("libiconv.dylib");
-            //includeFrameworks.add("AdSupport.framework");
+            includeFrameworks.add("AdSupport.framework");
+            includeFrameworks.add("GoogleMobileAds.framework");
+            includeFrameworks.add("EventKit.framework");
+            includeFrameworks.add("EventKitUI.framework");
             includeFrameworks.add("AddressBookUI.framework");
             includeFrameworks.add("SystemConfiguration.framework");
             includeFrameworks.add("MapKit.framework");
@@ -271,11 +274,13 @@ public class ByteCodeTranslator {
             includeFrameworks.add("StoreKit.framework");
             includeFrameworks.add("CoreMotion.framework");
             includeFrameworks.add("CoreLocation.framework");
+            includeFrameworks.add("CoreTelephony.framework");
             includeFrameworks.add("MessageUI.framework");
             includeFrameworks.add("MediaPlayer.framework");
             includeFrameworks.add("AVFoundation.framework");
             includeFrameworks.add("CoreVideo.framework");
             includeFrameworks.add("QuickLook.framework");
+            includeFrameworks.add("CoreGraphics.framework");
             //includeFrameworks.add("iAd.framework");
             includeFrameworks.add("CoreMedia.framework");
             includeFrameworks.add("libz.dylib");

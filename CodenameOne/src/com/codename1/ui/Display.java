@@ -662,7 +662,7 @@ public final class Display {
         getImplementation().setDragStartPercentage(dragStartPercentage);
     }
 
-    CodenameOneImplementation getImplementation() {
+    public CodenameOneImplementation getImplementation() {
         return impl;
     }
 

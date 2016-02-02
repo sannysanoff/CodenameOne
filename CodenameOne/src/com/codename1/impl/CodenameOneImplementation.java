@@ -6731,5 +6731,15 @@ public abstract class CodenameOneImplementation {
     public void cancelLocalNotification(String notificationId) {
     }
     //ENDS METHODS FOR DEALING Local Notifications
+
+    public Rectangle getAdRectangle() {
+        return null;
+    }
     
+    public void setAdTop(int top) {
+    }
+
+    public void setAdVisibilityAndAlpha(boolean visibility, double alpha) {
+    }
+
 }

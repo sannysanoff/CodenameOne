@@ -25,6 +25,7 @@ package com.codename1.impl.android;
 import com.codename1.location.AndroidLocationManager;
 import android.app.*;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.Handler;
 import android.view.MotionEvent;
 import com.codename1.codescan.ScanResult;
 import com.codename1.media.Media;
@@ -202,6 +203,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     public static boolean textureView = false;
     private Media background;
     private boolean asyncEditMode = false;
+    public static Handler mainThreadHandler;
     
     /**
      * This method in used internally for ads
@@ -6615,5 +6617,41 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         n.setBadgeNumber(b.getInt("NOTIF_NUMBER"));
         return n;
     }
+
+    public Rectangle getAdRectangle() {
+        if (viewBelow == null) return null;
+        ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams)viewBelow.getLayoutParams();
+        int topMargin = layoutParams.topMargin;
+        return new Rectangle(0, topMargin, viewBelow.getWidth(), viewBelow.getHeight());
+    }
+
+    public void setAdTop(int top) {
+        if (viewBelow == null) return;
+        int intMyHeight = getDisplayHeight();
+        System.out.println("Oh");
+        int desiredBottom = top + viewBelow.getHeight();
+        int desiredBottomPadding = intMyHeight - desiredBottom;
+        if (desiredBottomPadding < 0) desiredBottomPadding = 0;
+        final ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams)viewBelow.getLayoutParams();
+        layoutParams.bottomMargin = desiredBottomPadding;
+        mainThreadHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                viewBelow.setLayoutParams(layoutParams);
+            }
+        });
+    }
+
+    public void setAdVisibilityAndAlpha(final boolean visibility, final double alpha) {
+        if (viewBelow == null) return;
+        mainThreadHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                viewBelow.setAlpha((float)alpha);
+                viewBelow.setVisibility(visibility ? View.VISIBLE : View.GONE);
+            }
+        });
+    }
+
     
 }
