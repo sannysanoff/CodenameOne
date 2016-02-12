@@ -393,7 +393,7 @@ public class Parser extends ClassVisitor {
         System.out.println("outputDirectory is: " + outputDirectory.getAbsolutePath() );
         String file = "Unknown File";
         try {
-            System.out.println("Iterate first..");
+            System.out.println("Iterate first.. ("+classes.size()+")");
             for(ByteCodeClass bc : classes) {
                 // special case for object
                 if(bc.getClsName().equals("java_lang_Object")) {
@@ -407,12 +407,12 @@ public class Parser extends ClassVisitor {
                 }
                 bc.setBaseInterfacesObject(lst);
             }
-            if(ByteCodeTranslator.verbose) System.out.println("Iterate second..");
+            if(ByteCodeTranslator.verbose) System.out.println("Iterate second.. ("+classes.size()+")");
             for(ByteCodeClass bc : classes) {
                 file = bc.getClsName();
                 bc.updateAllDependencies();
             }
-            if(ByteCodeTranslator.verbose) System.out.println("Mark deps..");
+            if(ByteCodeTranslator.verbose) System.out.println("Mark deps..("+classes.size()+")");
             ByteCodeClass.markDependencies(classes);
             classes = ByteCodeClass.clearUnmarked(classes);
 
@@ -427,7 +427,7 @@ public class Parser extends ClassVisitor {
 
             if(ByteCodeTranslator.verbose) System.out.println("Generate common header..");
             generateClassAndMethodIndexHeader(outputDirectory);
-            if(ByteCodeTranslator.verbose) System.out.println("Generate all classes..");
+            if(ByteCodeTranslator.verbose) System.out.println("Generate all classes.. ("+classes.size()+")");
             for(ByteCodeClass bc : classes) {
                 file = bc.getClsName();
                 writeFile(bc.getClsName(), bc, outputDirectory);
