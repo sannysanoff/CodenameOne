@@ -238,7 +238,7 @@ public class ByteCodeTranslator {
                     return filename.endsWith(".bundle") || filename.endsWith(".xcdatamodeld") || !pathname.isHidden() && !filename.startsWith(".") && !"Images.xcassets".equals(filename);
                 }
             });
-            
+
             StringBuilder fileOneEntry = new StringBuilder();
             StringBuilder fileTwoEntry = new StringBuilder();
             StringBuilder fileListEntry = new StringBuilder();
@@ -307,6 +307,9 @@ public class ByteCodeTranslator {
             });
             
             for(String file : arr) {
+                if (file.endsWith(".h")) {
+                    continue;
+                }
                 if (file.endsWith(PreservingFileOutputStream.NEW_SUFFIX)) {
                     file = file.substring(0, file.length()-PreservingFileOutputStream.NEW_SUFFIX.length());
                 } else {
