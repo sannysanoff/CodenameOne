@@ -352,7 +352,7 @@ public class TextArea extends Component {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     protected void initLaf(UIManager uim) {
         super.initLaf(uim);
@@ -385,7 +385,7 @@ public class TextArea extends Component {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public void setWidth(int width) {
         if(width != getWidth()) {
@@ -481,7 +481,7 @@ public class TextArea extends Component {
     }
     
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public void keyPressed(int keyCode) {
         super.keyPressed(keyCode);
@@ -522,21 +522,21 @@ public class TextArea extends Component {
     
     
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     protected void fireClicked() {
         onClick();
     }
     
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     protected boolean isSelectableInteraction() {
         return editable;
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public void keyReleased(int keyCode) {
         int action = com.codename1.ui.Display.getInstance().getGameAction(keyCode);
@@ -555,7 +555,7 @@ public class TextArea extends Component {
     }
     
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public boolean isScrollableY() {
         return isFocusable() && getScrollDimension().getHeight() > getHeight();
@@ -589,14 +589,14 @@ public class TextArea extends Component {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public void pointerHover(int[] x, int[] y) {
         requestFocus();
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public void pointerHoverReleased(int[] x, int[] y) {
         requestFocus();
@@ -607,7 +607,7 @@ public class TextArea extends Component {
     }
     
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public void pointerReleased(int x, int y) {
         // prevent a drag operation from going into edit mode
@@ -637,7 +637,7 @@ public class TextArea extends Component {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     void focusGainedInternal() {
         super.focusGainedInternal();
@@ -645,7 +645,7 @@ public class TextArea extends Component {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     void focusLostInternal() {
         super.focusLostInternal();
@@ -756,7 +756,8 @@ public class TextArea extends Component {
     }
     
     private int indexOf(char[] t, char c, int offset, int length) {
-        for(int iter = offset ; iter < t.length && iter < offset+length; iter++) {
+        int tlen = t.length;
+        for(int iter = offset ; iter < tlen && iter < offset+length; iter++) {
             if(t[iter] == c) {
                 return iter;
            }
@@ -847,7 +848,8 @@ public class TextArea extends Component {
             } else {
                 // special case for the edge case of "no room".
                 // Its important since sometimes this case occurs in the GUI builder by accident
-                for(int iter = 0 ; iter < text.length ; iter++) {
+                int tlen = text.length;
+                for(int iter = 0 ; iter < tlen ; iter++) {
                     rowStrings.add("" + text[iter]);
                 }
             }
@@ -997,7 +999,8 @@ public class TextArea extends Component {
                     } else {
                         // special case for the edge case of "no room".
                         // Its important since sometimes this case occurs in the GUI builder by accident
-                        for(int iter = 0 ; iter < text.length ; iter++) {
+                        int tlen = text.length;
+                        for(int iter = 0 ; iter < tlen ; iter++) {
                             rowStrings.add("" + text[iter]);
                         }
                     }
@@ -1033,7 +1036,7 @@ public class TextArea extends Component {
     }
     
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public void paint(Graphics g) {
         
@@ -1056,7 +1059,7 @@ public class TextArea extends Component {
     }
     
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     protected Dimension calcPreferredSize(){
         if(shouldShowHint()) {
@@ -1071,7 +1074,7 @@ public class TextArea extends Component {
     }
         
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     protected Dimension calcScrollSize(){
         return getUIManager().getLookAndFeel().getTextAreaSize(this, false);
@@ -1111,7 +1114,7 @@ public class TextArea extends Component {
      */
     void fireActionEvent() {
         if(actionListeners != null) {
-            ActionEvent evt = new ActionEvent(this);
+            ActionEvent evt = new ActionEvent(this,ActionEvent.Type.Edit);
             actionListeners.fireActionEvent(evt);
         }
         if(bindListeners != null) {
@@ -1122,7 +1125,7 @@ public class TextArea extends Component {
     }
     
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     void onEditComplete(String text) {
         if (!Display.getInstance().getImplementation().isAsyncEditMode()) {
@@ -1414,7 +1417,8 @@ public class TextArea extends Component {
     public static void autoDetectWidestChar(String s) {
         Font f = UIManager.getInstance().getComponentStyle("TextArea").getFont();
         int widest = 0;
-        for(int iter = 0 ; iter < s.length() ; iter++) {
+        int slen = s.length();
+        for(int iter = 0 ; iter < slen ; iter++) {
             char c = s.charAt(iter);
             int w = f.charWidth(c);
             if(w > widest) {
@@ -1549,21 +1553,21 @@ public class TextArea extends Component {
     }
     
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public String[] getBindablePropertyNames() {
         return new String[] {"text"};
     }
     
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public Class[] getBindablePropertyTypes() {
         return new Class[] {String.class};
     }
     
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public void bindProperty(String prop, BindTarget target) {
         if(prop.equals("text")) {
@@ -1577,7 +1581,7 @@ public class TextArea extends Component {
     }
     
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public void unbindProperty(String prop, BindTarget target) {
         if(prop.equals("text")) {
@@ -1594,7 +1598,7 @@ public class TextArea extends Component {
     }
     
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public Object getBoundPropertyValue(String prop) {
         if(prop.equals("text")) {
@@ -1604,7 +1608,7 @@ public class TextArea extends Component {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public void setBoundPropertyValue(String prop, Object value) {
         if(prop.equals("text")) {

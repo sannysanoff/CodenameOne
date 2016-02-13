@@ -26,6 +26,7 @@ package com.codename1.ui;
 import com.codename1.cloud.BindTarget;
 import com.codename1.impl.CodenameOneImplementation;
 import com.codename1.ui.util.EventDispatcher;
+import com.codename1.ui.geom.Point;
 import com.codename1.ui.geom.Rectangle;
 import com.codename1.ui.geom.Dimension;
 import com.codename1.ui.plaf.Style;
@@ -40,6 +41,7 @@ import com.codename1.ui.events.StyleListener;
 import com.codename1.ui.plaf.Border;
 import com.codename1.ui.plaf.LookAndFeel;
 import com.codename1.ui.plaf.UIManager;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -339,7 +341,9 @@ public class Component implements Animation, StyleListener {
     
     /**
      * Returns a "meta style" that allows setting styles once to all the different Style objects, the getters for this
-     * style will be meaningless and will return 0 values.
+     * style will be meaningless and will return 0 values. Usage:
+     * 
+     * <script src="https://gist.github.com/codenameone/31a32bdcf014a9e55a95.js"></script>
      * @return a unified style object for the purpose of setting on object object instances
      */
     public Style getAllStyles() {
@@ -431,6 +435,7 @@ public class Component implements Animation, StyleListener {
 
     private void initStyle() {
         unSelectedStyle = getUIManager().getComponentStyle(getUIID());
+        lockStyleImages(unSelectedStyle);
         if (unSelectedStyle != null) {
             unSelectedStyle.addStyleListener(this);
             if (unSelectedStyle.getBgPainter() == null) {
@@ -2855,7 +2860,7 @@ public class Component implements Animation, StyleListener {
         Form p = getComponentForm();
         
         if (pointerDraggedListeners != null && pointerDraggedListeners.hasListeners()) {
-            pointerDraggedListeners.fireActionEvent(new ActionEvent(this, x, y));
+            pointerDraggedListeners.fireActionEvent(new ActionEvent(this, ActionEvent.Type.PointerDrag, x, y));
         }
         
         if(dragAndDropInitialized) {
@@ -3076,7 +3081,7 @@ public class Component implements Animation, StyleListener {
     public void pointerPressed(int x, int y) {
         dragActivated = false;
         if (pointerPressedListeners != null && pointerPressedListeners.hasListeners()) {
-            pointerPressedListeners.fireActionEvent(new ActionEvent(this, x, y));
+            pointerPressedListeners.fireActionEvent(new ActionEvent(this, ActionEvent.Type.PointerPressed, x, y));
         }
         clearDrag();
         if(isDragAndDropOperation(x, y)) {
@@ -3120,7 +3125,7 @@ public class Component implements Animation, StyleListener {
      */
     public void pointerReleased(int x, int y) {
         if (pointerReleasedListeners != null && pointerReleasedListeners.hasListeners()) {
-            ActionEvent ev = new ActionEvent(this, x, y);
+            ActionEvent ev = new ActionEvent(this, ActionEvent.Type.PointerReleased, x, y);
             pointerReleasedListeners.fireActionEvent(ev);
             if(ev.isConsumed()) {
                 return;
@@ -3261,7 +3266,7 @@ public class Component implements Animation, StyleListener {
                 p.repaint(x, y, getWidth(), getHeight());
                 getParent().scrollRectToVisible(x, y, getWidth(), getHeight(), getParent());
                 if(dropListener != null) {
-                    ActionEvent ev = new ActionEvent(this, dropTargetComponent, x, y);
+                    ActionEvent ev = new ActionEvent(this, ActionEvent.Type.PointerDrag, dropTargetComponent, x, y);
                     dropListener.fireActionEvent(ev);
                     if(!ev.isConsumed()) {
                         dropTargetComponent.drop(this, x, y);
@@ -3271,7 +3276,7 @@ public class Component implements Animation, StyleListener {
                 }
             } else {
                 if(dragOverListener != null) {
-                    ActionEvent ev = new ActionEvent(this, null, x, y);
+                    ActionEvent ev = new ActionEvent(this, ActionEvent.Type.PointerDrag,null, x, y);
                     dragOverListener.fireActionEvent(ev);
                 }
                 p.repaint();
@@ -3833,7 +3838,7 @@ public class Component implements Animation, StyleListener {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public boolean animate() {
         if(!visible){
@@ -4179,6 +4184,18 @@ public class Component implements Animation, StyleListener {
         this.isScrollVisible = isScrollVisible;
     }
 
+    void lockStyleImages(Style stl) {
+        Image i = stl.getBgImage();
+        if(i != null) {
+            i.lock();
+        } else {
+            Border b = stl.getBorder();
+            if(b != null) {
+                b.lock();
+            }
+        }
+    }
+    
     /**
      * Invoked internally to initialize and bind the component
      */
@@ -4187,15 +4204,7 @@ public class Component implements Animation, StyleListener {
             initialized = true;
             UIManager manager = getUIManager();
             Style stl = getStyle();
-            Image i = stl.getBgImage();
-            if(i != null) {
-                i.lock();
-            } else {
-                Border b = stl.getBorder();
-                if(b != null) {
-                    b.lock();
-                }
-            }
+            lockStyleImages(stl);
             manager.getLookAndFeel().bind(this);
             checkAnimation();
             if(isRTL() && isScrollableX()){
@@ -4303,7 +4312,7 @@ public class Component implements Animation, StyleListener {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public void styleChanged(String propertyName, Style source) {
         //changing the Font, Padding, Margin may casue the size of the Component to Change

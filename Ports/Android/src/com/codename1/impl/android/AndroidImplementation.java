@@ -178,7 +178,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     static final int DROID_IMPL_KEY_MUTE = -23459;
     static int[] leftSK = new int[]{DROID_IMPL_KEY_MENU};
     CodenameOneSurface myView = null;
-    private CodenameOneTextPaint defaultFont;
+    CodenameOneTextPaint defaultFont;
     private final char[] tmpchar = new char[1];
     private final Rect tmprect = new Rect();
     protected int defaultFontHeight;
@@ -202,6 +202,19 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     public static boolean textureView = false;
     private Media background;
     private boolean asyncEditMode = false;
+    private boolean compatPaintMode;
+
+    @Override
+    public void setPlatformHint(String key, String value) {
+        if(key.equals("platformHint.compatPaintMode")) {
+            compatPaintMode = value.equalsIgnoreCase("true");
+            return;
+        }
+        if(key.equals("platformHint.legacyPaint")) {
+            AndroidAsyncView.legacyPaintLogic = value.equalsIgnoreCase("true");;
+        }
+    }
+
     
     /**
      * This method in used internally for ads
@@ -1568,16 +1581,28 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
 
     @Override
     public void paintComponentBackground(Object graphics, int x, int y, int width, int height, Style s) {
+        if((!asyncView) || compatPaintMode) {
+            super.paintComponentBackground(graphics, x, y, width, height, s);
+            return;
+        }
         ((AndroidGraphics) graphics).paintComponentBackground(x, y, width, height, s);
     }
 
     @Override
     public void fillLinearGradient(Object graphics, int startColor, int endColor, int x, int y, int width, int height, boolean horizontal) {
+        if(!asyncView) {
+            super.fillLinearGradient(graphics, startColor, endColor, x, y, width, height, horizontal);
+            return;
+        }
         ((AndroidGraphics)graphics).fillLinearGradient(startColor, endColor, x, y, width, height, horizontal);
     }
 
     @Override
     public void fillRectRadialGradient(Object graphics, int startColor, int endColor, int x, int y, int width, int height, float relativeX, float relativeY, float relativeSize) {
+        if(!asyncView) {
+            super.fillRectRadialGradient(graphics, startColor, endColor, x, y, width, height, relativeX, relativeY, relativeSize);
+            return;
+        }
         ((AndroidGraphics)graphics).fillRectRadialGradient(startColor, endColor, x, y, width, height, relativeX, relativeY, relativeSize);
     }
 
@@ -1587,12 +1612,16 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     }
         
 
-    /*@Override
+    @Override
     public void drawLabelComponent(Object nativeGraphics, int cmpX, int cmpY, int cmpHeight, int cmpWidth, Style style, String text, Object icon, Object stateIcon, int preserveSpaceForState, int gap, boolean rtl, boolean isOppositeSide, int textPosition, int stringWidth, boolean isTickerRunning, int tickerShiftText, boolean endsWith3Points, int valign) {
+        if(AndroidAsyncView.legacyPaintLogic) {
+            super.drawLabelComponent(nativeGraphics, cmpX, cmpY, cmpHeight, cmpWidth, style, text, icon, stateIcon, preserveSpaceForState, gap, rtl, isOppositeSide, textPosition, stringWidth, isTickerRunning, tickerShiftText, endsWith3Points, valign);
+            return;
+        }
         ((AndroidGraphics)nativeGraphics).drawLabelComponent(cmpX, cmpY, cmpHeight, cmpWidth, style, text, 
                 (Bitmap)icon, (Bitmap)stateIcon, preserveSpaceForState, gap, rtl, isOppositeSide, textPosition, stringWidth, 
                 isTickerRunning, tickerShiftText, endsWith3Points, valign);
-    }*/
+    }
 
    
     @Override

@@ -73,8 +73,8 @@ import com.codename1.ui.plaf.Style;
  */
 class AndroidGraphics {
 
-    private Canvas canvas;
-    private Paint paint;
+    protected Canvas canvas;
+    protected Paint paint;
     private CodenameOneTextPaint font;
     private Transform transform;
     private Matrix convertedTransform;
@@ -84,8 +84,8 @@ class AndroidGraphics {
     private final RectF tmprectF = new RectF();
     private final Rect tmprect = new Rect();
     private final Path tmppath = new Path();
-    private final static PorterDuffXfermode PORTER = new PorterDuffXfermode(PorterDuff.Mode.SRC_OVER);
-    private AndroidImplementation impl;
+    protected final static PorterDuffXfermode PORTER = new PorterDuffXfermode(PorterDuff.Mode.SRC_OVER);
+    AndroidImplementation impl;
     private int alpha = 255;
 
     AndroidGraphics(AndroidImplementation impl, Canvas canvas) {
@@ -181,8 +181,25 @@ class AndroidGraphics {
         canvas.drawRect(dest, tilePainter);
         canvas.restore();
     }
+    
+    private void tileImageImpl(Object img, int x, int y, int w, int h) {
+        Bitmap b = (Bitmap) img;
+        Rect dest = new Rect();
+        dest.top = 0;
+        dest.bottom = h;
+        dest.left = 0;
+        dest.right = w;
+        BitmapShader shader = new BitmapShader(b, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
+        Paint tilePainter = new Paint();
+        tilePainter.setShader(shader);
+        tilePainter.setAntiAlias(false);
+        canvas.translate(x, y);
+        canvas.concat(getTransformMatrix());
+        canvas.drawRect(dest, tilePainter);
+    }
+    
 
-    private Matrix getTransformMatrix(){
+    protected Matrix getTransformMatrix(){
         if ( transformDirty ){
         	// Conversion from 4x4 to 3x3
         	// See http://www.w3.org/TR/2009/WD-SVG-Transforms-20090320/#_4x4-to-3x3-conversion
@@ -335,7 +352,7 @@ class AndroidGraphics {
 
    public void fillRect(int x, int y, int w, int h, byte alpha) {
         if(alpha != 0) {
-            int oldAlpha = alpha;
+            int oldAlpha = getAlpha();
             setAlpha(alpha & 0xff);
             fillRect(x, y, w, h);
             setAlpha(oldAlpha);
@@ -344,7 +361,7 @@ class AndroidGraphics {
 
    public void fillRectImpl(int x, int y, int w, int h, byte alpha) {
         if(alpha != 0) {
-            int oldAlpha = alpha;
+            int oldAlpha = getAlpha();
             setAlpha(alpha & 0xff);
 
             boolean antialias = paint.isAntiAlias();
@@ -357,6 +374,193 @@ class AndroidGraphics {
         }
     }
 
+    public void paintComponentBackground(byte bgType, Image bgImageOrig, int bgColor, byte bgTransparency,
+                                         int startColor, int endColor, float relativeX,
+                                         float relativeY, float relativeSize,
+                                         int x, int y, int width, int height) {
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+        canvas.save();
+        canvas.concat(getTransformMatrix());
+        if (bgImageOrig == null) {
+            if(bgType >= Style.BACKGROUND_GRADIENT_LINEAR_VERTICAL) {
+                drawGradientBackground(bgType, bgColor, bgTransparency, startColor, endColor,
+                        relativeX, relativeY, relativeSize, x, y, width, height);
+                canvas.restore();
+                return;
+            }
+            setColor(bgColor);
+            fillRectImpl(x, y, width, height, bgTransparency);
+            canvas.restore();
+            return;
+        } else {
+            int iW = bgImageOrig.getWidth();
+            int iH = bgImageOrig.getHeight();
+            Object bgImage = bgImageOrig.getImage();
+            switch (bgType) {
+                case Style.BACKGROUND_NONE:
+                    if(bgTransparency != 0) {
+                        setColor(bgColor);
+                        fillRectImpl(x, y, width, height, bgTransparency);
+                    }
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_IMAGE_SCALED:
+                    drawImageImpl(bgImage, x, y, width, height);
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_IMAGE_SCALED_FILL:
+                    float r = Math.max(((float)width) / ((float)iW), ((float)height) / ((float)iH));
+                    int bwidth = (int)(((float)iW) * r);
+                    int bheight = (int)(((float)iH) * r);
+                    drawImageImpl(bgImage, x + (width - bwidth) / 2, y + (height - bheight) / 2, bwidth, bheight);
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_IMAGE_SCALED_FIT:
+                    if(bgTransparency != 0) {
+                        setColor(bgColor);
+                        fillRectImpl(x, y, width, height, bgTransparency);
+                    }
+                    float r2 = Math.min(((float)width) / ((float)iW), ((float)height) / ((float)iH));
+                    int awidth = (int)(((float)iW) * r2);
+                    int aheight = (int)(((float)iH) * r2);
+                    drawImageImpl(bgImage, x + (width - awidth) / 2, y + (height - aheight) / 2, awidth, aheight);
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_IMAGE_TILE_BOTH:
+                    tileImageImpl(bgImage, x, y, width, height);
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_IMAGE_TILE_HORIZONTAL_ALIGN_TOP:
+                    setColor(bgColor);
+                    fillRectImpl(x, y, width, height, bgTransparency);
+                    tileImageImpl(bgImage, x, y, width, iH);
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_IMAGE_TILE_HORIZONTAL_ALIGN_CENTER:
+                    setColor(bgColor);
+                    fillRectImpl(x, y, width, height, bgTransparency);
+                    tileImageImpl(bgImage, x, y + (height / 2 - iH / 2), width, iH);
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_IMAGE_TILE_HORIZONTAL_ALIGN_BOTTOM:
+                    setColor(bgColor);
+                    fillRectImpl(x, y, width, height, bgTransparency);
+                    tileImageImpl(bgImage, x, y + (height - iH), width, iH);
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_IMAGE_TILE_VERTICAL_ALIGN_LEFT:
+                    setColor(bgColor);
+                    fillRectImpl(x, y, width, height, bgTransparency);
+                    for (int yPos = 0; yPos <= height; yPos += iH) {
+                        canvas.drawBitmap((Bitmap) bgImage, x, y + yPos, paint);
+                    }
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_IMAGE_TILE_VERTICAL_ALIGN_CENTER:
+                    setColor(bgColor);
+                    fillRectImpl(x, y, width, height, bgTransparency);
+                    for (int yPos = 0; yPos <= height; yPos += iH) {
+                        canvas.drawBitmap((Bitmap) bgImage, x + (width / 2 - iW / 2), y + yPos, paint);
+                    }
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_IMAGE_TILE_VERTICAL_ALIGN_RIGHT:
+                    setColor(bgColor);
+                    fillRectImpl(x, y, width, height, bgTransparency);
+                    for (int yPos = 0; yPos <= height; yPos += iH) {
+                        canvas.drawBitmap((Bitmap) bgImage, x + width - iW, y + yPos, paint);
+                    }
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_IMAGE_ALIGNED_TOP:
+                    setColor(bgColor);
+                    fillRectImpl(x, y, width, height, bgTransparency);
+                    canvas.drawBitmap((Bitmap) bgImage, x + (width / 2 - iW / 2), y, paint);
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_IMAGE_ALIGNED_BOTTOM:
+                    setColor(bgColor);
+                    fillRectImpl(x, y, width, height, bgTransparency);
+                    canvas.drawBitmap((Bitmap) bgImage, x + (width / 2 - iW / 2), y + (height - iH), paint);
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_IMAGE_ALIGNED_LEFT:
+                    setColor(bgColor);
+                    fillRectImpl(x, y, width, height, bgTransparency);
+                    canvas.drawBitmap((Bitmap) bgImage, x, y + (height / 2 - iH / 2), paint);
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_IMAGE_ALIGNED_RIGHT:
+                    setColor(bgColor);
+                    fillRectImpl(x, y, width, height, bgTransparency);
+                    canvas.drawBitmap((Bitmap) bgImage, x + width - iW, y + (height / 2 - iH / 2), paint);
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_IMAGE_ALIGNED_CENTER:
+                    setColor(bgColor);
+                    fillRectImpl(x, y, width, height, bgTransparency);
+                    canvas.drawBitmap((Bitmap) bgImage, x + (width / 2 - iW / 2), y + (height / 2 - iH / 2), paint);
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_IMAGE_ALIGNED_TOP_LEFT:
+                    setColor(bgColor);
+                    fillRectImpl(x, y, width, height, bgTransparency);
+                    canvas.drawBitmap((Bitmap) bgImage, x, y, paint);
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_IMAGE_ALIGNED_TOP_RIGHT:
+                    setColor(bgColor);
+                    fillRectImpl(x, y, width, height, bgTransparency);
+                    canvas.drawBitmap((Bitmap) bgImage, x + width - iW, y, paint);
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_IMAGE_ALIGNED_BOTTOM_LEFT:
+                    setColor(bgColor);
+                    fillRectImpl(x, y, width, height, bgTransparency);
+                    canvas.drawBitmap((Bitmap) bgImage, x, y + (height - iH), paint);
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_IMAGE_ALIGNED_BOTTOM_RIGHT:
+                    setColor(bgColor);
+                    fillRectImpl(x, y, width, height, bgTransparency);
+                    canvas.drawBitmap((Bitmap) bgImage, x + width - iW, y + (height - iH), paint);
+                    canvas.restore();
+                    return;
+                case Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL:
+                case Style.BACKGROUND_GRADIENT_LINEAR_VERTICAL:
+                case Style.BACKGROUND_GRADIENT_RADIAL:
+                    drawGradientBackground(bgType, bgColor, bgTransparency, startColor, endColor,
+                            relativeX, relativeY, relativeSize, x, y, width, height);
+                    canvas.restore();
+                    return;
+            }
+        }
+    }
+
+    private void drawGradientBackground(byte bgType, int bgColor, byte bgTransparency, int startColor, int endColor, float relativeX,
+                        float relativeY, float relativeSize,
+                        int x, int y, int width, int height) {
+        switch (bgType) {
+            case Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL:
+                fillLinearGradient(startColor, endColor,
+                        x, y, width, height, true);
+                return;
+            case Style.BACKGROUND_GRADIENT_LINEAR_VERTICAL:
+                fillLinearGradient(startColor, endColor,
+                        x, y, width, height, false);
+                return;
+            case Style.BACKGROUND_GRADIENT_RADIAL:
+                fillRectRadialGradient(startColor, endColor,
+                        x, y, width, height, relativeX, relativeY,
+                        relativeSize);
+                return;
+        }
+        setColor(bgColor);
+        fillRectImpl(x, y, width, height, bgTransparency);
+    }   
+   
     public void paintComponentBackground(int x, int y, int width, int height, Style s) {
         if (width <= 0 || height <= 0) {
             return;
@@ -409,25 +613,25 @@ class AndroidGraphics {
                     canvas.restore();
                 return;
                 case Style.BACKGROUND_IMAGE_TILE_BOTH:
-                    tileImage(bgImage, x, y, width, height);
+                    tileImageImpl(bgImage, x, y, width, height);
                     canvas.restore();
                     return;
                 case Style.BACKGROUND_IMAGE_TILE_HORIZONTAL_ALIGN_TOP:
                     setColor(s.getBgColor());
                     fillRectImpl(x, y, width, height, s.getBgTransparency());
-                    tileImage(bgImage, x, y, width, iH);
+                    tileImageImpl(bgImage, x, y, width, iH);
                     canvas.restore();
                 return;
                 case Style.BACKGROUND_IMAGE_TILE_HORIZONTAL_ALIGN_CENTER:
                     setColor(s.getBgColor());
                     fillRectImpl(x, y, width, height, s.getBgTransparency());
-                    tileImage(bgImage, x, y + (height / 2 - iH / 2), width, iH);
+                    tileImageImpl(bgImage, x, y + (height / 2 - iH / 2), width, iH);
                     canvas.restore();
                 return;
                 case Style.BACKGROUND_IMAGE_TILE_HORIZONTAL_ALIGN_BOTTOM:
                     setColor(s.getBgColor());
                     fillRectImpl(x, y, width, height, s.getBgTransparency());
-                    tileImage(bgImage, x, y + (height - iH), width, iH);
+                    tileImageImpl(bgImage, x, y + (height - iH), width, iH);
                     canvas.restore();
                 return;
                 case Style.BACKGROUND_IMAGE_TILE_VERTICAL_ALIGN_LEFT:
@@ -542,6 +746,7 @@ class AndroidGraphics {
         boolean antialias = paint.isAntiAlias();
         paint.setStyle(Paint.Style.FILL);
         paint.setAntiAlias(false);
+        paint.setAlpha(255);
         if(!horizontal) {
             paint.setShader(new LinearGradient(x, y, 0, height, startColor, endColor, Shader.TileMode.MIRROR));
         } else {
@@ -559,6 +764,7 @@ class AndroidGraphics {
         boolean antialias = paint.isAntiAlias();
         paint.setStyle(Paint.Style.FILL);
         paint.setAntiAlias(false);
+        paint.setAlpha(255);
         paint.setShader(new RadialGradient(x, y, Math.max(width, height), startColor, endColor, Shader.TileMode.MIRROR));
         canvas.save();
         canvas.concat(getTransformMatrix());
@@ -572,6 +778,7 @@ class AndroidGraphics {
         boolean antialias = paint.isAntiAlias();
         paint.setStyle(Paint.Style.FILL);
         paint.setAntiAlias(false);
+        paint.setAlpha(255);
         paint.setShader(new RadialGradient(x, y, Math.max(width, height), startColor, endColor, Shader.TileMode.MIRROR));
         canvas.save();
         canvas.concat(getTransformMatrix());
@@ -755,14 +962,14 @@ class AndroidGraphics {
                     if (iconHeight > fontHeight) {
                         iconStringHGap = (iconHeight - fontHeight) / 2;
                         strWidth = drawLabelStringValign(nativeFont, text, x, y, textSpaceW, isTickerRunning,
-                                tickerShiftText, textDecoration, rtl, endsWith3Points, iconWidth, iconStringHGap, iconHeight,
+                                tickerShiftText, textDecoration, rtl, endsWith3Points, strWidth, iconStringHGap, iconHeight,
                                 fontHeight, valign);
 
                         drawImage(icon, x + strWidth + gap, y);
                     } else {
                         iconStringHGap = (fontHeight - iconHeight) / 2;
                         strWidth = drawLabelString(nativeFont, text, x, y, textSpaceW, isTickerRunning,
-                                tickerShiftText, textDecoration, rtl, endsWith3Points, iconWidth, fontHeight);
+                                tickerShiftText, textDecoration, rtl, endsWith3Points, strWidth, fontHeight);
 
                         drawImage(icon, x + strWidth + gap, y + iconStringHGap);
                     }
@@ -979,7 +1186,7 @@ class AndroidGraphics {
     /**
      * Reverses alignment in the case of bidi
      */
-    private int reverseAlignForBidi(boolean rtl, int align) {
+    protected final int reverseAlignForBidi(boolean rtl, int align) {
         if (rtl) {
             switch (align) {
                 case Component.RIGHT:

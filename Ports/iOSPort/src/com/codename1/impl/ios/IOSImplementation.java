@@ -92,6 +92,7 @@ import com.codename1.ui.Transform;
 import com.codename1.ui.geom.PathIterator;
 import com.codename1.ui.geom.Shape;
 import com.codename1.ui.plaf.Style;
+import com.codename1.ui.spinner.Picker;
 import com.codename1.util.StringUtil;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -539,6 +540,9 @@ public class IOSImplementation extends CodenameOneImplementation {
                 Display.getInstance().onEditingComplete(currentEditing, ((TextArea)currentEditing).getText());
                 currentEditing = null;
                 callHideTextEditor();
+                if (nativeInstance.isAsyncEditMode()) {
+                    nativeInstance.setNativeEditingComponentVisible(false);
+                }
                 synchronized(EDITING_LOCK) {
                     EDITING_LOCK.notify();
                 }
@@ -799,6 +803,9 @@ public class IOSImplementation extends CodenameOneImplementation {
                             }
                             instance.currentEditing = null;
                             instance.callHideTextEditor();
+                            if (nativeInstance.isAsyncEditMode()) {
+                                nativeInstance.setNativeEditingComponentVisible(false);
+                            }
                             EDITING_LOCK.notify();
                         }
                         Form current = Display.getInstance().getCurrent();
@@ -2062,9 +2069,11 @@ public class IOSImplementation extends CodenameOneImplementation {
     
     @Override
     public void setTransform(Object graphics, Transform transform) {
-        ((NativeGraphics)graphics).transform = transform;
-        ((NativeGraphics)graphics).transformApplied = false;
-        ((NativeGraphics)graphics).applyTransform();
+        NativeGraphics ng = (NativeGraphics)graphics;
+        ng.transform = transform;
+        ng.transformApplied = false;
+        ng.checkControl();
+        ng.applyTransform();
         
     }
     
@@ -2084,7 +2093,26 @@ public class IOSImplementation extends CodenameOneImplementation {
             0, 0
         );
     }
+    
+    public void setNativeTransformMutable(Transform transform){
+        Matrix t = (Matrix)transform.getNativeTransform();
+        float[] m = t.getData();
+        
+        
+        // Note that Matrix is stored in column-major format but GLKMatrix is stored in row-major
+        // that's why we transpose it here.
+        //Log.p("....Setting transform.....");
+        nativeInstance.nativeSetTransformMutable(
+            m[0], m[4], m[8], m[12],
+            m[1], m[5], m[9], m[13],
+            m[2], m[6], m[10], m[14],
+            m[3], m[7], m[11], m[15],
+            0, 0
+        );
+    }
 
+    
+    
     @Override
     public boolean transformEqualsImpl(Transform t1, Transform t2) {
         if ( t1 != null ){
@@ -3723,7 +3751,10 @@ public class IOSImplementation extends CodenameOneImplementation {
         }
 
         public void applyTransform(){
-            
+            if (!transformApplied) {
+                setNativeTransformMutable(this.transform);
+                transformApplied = true;
+            }
         }
         
         public void pushClip(){
@@ -3844,40 +3875,104 @@ public class IOSImplementation extends CodenameOneImplementation {
         }
         
         
+        private float[] tmpNativeDrawShape_buf = new float[6];
+        private float[] tmpNativeDrawShape_coords;
+        
+        private float[] getTmpNativeDrawShape_coords(int size) {
+            if (tmpNativeDrawShape_coords == null) {
+                tmpNativeDrawShape_coords = new float[size];
+            }
+            if (tmpNativeDrawShape_coords.length < size) {
+                float[] newArray = new float[size];
+                System.arraycopy(tmpNativeDrawShape_coords, 0, newArray, 0, tmpNativeDrawShape_coords.length);
+                tmpNativeDrawShape_coords = newArray;
+            }
+            return tmpNativeDrawShape_coords;
+        }
+        
+        private float[] growTmpNativeDrawShape_coords(int size, int factor) {
+            if (tmpNativeDrawShape_coords.length < size) {
+                float[] newArray = new float[size * factor];
+                System.arraycopy(tmpNativeDrawShape_coords, 0, newArray, 0, tmpNativeDrawShape_coords.length);
+                tmpNativeDrawShape_coords = newArray;
+            }
+            return tmpNativeDrawShape_coords;
+        }
+        
+        private byte[] getTmpNativeDrawShape_commands(int size) {
+            if (tmpNativeDrawShape_commands == null) {
+                tmpNativeDrawShape_commands = new byte[size];
+            }
+            if (tmpNativeDrawShape_commands.length < size) {
+                byte[] newArray = new byte[size];
+                System.arraycopy(tmpNativeDrawShape_commands, 0, newArray, 0, tmpNativeDrawShape_commands.length);
+                tmpNativeDrawShape_commands = newArray;
+            }
+            return tmpNativeDrawShape_commands;
+        }
+        
+        private byte[] growTmpNativeDrawShape_commands(int size, int factor) {
+            if (tmpNativeDrawShape_commands.length < size) {
+                byte[] newArray = new byte[size * factor];
+                System.arraycopy(tmpNativeDrawShape_commands, 0, newArray, 0, tmpNativeDrawShape_commands.length);
+                tmpNativeDrawShape_commands = newArray;
+            }
+            return tmpNativeDrawShape_commands;
+        }
+        
+        private byte[] tmpNativeDrawShape_commands;
+        
         /**
          * Draws a shape in the graphics context
          * @param shape
-         * @param lineWidth
-         * @param capStyle
-         * @param miterStyle
-         * @param miterLimit
-         * @param x
-         * @param y
-         * @param w
-         * @param h 
+         * @param stroke
          */
         void nativeDrawShape(Shape shape, Stroke stroke){//float lineWidth, int capStyle, int miterStyle, float miterLimit){
-      
+            if (shape.getClass() == GeneralPath.class) {
+                // GeneralPath gives us some easy access to the points
+                GeneralPath p = (GeneralPath)shape;
+                int commandsLen = p.getTypesSize();
+                int pointsLen = p.getPointsSize();
+                byte[] commandsArr = getTmpNativeDrawShape_commands(commandsLen);
+                float[] pointsArr = getTmpNativeDrawShape_coords(pointsLen);
+                p.getTypes(commandsArr);
+                p.getPoints(pointsArr);
+                
+                nativeInstance.nativeDrawShapeMutable(color, alpha, commandsLen, commandsArr, pointsLen, pointsArr, stroke.getLineWidth(), stroke.getCapStyle(), stroke.getJoinStyle(), stroke.getMiterLimit());
+            } else {
+                Log.p("Drawing shapes that are not GeneralPath objects is not yet supported on mutable images.");
+            }
+            
+            
         }
         
         
         /**
          * Fills a shape in the graphics context.
          * @param shape
-         * @param x
-         * @param y
-         * @param w
-         * @param h 
          */
         void nativeFillShape(Shape shape) {
-
+            if (shape.getClass() == GeneralPath.class) {
+                // GeneralPath gives us some easy access to the points
+                GeneralPath p = (GeneralPath)shape;
+                int commandsLen = p.getTypesSize();
+                int pointsLen = p.getPointsSize();
+                byte[] commandsArr = getTmpNativeDrawShape_commands(commandsLen);
+                float[] pointsArr = getTmpNativeDrawShape_coords(pointsLen);
+                p.getTypes(commandsArr);
+                p.getPoints(pointsArr);
+                
+                nativeInstance.nativeFillShapeMutable(color, alpha, commandsLen, commandsArr, pointsLen, pointsArr);
+            } else {
+                Log.p("Drawing shapes that are not GeneralPath objects is not yet supported on mutable images.");
+            }
         }
         
        
         
         
         boolean isTransformSupported(){
-            return false;
+            return true;
         }
         
         boolean isPerspectiveTransformSupported(){
@@ -3885,7 +3980,7 @@ public class IOSImplementation extends CodenameOneImplementation {
         }
         
         boolean isShapeSupported(){
-            return false;
+            return true;
         }
         
         boolean isAlphaMaskSupported(){
@@ -3896,15 +3991,26 @@ public class IOSImplementation extends CodenameOneImplementation {
         //----------------------------------------------------------------------
         
         public void resetAffine() {
+            this.transform.setIdentity();
+            transformApplied = false;
+            this.applyTransform();
         }
 
         public void scale(float x, float y) {
+            this.transform.scale(x, y, 1);
+            transformApplied = false;
+            this.applyTransform();
         }
 
         public void rotate(float angle) {
+            this.transform.rotate(angle, 0, 0);
+            transformApplied = false;
         }
 
         public void rotate(float angle, int x, int y) {
+            this.transform.rotate(angle, x, y);
+            transformApplied = false;
+            this.applyTransform();
         }
         
         public void translate(int x, int y){
@@ -5003,9 +5109,10 @@ public class IOSImplementation extends CodenameOneImplementation {
     @Override
     public String[] getAllContacts(boolean withNumbers) {
         int[] c = new int[nativeInstance.getContactCount(withNumbers)];
+        int clen = c.length;
         nativeInstance.getContactRefIds(c, withNumbers);
-        String[] r = new String[c.length];
-        for(int iter = 0 ; iter < c.length ; iter++) {
+        String[] r = new String[clen];
+        for(int iter = 0 ; iter < clen ; iter++) {
             r[iter] = "" + c[iter];
         }
         return r;
@@ -5920,7 +6027,8 @@ public class IOSImplementation extends CodenameOneImplementation {
         NetworkConnection n = (NetworkConnection)connection;
         n.ensureConnection();
         String[] s = new String[nativeInstance.getResponseHeaderCount(n.peer)];
-        for(int iter = 0 ; iter < s.length ; iter++) {
+        int slen = s.length;
+        for(int iter = 0 ; iter < slen ; iter++) {
             s[iter] = nativeInstance.getResponseHeaderName(n.peer, iter);
         }
         return s;
@@ -6078,7 +6186,8 @@ public class IOSImplementation extends CodenameOneImplementation {
                     nativeInstance.getResourcesDir()
                 };
         }
-        for(int iter = 0 ; iter < roots.length ; iter++) {
+        int rlen = roots.length;
+        for(int iter = 0 ; iter < rlen ; iter++) {
             if(roots[iter].startsWith("/")) {
                 roots[iter] = "file:/" + roots[iter];
             }
@@ -7057,25 +7166,34 @@ public class IOSImplementation extends CodenameOneImplementation {
     @Override
     public Object showNativePicker(final int type, final Component source, final Object currentValue, final Object data) {
         datePickerResult = -2;
-        int x = 0, y = 0, w = 20, h = 20;
+        int x = 0, y = 0, w = 20, h = 20, preferredHeight = 0, preferredWidth = 0;
+        
         if(source != null) {
             x = source.getAbsoluteX();
             y = source.getAbsoluteY();
             w = source.getWidth();
             h = source.getHeight();
         }
+        
+        if (source instanceof Picker) {
+            Picker p = (Picker)source;
+            preferredHeight = p.getPreferredPopupHeight();
+            preferredWidth = p.getPreferredPopupWidth();
+        }
+        
         if(type == Display.PICKER_TYPE_STRINGS) {
             String[] strs = (String[])data;
             int offset = -1;
             if(currentValue != null) {
-                for(int iter = 0 ; iter < strs.length ; iter++) {
+                int slen = strs.length;
+                for(int iter = 0 ; iter < slen ; iter++) {
                     if(strs[iter].equals(currentValue)) {
                         offset = iter;
                         break;
                     }
                 }
             }
-            nativeInstance.openStringPicker(strs, offset, x, y, w, h);
+            nativeInstance.openStringPicker(strs, offset, x, y, w, h, preferredWidth, preferredHeight);
         } else {
             long time;
             if(currentValue instanceof Integer) {
@@ -7086,7 +7204,7 @@ public class IOSImplementation extends CodenameOneImplementation {
             } else {
                 time = ((java.util.Date)currentValue).getTime();
             }
-            nativeInstance.openDatePicker(type, time, x, y, w, h);
+            nativeInstance.openDatePicker(type, time, x, y, w, h, preferredWidth, preferredHeight);
         }
         // wait for the native code to complete
         Display.getInstance().invokeAndBlock(new Runnable() {

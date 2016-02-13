@@ -72,7 +72,7 @@ public class FlowLayout extends Layout{
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public void layoutContainer(Container parent) {
         int x = parent.getStyle().getPadding(parent.isRTL(), Component.LEFT);
@@ -262,7 +262,7 @@ public class FlowLayout extends Layout{
     private Dimension dim = new Dimension(0, 0);
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public  Dimension getPreferredSize(Container parent) {
         int parentWidth = parent.getWidth();
@@ -282,7 +282,7 @@ public class FlowLayout extends Layout{
             int prefW = cmp.getPreferredW()+ cmp.getStyle().getMargin(false, Component.RIGHT)+ cmp.getStyle().getMargin(false, Component.LEFT);
             w += prefW;
             //we need to break a line
-            if (parentWidth > parentPadding && w >= parentWidth && i > 0) {
+            if (parentWidth > parentPadding && w > parentWidth && i > 0) {
                 height += cmp.getPreferredH() + cmp.getStyle().getMargin(false, Component.TOP) + cmp.getStyle().getMargin(false, Component.BOTTOM);
                 width = Math.max(w, width);
                 w = prefW;
@@ -298,7 +298,7 @@ public class FlowLayout extends Layout{
 
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public String toString() {
         return "FlowLayout";
@@ -381,7 +381,7 @@ public class FlowLayout extends Layout{
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public boolean equals(Object o) {
         return super.equals(o) && ((FlowLayout)o).orientation == orientation &&
