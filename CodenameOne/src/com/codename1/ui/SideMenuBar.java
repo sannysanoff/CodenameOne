@@ -111,7 +111,7 @@ public class SideMenuBar extends MenuBar {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     protected void initMenuBar(Form parent) {
         if (parent.getClientProperty("Menu") != null) {
@@ -166,7 +166,7 @@ public class SideMenuBar extends MenuBar {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     protected void removeAllCommands() {
@@ -195,7 +195,7 @@ public class SideMenuBar extends MenuBar {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     protected void unInstallMenuBar() {
@@ -230,7 +230,7 @@ public class SideMenuBar extends MenuBar {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     protected void installMenuBar() {
         if (parent.getClientProperty("Menu") != null) {
@@ -352,7 +352,7 @@ public class SideMenuBar extends MenuBar {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     protected int getDragRegionStatus(int x, int y) {
         if (getUIManager().isThemeConstant("sideMenuFoldedSwipeBool", true)) {
@@ -506,7 +506,7 @@ public class SideMenuBar extends MenuBar {
     
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public void addCommand(Command cmd) {
         if (cmd.getClientProperty("TitleCommand") != null) {
@@ -534,7 +534,7 @@ public class SideMenuBar extends MenuBar {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public void setBackCommand(Command backCommand) {
         super.setBackCommand(backCommand);
@@ -557,7 +557,7 @@ public class SideMenuBar extends MenuBar {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     protected void addCommand(Command cmd, int index) {
         if (cmd.getClientProperty("TitleCommand") != null) {
@@ -601,7 +601,7 @@ public class SideMenuBar extends MenuBar {
                 continue;
             }
             if(c instanceof Button && ((Button)c).getCommand() == cmd) {
-                Container cc = getParent();
+                Container cc = c.getParent();
                 if(cc != null) {
                     cc.removeComponent(c);
                 }
@@ -611,7 +611,7 @@ public class SideMenuBar extends MenuBar {
     }
     
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     protected void removeCommand(Command cmd) {
         super.removeCommand(cmd);
@@ -962,7 +962,7 @@ public class SideMenuBar extends MenuBar {
         if (getUIManager().isThemeConstant("paintsTitleBarBool", false)) {
             Container bar = new Container();
             bar.setUIID("StatusBarSideMenu");
-            menu.addComponent(bar);
+            addComponentToSideMenu(menu, bar);
         }
         if (!getUIManager().isThemeConstant("sideMenuTensileDragBool", true)) {
             menu.setTensileDragEnabled(false);
@@ -984,9 +984,9 @@ public class SideMenuBar extends MenuBar {
                     Button btn = createTouchCommandButton(c);
                     btn.setParent(cnt);
                     cnt.setLeadComponent(btn);
-                    menu.addComponent(cnt);
+                    addComponentToSideMenu(menu, cnt);
                 } else {
-                    menu.addComponent(cmp);
+                    addComponentToSideMenu(menu, cmp);
                 }
                 initTitleBarStatus();
             } else {
@@ -995,7 +995,7 @@ public class SideMenuBar extends MenuBar {
                         c.getIcon() == null) {
                     continue;
                 }
-                menu.addComponent(createTouchCommandButton(c));
+                addComponentToSideMenu(menu, createTouchCommandButton(c));
             }
         }
         UIManager uim = menu.getUIManager();
@@ -1038,9 +1038,24 @@ public class SideMenuBar extends MenuBar {
         }
     }
     
-
     /**
-     * @inheritDoc
+     * This method responsible to add a Component to the side navigation panel.
+     *
+     * @param menu the Menu Container that was created in the
+     * constructSideNavigationComponent() method
+     *
+     * @param cmp the Component to add to the side menu
+     */
+    protected void addComponentToSideMenu(Container menu, Component cmp){
+        addComponentToSideMenuImpl(menu, cmp);
+    }
+    
+    void addComponentToSideMenuImpl(Container menu, Component cmp){
+        menu.addComponent(cmp);    
+    }
+    
+    /**
+     * {@inheritDoc}
      */
     protected Button createTouchCommandButton(final Command c) {
 
@@ -1072,7 +1087,7 @@ public class SideMenuBar extends MenuBar {
             void actionCommandImpl(Command cmd, ActionEvent ev) {
                 if (cmd instanceof SideMenuBar.CommandWrapper) {
                     cmd = ((SideMenuBar.CommandWrapper) cmd).cmd;
-                    ev = new ActionEvent(cmd);
+                    ev = new ActionEvent(cmd,ActionEvent.Type.Command);
                 }
                 final Command c = cmd;
                 final ActionEvent e = ev;
@@ -1644,7 +1659,7 @@ public class SideMenuBar extends MenuBar {
             
             public void run() {
                 if(Display.getInstance().isEdt()) {
-                    ActionEvent e = new ActionEvent(cmd);
+                    ActionEvent e = new ActionEvent(cmd,ActionEvent.Type.Command);
                     parent.dispatchCommand(cmd, e);
                     return;
                 }

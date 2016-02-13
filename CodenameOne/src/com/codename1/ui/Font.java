@@ -121,7 +121,9 @@ public class Font {
     private Object font;
 
     private boolean ttf;
-
+    
+    private float pixelSize=-1;	// for derived fonts only, the size that was requested
+    
     private String fontUniqueId;
 
     private static HashMap<String, Font> derivedFontCache = new HashMap<String, Font>();
@@ -259,13 +261,15 @@ public class Font {
                 return f;
             }
             f = new Font(Display.impl.deriveTrueTypeFont(font, sizePixels, weight));
-            derivedFontCache.put(key, f);
+            f.pixelSize = sizePixels;
             f.ttf = true;
+            derivedFontCache.put(key, f);
             return f;
         } else {
             // not sure if this ever happens but don't want to break that code
-            Font f = new Font(Display.impl.deriveTrueTypeFont(font, sizePixels, weight));
-            f.ttf = true;
+        	Font f = new Font(Display.impl.deriveTrueTypeFont(font, sizePixels, weight));
+        	f.pixelSize = sizePixels;
+        	f.ttf = true;
             return f;
         }
     }
@@ -553,7 +557,7 @@ public class Font {
     }
     
     /**
-    * @inheritDoc
+    * {@inheritDoc}
     */
    public boolean equals(Object o) {
        if(ttf) {
@@ -581,4 +585,14 @@ public class Font {
    public int getDescent() {
        return Display.impl.getFontDescent(font);
    }
+   
+   /**
+    * Returns the size with which the font object was created in case of truetype fonts/derived fonts. This
+    * is useful since a platform might change things slightly based on platform constraints but this value should
+    * be 100% consistent
+    * @return the size requested in the derive method
+    */
+    public float getPixelSize() { 
+        return pixelSize; 
+    }
 }

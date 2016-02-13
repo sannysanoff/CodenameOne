@@ -49,7 +49,15 @@ public final class AnimationManager {
      * @return true if an animation is currently in progress
      */
     public boolean isAnimating() {
-        return anims.size() > 0;
+        int size = anims.size();
+        if(size == 0) {
+            return false;
+        }
+        if(size > 1) {
+            return true;
+        }
+        // special case where an animation finished but wasn't removed from the queue just yet...
+        return anims.get(0).isInProgress();
     }
     
     void updateAnimations() {
@@ -124,13 +132,17 @@ public final class AnimationManager {
         parentForm.getContentPane().addScrollListener(new ScrollListener() {
             public void scrollChanged(int scrollX, int scrollY, int oldscrollX, int oldscrollY) {
                 if(scrollY >= 0) {
+                    boolean changed = false;
                     for(ComponentAnimation c : cna) {
                         if(scrollY < c.getMaxSteps()) {
                             c.setStep(scrollY);
                             c.updateAnimationState();
+                            changed = true;
                         }
                     } 
-                    parentForm.revalidate();
+                    if(changed) {
+                        parentForm.revalidate();
+                    }
                 }
             }
         });

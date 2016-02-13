@@ -973,7 +973,7 @@ public final class Display {
             }
             if(!impl.handleEDTException(err)) {
                 if(errorHandler != null) {
-                    errorHandler.fireActionEvent(new ActionEvent(err));
+                    errorHandler.fireActionEvent(new ActionEvent(err,ActionEvent.Type.Exception));
                 } else {
                     Dialog.show("Error", "An internal application error occurred: " + err.toString(), "OK", null);
                 }
@@ -1005,7 +1005,7 @@ public final class Display {
                 }
                 if(!impl.handleEDTException(err)) {
                     if(errorHandler != null) {
-                        errorHandler.fireActionEvent(new ActionEvent(err));
+                        errorHandler.fireActionEvent(new ActionEvent(err,ActionEvent.Type.Exception));
                     } else {
                         Dialog.show("Error", "An internal application error occurred: " + err.toString(), "OK", null);
                     }
@@ -1936,7 +1936,8 @@ public final class Display {
     private int[] readArrayStackArgument(int offset) {
         int[] a = new int[inputEventStackTmp[offset]];
         offset++;
-        for(int iter = 0 ; iter < a.length ; iter++) {
+        int alen = a.length;
+        for(int iter = 0 ; iter < alen ; iter++) {
             a[iter] = inputEventStackTmp[offset + iter];
         }
         return a;
@@ -2784,6 +2785,11 @@ public final class Display {
             Container.blockOverdraw = true;
             return;
         }
+        if(key.startsWith("platformHint.")) {
+            impl.setPlatformHint(key, value);
+            return;
+        }
+        
         if(localProperties == null) {
             localProperties = new HashMap<String, String>();
         }
@@ -3056,7 +3062,32 @@ public final class Display {
     }
 
     /**
-     * This method returns the platform Location Control
+     * This method returns the platform Location Manager used for geofencing. This allows tracking the 
+     * user location in the background. Usage:
+     * 
+     * <script src="https://gist.github.com/codenameone/b0fa5280bde905a8f0cd.js"></script>
+<noscript><pre>{@code public class GeofenceListenerImpl implements GeofenceListener {
+    public void onExit(String id) {
+        System.out.println("Exited "+id);
+    }
+
+    public void onEntered(String id) {
+        System.out.println("Entered "+id);
+    }
+}
+Form hi = new Form("Hi World");
+hi.addComponent(new Label("Hi World"));
+        
+Location loc = new Location();
+loc.setLatitude(51.5033630);
+loc.setLongitude(-0.1276250);
+        
+Geofence gf = new Geofence("test", loc, 100, 100000);
+        
+LocationManager.getLocationManager().addGeoFencing(GeofenceListenerImpl.class, gf);
+        
+hi.show();}</pre></noscript>
+     * 
      * @return LocationManager Object
      */
     public LocationManager getLocationManager() {
