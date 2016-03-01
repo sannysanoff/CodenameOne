@@ -206,6 +206,14 @@ public class Form extends Container {
         
         // hardcoded, anything else is just pointless...
         formStyle.setBgTransparency(0xFF);
+
+        initGlobalToolbar();
+    }
+    
+    void initGlobalToolbar() {
+        if(Toolbar.isGlobalToolbar()) {
+            setToolbar(new Toolbar());
+        }
     }
 
     static int getInvisibleAreaUnderVKB(Form f) {
@@ -531,11 +539,17 @@ public class Form extends Container {
     }
 
     /**
-     * Allows a developer that doesn't derive from the form to draw on top of the 
+     * <p>Allows a developer that doesn't derive from the form to draw on top of the 
      * form regardless of underlying changes or animations. This is useful for
      * watermarks or special effects (such as tinting) it is also useful for generic
      * drawing of validation errors etc... A glass pane is generally 
-     * transparent or translucent and allows the the UI bellow to be seen.
+     * transparent or translucent and allows the the UI below to be seen.</p>
+     * <p>
+     * The example shows a glasspane running on top of a field to show a validation hint,
+     * notice that for real world usage you should probably look into {@link com.codename1.ui.validation.Validator}
+     * </p>
+     * <script src="https://gist.github.com/codenameone/f5b83373088600b19610.js"></script>
+     * <img src="https://www.codenameone.com/img/developer-guide/graphics-glasspane.png" alt="Sample of glasspane" />
      * 
      * @param glassPane a new glass pane to install. It is generally recommended to
      * use a painter chain if more than one painter is required.
@@ -622,11 +636,17 @@ public class Form extends Container {
     }
 
     /**
-     * Allows a developer that doesn't derive from the form to draw on top of the 
+     * <p>Allows a developer that doesn't derive from the form to draw on top of the 
      * form regardless of underlying changes or animations. This is useful for
      * watermarks or special effects (such as tinting) it is also useful for generic
      * drawing of validation errors etc... A glass pane is generally 
-     * transparent or translucent and allows the the UI bellow to be seen.
+     * transparent or translucent and allows the the UI below to be seen.</p>
+     * <p>
+     * The example shows a glasspane running on top of a field to show a validation hint,
+     * notice that for real world usage you should probably look into {@link com.codename1.ui.validation.Validator}
+     * </p>
+     * <script src="https://gist.github.com/codenameone/f5b83373088600b19610.js"></script>
+     * <img src="https://www.codenameone.com/img/developer-guide/graphics-glasspane.png" alt="Sample of glasspane" />
      * 
      * @return the instance of the glass pane for this form
      * @see com.codename1.ui.painter.PainterChain#installGlassPane(Form, com.codename1.ui.Painter) 
@@ -917,6 +937,21 @@ public class Form extends Container {
      */
     public void setBackCommand(Command backCommand) {
         menuBar.setBackCommand(backCommand);
+    }
+
+    /**
+     * Shorthand for {@link #setBackCommand(com.codename1.ui.Command)} that
+     * dynamically creates the command using {@link com.codename1.ui.Command#create(java.lang.String, com.codename1.ui.Image, com.codename1.ui.events.ActionListener)}.
+     * 
+     * @param name the name/title of the command
+     * @param icon the icon for the command
+     * @param ev the even handler
+     * @return a newly created Command instance
+     */
+    public Command setBackCommand(String name, Image icon, ActionListener ev) {
+        Command cmd = Command.create(name, icon, ev);
+        menuBar.setBackCommand(cmd);
+        return cmd;
     }
 
     /**
@@ -1744,13 +1779,7 @@ public class Form extends Container {
             }
             titleStyle.setMarginUnit(null);
             contentStyle.setMarginUnit(null);
-            if (p instanceof BGPainter && ((BGPainter) p).getPreviousForm() != null) {
-                ((BGPainter) p).setPreviousForm(previousForm);
-            } else {
-                BGPainter b = new BGPainter(this, p);
-                getStyle().setBgPainter(b);
-                b.setPreviousForm(previousForm);
-            }
+            initDialogBgPainter(p, previousForm);
             revalidate();
         }
 
@@ -1768,6 +1797,20 @@ public class Form extends Container {
             Display.getInstance().invokeAndBlock(new RunnableWrapper(this, p, reverse));
             // if the virtual keyboard was opend by the dialog close it
             Display.getInstance().setShowVirtualKeyboard(false);
+        }
+    }
+
+    /**
+     * Allows Dialog to override background painting for blur
+     * @param p the painter
+     */
+    void initDialogBgPainter(Painter p, Form previousForm) {
+        if (p instanceof BGPainter && ((BGPainter) p).getPreviousForm() != null) {
+            ((BGPainter) p).setPreviousForm(previousForm);
+        } else {
+            BGPainter b = new BGPainter(this, p);
+            getStyle().setBgPainter(b);
+            b.setPreviousForm(previousForm);
         }
     }
 
@@ -2236,6 +2279,16 @@ public class Form extends Container {
                 if(cmp != null) {
                     cmp = ((Container)cmp).getComponentAt(x, y);
                     if (cmp != null && cmp.isEnabled() && cmp.isFocusable()) {
+                        if(cmp.hasLead) {
+                            Container leadParent;
+                            if (cmp instanceof Container) {
+                                leadParent = ((Container) cmp).getLeadParent();
+                            } else {
+                                leadParent = cmp.getParent().getLeadParent();
+                            }
+                            setFocused(leadParent);
+                            cmp = cmp.getLeadComponent();
+                        }
                         cmp.initDragAndDrop(x, y);
                         cmp.pointerPressed(x, y);
                         tactileTouchVibe(x, y, cmp);
@@ -2573,8 +2626,21 @@ public class Form extends Container {
                         Component cmp = ((BorderLayout)super.getLayout()).getWest();
                         if(cmp != null) {
                             cmp = ((Container)cmp).getComponentAt(x, y);
-                            if (cmp != null && cmp.isEnabled()) {
-                                cmp.pointerReleased(x, y);
+                            if (cmp != null && cmp.isEnabled()) {                                
+                                if(cmp.hasLead) {
+                                    Container leadParent;
+                                    if (cmp instanceof Container) {
+                                        leadParent = ((Container) cmp).getLeadParent();
+                                    } else {
+                                        leadParent = cmp.getParent().getLeadParent();
+                                    }
+                                    leadParent.repaint();
+                                    setFocused(leadParent);
+                                    cmp = cmp.getLeadComponent();
+                                    cmp.pointerReleased(x, y);
+                                } else {
+                                    cmp.pointerReleased(x, y);
+                                }
                             }
                         }
                     }

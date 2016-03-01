@@ -23,6 +23,7 @@
  */
 package com.codename1.ui;
 
+import static com.codename1.ui.Container.enableLayoutOnPaint;
 import com.codename1.ui.animations.Motion;
 import com.codename1.ui.events.ActionEvent;
 import com.codename1.ui.events.ActionListener;
@@ -39,8 +40,8 @@ import com.codename1.ui.plaf.UIManager;
 import com.codename1.ui.util.EventDispatcher;
 
 /**
- * A component that lets the user switch between a group of components by
- * clicking on a tab with a given title and/or icon.
+ * <p>A component that lets the user switch between a group of components by
+ * clicking on a tab with a given title and/or icon.</p>
  *
  * <p>
  * Tabs/components are added to a <code>Tabs</code> object by using the
@@ -48,13 +49,24 @@ import com.codename1.ui.util.EventDispatcher;
  * A tab is represented by an index corresponding
  * to the position it was added in, where the first tab has an index equal to 0
  * and the last tab has an index equal to the tab count minus 1.
+ * </p>
  * <p>
  * The <code>Tabs</code> uses a <code>SingleSelectionModel</code>
  * to represent the set of tab indices and the currently selected index.
  * If the tab count is greater than 0, then there will always be a selected
  * index, which by default will be initialized to the first tab.
  * If the tab count is 0, then the selected index will be -1.
- * <p>
+ * </p>
+ * <p>A simple {@code Tabs} sample looks a bit like this:</p>
+ * <script src="https://gist.github.com/codenameone/ba27124a0a25e685b123.js"></script>
+ * <img src="https://www.codenameone.com/img/developer-guide/components-tabs.png" alt="Simple usage of Tabs" />
+ * 
+ * <p>A common use case for {@code Tabs} is the iOS carousel UI where dots are drawn at the bottom of the 
+ * form and swiping is used to move between pages:</p>
+ * <script src="https://gist.github.com/codenameone/e981c3f91f98f1515987.js"></script>
+ * <img src="https://www.codenameone.com/img/developer-guide/components-tabs-swipe1.png" alt="Tabs carousel page 1" />
+ * <img src="https://www.codenameone.com/img/developer-guide/components-tabs-swipe2.png" alt="Tabs carousel page 2" />
+ * 
  *
  * @author Chen Fishbein
  *
@@ -107,7 +119,7 @@ public class Tabs extends Container {
      * of either: <code>Component.TOP</code>, <code>Component.BOTTOM</code>,
      * <code>Component.LEFT</code>, or <code>Component.RIGHT</code>.
      *
-     * @param tabPlacement the placement for the tabs relative to the content
+     * @param tabP the placement for the tabs relative to the content
      */
     public Tabs(int tabP) {
         super(new BorderLayout());
@@ -257,6 +269,7 @@ public class Tabs extends Container {
                     component.paintLockRelease();
                 }
                 slideToDestMotion = null;
+                enableLayoutOnPaint = true;
                 deregisterAnimatedInternal();
                 setSelectedIndex(active);
             }
@@ -1041,7 +1054,16 @@ public class Tabs extends Container {
     }
 
     /**
-     * The UIID for a tab component which defaults to Tab
+     * <p>The UIID for a tab button which defaults to Tab.
+     * Tab buttons used to have two separate styles for selected and unselected. This was later consolidated so 
+     * the tabs behave as a single toggle button (radio button) however one thing that remained is a call to 
+     * <code>setUIID</code> that is implicitly made to restore the original "Tab" style. </p>
+     * 
+     * <p>Effectively Tabs invokes the <code>setUIID</code> call on the Tab switch so if you want to manipulate
+     * the tab UIID manually (have one red and one green tab) this is a problem.</>.
+     * <p>To enable such code add all the tabs then just just invoke <code>setTabUIID(null)</code> to disable 
+     * this behavior.</p>
+     * 
      * @param tabUIID the tabUIID to set
      */
     public void setTabUIID(String tabUIID) {
@@ -1271,6 +1293,7 @@ public class Tabs extends Container {
                                 component.setX(component.getX() + diffX);
                                 component.paintLock(false);
                             }
+                            enableLayoutOnPaint = false;
                             repaint();
                         }
                     }

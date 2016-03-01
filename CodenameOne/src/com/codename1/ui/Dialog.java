@@ -46,12 +46,13 @@ import java.util.Map;
  * <p>Modality indicates that a dialog will block the calling thread even if the
  * calling thread is the EDT. Notice that a dialog will not release the block
  * until dispose is called even if show() from another form is called! Events are still performed thanks
- * to the <code>invokeAndBlock</code> capability of the <code>Display</code> class.</p>
+ * to the {@link com.codename1.ui.Display#invokeAndBlock(java.lang.Runnable)} capability of the 
+ * <code>Display</code> class.</p>
  * <p>To determine the size of the dialog use the show method that accepts 4 integer
  * values, notice that these values accept margin from the four sides rather than x, y, width
  * and height values!</p>
- * <p>To style the dialog its important to either use the <code>getDialogStyle()</code> or 
- * <code>setDialogUIID</code> methods rather than styling the dialog object directly.</p>
+ * <p>It's important to style a <code>Dialog</code> using {@link Dialog#getDialogStyle()} or 
+ * {@link Dialog#setDialogUIID(java.lang.String)} methods rather than styling the dialog object directly.</p>
  * <p>
  * The <code>Dialog</code> class also includes support for popup dialog which is a dialog type that is positioned
  * next to a component or screen area and points an arrow at that location. 
@@ -62,12 +63,12 @@ import java.util.Map;
  * 
  * <p>See this sample for showing a dialog at the bottom of the screen:</p>
  * <script src="https://gist.github.com/codenameone/60ca2cc54eea0cb12ede.js"></script>
+ * <img src="https://www.codenameone.com/img/developer-guide/components-dialog-modal-south.png" alt="Dialog South" />
  *
  * @author Shai Almog
  * @see Display#invokeAndBlock(java.lang.Runnable) 
  */
 public class Dialog extends Form {
-
     /**
      * Indicates whether the dialog has been disposed
      */
@@ -181,6 +182,11 @@ public class Dialog extends Form {
 
     private boolean disposeWhenPointerOutOfBounds = false;
     private boolean pressedOutOfBounds;
+    
+    /**
+     * Returns true if the dialog was disposed automatically due to device rotation
+     */
+    private boolean disposedDueToRotation;
     private Label dialogTitle;
     private Container dialogContentPane;
 
@@ -189,6 +195,20 @@ public class Dialog extends Form {
      * its set to a value it biases the system towards a fixed direction for the popup dialog.
      */
     private Boolean popupDirectionBiasPortrait;
+
+    /**
+     * Dialog background can be blurred using a Gaussian blur effect, this sets the radius of the Gaussian 
+     * blur. -1 is a special case value that indicates that no blurring should take effect and the default tint mode
+     * only should be used
+     */
+    private static float defaultBlurBackgroundRadius = -1;
+
+    /**
+     * Dialog background can be blurred using a Gaussian blur effect, this sets the radius of the Gaussian 
+     * blur. -1 is a special case value that indicates that no blurring should take effect and the default tint mode
+     * only should be used
+     */
+    private float blurBackgroundRadius = defaultBlurBackgroundRadius;
     
     /**
      * Constructs a Dialog with a title
@@ -239,6 +259,10 @@ public class Dialog extends Form {
         super.getStyle().setBorder(null);
         setSmoothScrolling(false);
         deregisterAnimated(this);
+    }
+
+    @Override
+    void initGlobalToolbar() {
     }
 
     public Container getContentPane() {
@@ -567,6 +591,7 @@ public class Dialog extends Form {
      */
     void sizeChangedInternal(int w, int h) {
         if(disposeOnRotation) {
+            disposedDueToRotation = true;
             dispose();
             Form frm = getPreviousForm();
             if(frm != null){
@@ -924,6 +949,8 @@ public class Dialog extends Form {
     }
 
     void onShowCompletedImpl() {
+        pressedOutOfBounds = false;
+        disposedDueToRotation = false;
         onShowCompleted();
         if(isDisposed()) {
             disposeImpl();
@@ -1672,6 +1699,14 @@ public class Dialog extends Form {
             pressedOutOfBounds = false;        
         }
     }
+
+    /**
+     * Returns true if a dialog that was disposed did it because of a pointer out of bounds
+     * @return true when a dialog was disposed due to pointer out of bounds.
+     */
+    public boolean wasDisposedDueToOutOfBoundsTouch() {
+        return pressedOutOfBounds;
+    }
     
     /**
      * Screen orientation position for the upcoming dialog. By default
@@ -1835,5 +1870,70 @@ public class Dialog extends Form {
      */
     public void setPopupDirectionBiasPortrait(Boolean popupDirectionBiasPortrait) {
         this.popupDirectionBiasPortrait = popupDirectionBiasPortrait;
+    }
+
+    /**
+     * Returns true if the dialog was disposed automatically due to device rotation
+     * @return the disposedDueToRotation value
+     */
+    public boolean wasDisposedDueToRotation() {
+        return disposedDueToRotation;
+    }
+
+    /**
+     * Dialog background can be blurred using a Gaussian blur effect, this sets the radius of the Gaussian
+     * blur. -1 is a special case value that indicates that no blurring should take effect and the default tint mode
+     * only should be used
+     * @return the blurBackgroundRadius
+     */
+    public float getBlurBackgroundRadius() {
+        return blurBackgroundRadius;
+    }
+
+    /**
+     * Dialog background can be blurred using a Gaussian blur effect, this sets the radius of the Gaussian
+     * blur. -1 is a special case value that indicates that no blurring should take effect and the default tint mode
+     * only should be used. Notice that this value can be set using the theme constant: {@code dialogBlurRadiusInt}
+     * @param blurBackgroundRadius the blurBackgroundRadius to set
+     */
+    public void setBlurBackgroundRadius(float blurBackgroundRadius) {
+        this.blurBackgroundRadius = blurBackgroundRadius;
+    }
+
+    /**
+     * Dialog background can be blurred using a Gaussian blur effect, this sets the radius of the Gaussian
+     * blur. -1 is a special case value that indicates that no blurring should take effect and the default tint mode
+     * only should be used
+     * @return the defaultBlurBackgroundRadius
+     */
+    public static float getDefaultBlurBackgroundRadius() {
+        return defaultBlurBackgroundRadius;
+    }
+
+    /**
+     * Dialog background can be blurred using a Gaussian blur effect, this sets the radius of the Gaussian
+     * blur. -1 is a special case value that indicates that no blurring should take effect and the default tint mode
+     * only should be used. Notice that this value can be set using the theme constant: {@code dialogBlurRadiusInt}
+     * @param aDefaultBlurBackgroundRadius the defaultBlurBackgroundRadius to set
+     */
+    public static void setDefaultBlurBackgroundRadius(float aDefaultBlurBackgroundRadius) {
+        defaultBlurBackgroundRadius = aDefaultBlurBackgroundRadius;
+    }
+
+    /**
+     * In case of a blur effect we need to do something different...
+     * {@inheritDoc}
+     */
+    void initDialogBgPainter(Painter p, Form previousForm) {
+        if(getBlurBackgroundRadius() > 0 && Display.impl.isGaussianBlurSupported()) {
+            Image img = Image.createImage(previousForm.getWidth(), previousForm.getHeight());
+            Graphics g = img.getGraphics();
+            previousForm.paintComponent(g, true);
+            img = Display.getInstance().gaussianBlurImage(img, blurBackgroundRadius);
+            getUnselectedStyle().setBgImage(img);
+            getUnselectedStyle().setBackgroundType(Style.BACKGROUND_IMAGE_SCALED_FILL);
+        } else {
+            super.initDialogBgPainter(p, previousForm);
+        }
     }
 }

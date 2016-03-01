@@ -60,8 +60,7 @@ import java.util.Timer;
 
 /**
  * Central class for the API that manages rendering/events and is used to place top
- * level components ({@link Form}) on the "display". Before any Form is shown the Developer must
- * invoke Display.init(Object m) in order to register the current MIDlet.
+ * level components ({@link Form}) on the "display". 
  * <p>This class handles the main thread for the toolkit referenced here on as the EDT
  * (Event Dispatch Thread) similar to the Swing EDT. This thread encapsulates the platform
  * specific event delivery and painting semantics and enables threading features such as
@@ -546,7 +545,7 @@ public final class Display {
      * This is the INTERNAL Display initialization method, it will be removed in future versions of the API.
      * This method must be called before any Form is shown
      *
-     * @param m the main running MIDlet
+     * @param m platform specific object used by the implementation
      * @deprecated this method is invoked internally do not invoke it!
      */
     public static void init(Object m) {
@@ -1543,6 +1542,10 @@ public final class Display {
     boolean isTextEditing(Component c) {
         return impl.isEditingText(c);
     }
+    
+    boolean isNativeEditorVisible(Component c) {
+        return impl.isNativeEditorVisible(c);
+    }
 
     /**
      * Minimizes the current application if minimization is supported by the platform (may fail).
@@ -2351,6 +2354,9 @@ public final class Display {
      * the vitual keyboard
      *
      * @param show toggles the virtual keyboards visibility
+     * @deprecated this method was only relevant for feature phones. 
+     * You should use {@link com.codename1.ui.TextArea#startEditingAsync()} or {@link com.codename1.ui.TextArea#stopEditing()}
+     * to control text field editing/VKB visibility
      */
     public void setShowVirtualKeyboard(boolean show) {
         if(isTouchScreenDevice()){
@@ -2365,6 +2371,8 @@ public final class Display {
      * Indicates if the virtual keyboard is currently showing or not
      *
      * @return true if the virtual keyboard is showing
+     * @deprecated this method was only relevant for feature phones. 
+     * You should use {@link com.codename1.ui.TextArea#isEditing()} instead.
      */
     public boolean isVirtualKeyboardShowing() {
         if(!isTouchScreenDevice()){
@@ -2376,6 +2384,7 @@ public final class Display {
     /**
      * Returns all platform supported virtual keyboards names
      * @return all platform supported virtual keyboards names
+     * @deprecated this method is only used in feature phones and has no modern equivalent
      */
     public String [] getSupportedVirtualKeyboard(){
         String [] retVal = new String[virtualKeyboards.size()];
@@ -2390,6 +2399,7 @@ public final class Display {
     /**
      * Register a virtual keyboard
      * @param vkb
+     * @deprecated this method is only used in feature phones and has no modern equivalent
      */
     public void registerVirtualKeyboard(VirtualKeyboardInterface vkb){
         virtualKeyboards.put(vkb.getVirtualKeyboardName(), vkb);
@@ -2400,6 +2410,7 @@ public final class Display {
      *
      * @param vkb a VirtualKeyboard to be used or null to disable the
      * VirtualKeyboard
+     * @deprecated this method is only used in feature phones and has no modern equivalent
      */
     public void setDefaultVirtualKeyboard(VirtualKeyboardInterface vkb){
         if(vkb != null){
@@ -2415,6 +2426,7 @@ public final class Display {
     /**
      * Get the default virtual keyboard or null if the VirtualKeyboard is disabled
      * @return the default vkb
+     * @deprecated this method is only used in feature phones and has no modern equivalent
      */
     public VirtualKeyboardInterface getDefaultVirtualKeyboard(){
         if(selectedVirtualKeyboard == null){
@@ -3161,15 +3173,19 @@ hi.show();}</pre></noscript>
     }
     
     /**
-     * Opens the device gallery
-     * The method returns immediately and the response will be sent asynchronously
-     * to the given ActionListener Object
+     * <p>Opens the device gallery to pick an image or a video.<br>
+     * The method returns immediately and the response is sent asynchronously
+     * to the given ActionListener Object as the source value of the event (as a String)</p>
      * 
-     * use this in the actionPerformed to retrieve the file path
-     * String path = (String) evt.getSource();
+     * <p>E.g. within the callback action performed call you can use this code: {@code String path = (String) evt.getSource();}.<br>
+     * A more detailed sample of picking a video file can be seen here:
+     * </p>
+     * 
+     * <script src="https://gist.github.com/codenameone/fb73f5d47443052f8956.js"></script>
+     * <img src="https://www.codenameone.com/img/developer-guide/components-mediaplayer.png" alt="Media player sample" />
      * 
      * @param response a callback Object to retrieve the file path
-     * @param type one of the following GALLERY_IMAGE, GALLERY_VIDEO, GALLERY_ALL
+     * @param type one of the following {@link #GALLERY_IMAGE}, {@link #GALLERY_VIDEO}, {@link #GALLERY_ALL}
      * @throws RuntimeException if this feature failed or unsupported on the platform
      */
     public void openGallery(ActionListener response, int type){
@@ -3876,5 +3892,25 @@ hi.show();}</pre></noscript>
      */ 
     public Media createBackgroundMedia(String uri) throws IOException{
         return impl.createBackgroundMedia(uri);
+    }
+
+    /**
+     * Create a blur image from the given image.
+     * The algorithm is gaussian blur - https://en.wikipedia.org/wiki/Gaussian_blur
+     * 
+     * @param image the image to blur
+     * @param radius the radius to be used in the algorithm
+     */ 
+    public Image gaussianBlurImage(Image image, float radius) {
+        return impl.gaussianBlurImage(image, radius);
+    }
+
+    /**
+     * Returns true if gaussian blur is supported on this platform
+     * 
+     * @return true if gaussian blur is supported.
+     */ 
+    public boolean isGaussianBlurSupported() {
+        return impl.isGaussianBlurSupported();
     }
 }

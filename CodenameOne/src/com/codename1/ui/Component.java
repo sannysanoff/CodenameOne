@@ -48,10 +48,13 @@ import java.util.Collection;
 import java.util.HashMap;
 
 /**
- * Base class for all the widgets in the toolkit using the composite pattern in 
- * a similar way to the AWT Container/Component relationship. All components are
- * potentially animated (need to be registered in {@link Display}). 
+ * <p>The component class is the basis of all UI widgets in Codename One, to arrange multiple components 
+ * together we use the Container class which itself "IS A" Component subclass. The Container is a 
+ * Component that contains Components effectively allowing us to nest Containers infinitely to build any type 
+ * of visual hierarchy we want by nesting Containers.
+ * </p>
  * 
+ * @see Container
  * @author Chen Fishbein
  */
 public class Component implements Animation, StyleListener {
@@ -426,6 +429,8 @@ public class Component implements Animation, StyleListener {
         alwaysTensile = laf.isDefaultAlwaysTensile();
         tensileHighlightEnabled = laf.isDefaultTensileHighlight();
         scrollOpacityChangeSpeed = laf.getFadeScrollBarSpeed();
+        isScrollVisible = laf.isScrollVisible();
+        
         if(tensileHighlightEnabled) {
             tensileLength = 3;
         } else {
@@ -905,8 +910,18 @@ public class Component implements Animation, StyleListener {
         selectedStyle = null;
         disabledStyle = null;
         pressedStyle = null;
+        allStyles = null;
         if(!sizeRequestedByUser) {
             preferredSize = null;
+        }
+    }
+    
+    /**
+     * This method will remove the Component from its parent.
+     */
+    public void remove(){
+        if(parent != null){
+            parent.removeComponent(this);
         }
     }
 
@@ -1428,9 +1443,12 @@ public class Component implements Animation, StyleListener {
     }
 
     /**
-     * Paints this component as a root by going to all the parent components and
+     * <p>Paints this component as a root by going to all the parent components and
      * setting the absolute translation based on coordinates and scroll status.
-     * Restores translation when the painting is finished.
+     * Restores translation when the painting is finished.<br>
+     * One of the uses of this method is to create a "screenshot" as is demonstrated in the code below
+     * that creates an image for sharing on social media</p>
+     * <script src="https://gist.github.com/codenameone/6bf5e68b329ae59a25e3.js"></script>
      * 
      * @param g the graphics to paint this Component on
      */
@@ -1440,9 +1458,13 @@ public class Component implements Animation, StyleListener {
     }
 
     /**
-     * Paints this component as a root by going to all the parent components and
+     * <p>Paints this component as a root by going to all the parent components and
      * setting the absolute translation based on coordinates and scroll status.
-     * Restores translation when the painting is finished.
+     * Restores translation when the painting is finished.<br>
+     * One of the uses of this method is to create a "screenshot" as is demonstrated in the code below
+     * that creates an image for sharing on social media</p>
+     * <script src="https://gist.github.com/codenameone/6bf5e68b329ae59a25e3.js"></script>
+     * 
      * 
      * @param g the graphics to paint this Component on
      * @param background if true paints all parents background
@@ -2303,7 +2325,7 @@ public class Component implements Animation, StyleListener {
     /**
      * Creates an animation that will transform the current component to the styling of the destination UIID when
      * completed. Notice that fonts will only animate within the truetype and native familiy and we recommend that you
-     * don't shift weight/typeface/style as this might diminish the effect.<br />
+     * don't shift weight/typeface/style as this might diminish the effect.<br>
      * <b>Important: </b> Only unselected styles are animated but once the animation completes all styles are applied.
      * @param destUIID the UIID to which this component will gradually shift
      * @param duration the duration of the animation or the number of steps
@@ -3954,8 +3976,9 @@ public class Component implements Animation, StyleListener {
         
         
         Painter bgp = getStyle().getBgPainter();
-        animateBackground = bgp != null && bgp.getClass() != BGPainter.class && bgp instanceof Animation && (bgp != this) && ((Animation)bgp).animate();
-
+        boolean animateBackgroundB = bgp != null && bgp.getClass() != BGPainter.class && bgp instanceof Animation && (bgp != this) && ((Animation)bgp).animate();
+        animateBackground = animateBackgroundB || animateBackground;
+                
         if(getUIManager().getLookAndFeel().isFadeScrollBar()) {
             if(tensileHighlightIntensity > 0) {
                 tensileHighlightIntensity = Math.max(0, tensileHighlightIntensity - (scrollOpacityChangeSpeed * 2));
@@ -4421,8 +4444,8 @@ public class Component implements Animation, StyleListener {
     }
 
     /**
-     * Used to reduce coupling between the TextArea component and display/implementation
-     * classes thus reduce the size of the hello world MIDlet
+     * Used to reduce coupling between the {@link TextArea} component and display/implementation
+     * classes thus reduce the size of the hello world 
      * 
      * @param text text after editing is completed
      */
@@ -5135,6 +5158,142 @@ public class Component implements Animation, StyleListener {
                 int y = rect.getY() + g.getTranslateY();
                 int width = rect.getSize().getWidth();
                 int height = rect.getSize().getHeight();
+                Image img = s.getBgImage();
+                if(img != null && img.requiresDrawImage()) {
+                    // damn no native painting...
+                    int iW = img.getWidth();
+                    int iH = img.getHeight();
+                    switch (s.getBackgroundType()) {
+                        case Style.BACKGROUND_IMAGE_SCALED:
+                            if (Display.impl.isScaledImageDrawingSupported()) {
+                                g.drawImage(img, x, y, width, height);
+                            } else {
+                                if (iW != width || iH != height) {
+                                    img = img.scaled(width, height);
+                                    s.setBgImage(img, true);
+                                }
+                                g.drawImage(img, x, y);
+                            }
+                            return;
+                        case Style.BACKGROUND_IMAGE_SCALED_FILL:
+                            float r = Math.max(((float) width) / ((float) iW), ((float) height) / ((float) iH));
+                            int bwidth = (int) (((float) iW) * r);
+                            int bheight = (int) (((float) iH) * r);
+                            if (Display.impl.isScaledImageDrawingSupported()) {
+                                g.drawImage(img, x + (width - bwidth) / 2, y + (height - bheight) / 2, bwidth, bheight);
+                            } else {
+                                if (iW != bwidth || iH != bheight) {
+                                    img = img.scaled(bwidth, bheight);
+                                    s.setBgImage(img, true);
+                                }
+                                g.drawImage(img, x + (width - bwidth) / 2, y + (height - bheight) / 2);
+                            }
+                            return;
+                        case Style.BACKGROUND_IMAGE_SCALED_FIT:
+                            if (s.getBgTransparency() != 0) {
+                                g.setColor(s.getBgColor());
+                                g.fillRect(x, y, width, height, s.getBgTransparency());
+                            }
+                            float r2 = Math.min(((float) width) / ((float) iW), ((float) height) / ((float) iH));
+                            int awidth = (int) (((float) iW) * r2);
+                            int aheight = (int) (((float) iH) * r2);
+                            if (Display.impl.isScaledImageDrawingSupported()) {
+                                g.drawImage(img, x + (width - awidth) / 2, y + (height - aheight) / 2, awidth, aheight);
+                            } else {
+                                if (iW != awidth || iH != aheight) {
+                                    img = img.scaled(awidth, aheight);
+                                    s.setBgImage(img, true);
+                                }
+                                g.drawImage(img, x + (width - awidth) / 2, y + (height - aheight) / 2, awidth, aheight);
+                            }
+                            return;
+                        case Style.BACKGROUND_IMAGE_TILE_BOTH:
+                            g.tileImage(img, x, y, width, height);
+                            return;
+                        case Style.BACKGROUND_IMAGE_TILE_HORIZONTAL_ALIGN_TOP:
+                            g.setColor(s.getBgColor());
+                            g.fillRect(x, y, width, height, s.getBgTransparency());
+                            g.tileImage(img, x, y, width, iH);
+                            return;
+                        case Style.BACKGROUND_IMAGE_TILE_HORIZONTAL_ALIGN_CENTER:
+                            g.setColor(s.getBgColor());
+                            g.fillRect(x, y, width, height, s.getBgTransparency());
+                            g.tileImage(img, x, y + (height / 2 - iH / 2), width, iH);
+                            return;
+                        case Style.BACKGROUND_IMAGE_TILE_HORIZONTAL_ALIGN_BOTTOM:
+                            g.setColor(s.getBgColor());
+                            g.fillRect(x, y, width, height, s.getBgTransparency());
+                            g.tileImage(img, x, y + (height - iH), width, iH);
+                            return;
+                        case Style.BACKGROUND_IMAGE_TILE_VERTICAL_ALIGN_LEFT:
+                            g.setColor(s.getBgColor());
+                            g.fillRect(x, y, width, height, s.getBgTransparency());
+                            for (int yPos = 0; yPos <= height; yPos += iH) {
+                                g.drawImage(img, x, y + yPos);
+                            }
+                            return;
+                        case Style.BACKGROUND_IMAGE_TILE_VERTICAL_ALIGN_CENTER:
+                            g.setColor(s.getBgColor());
+                            g.fillRect(x, y, width, height, s.getBgTransparency());
+                            for (int yPos = 0; yPos <= height; yPos += iH) {
+                                g.drawImage(img, x + (width / 2 - iW / 2), y + yPos);
+                            }
+                            return;
+                        case Style.BACKGROUND_IMAGE_TILE_VERTICAL_ALIGN_RIGHT:
+                            g.setColor(s.getBgColor());
+                            g.fillRect(x, y, width, height, s.getBgTransparency());
+                            for (int yPos = 0; yPos <= height; yPos += iH) {
+                                g.drawImage(img, x + width - iW, y + yPos);
+                            }
+                            return;
+                        case Style.BACKGROUND_IMAGE_ALIGNED_TOP:
+                            g.setColor(s.getBgColor());
+                            g.fillRect(x, y, width, height, s.getBgTransparency());
+                            g.drawImage(img, x + (width / 2 - iW / 2), y);
+                            return;
+                        case Style.BACKGROUND_IMAGE_ALIGNED_BOTTOM:
+                            g.setColor(s.getBgColor());
+                            g.fillRect(x, y, width, height, s.getBgTransparency());
+                            g.drawImage(img, x + (width / 2 - iW / 2), y + (height - iH));
+                            return;
+                        case Style.BACKGROUND_IMAGE_ALIGNED_LEFT:
+                            g.setColor(s.getBgColor());
+                            g.fillRect(x, y, width, height, s.getBgTransparency());
+                            g.drawImage(img, x, y + (height / 2 - iH / 2));
+                            return;
+                        case Style.BACKGROUND_IMAGE_ALIGNED_RIGHT:
+                            g.setColor(s.getBgColor());
+                            g.fillRect(x, y, width, height, s.getBgTransparency());
+                            g.drawImage(img, x + width - iW, y + (height / 2 - iH / 2));
+                            return;
+                        case Style.BACKGROUND_IMAGE_ALIGNED_CENTER:
+                            g.setColor(s.getBgColor());
+                            g.fillRect(x, y, width, height, s.getBgTransparency());
+                            g.drawImage(img, x + (width / 2 - iW / 2), y + (height / 2 - iH / 2));
+                            return;
+                        case Style.BACKGROUND_IMAGE_ALIGNED_TOP_LEFT:
+                            g.setColor(s.getBgColor());
+                            g.fillRect(x, y, width, height, s.getBgTransparency());
+                            g.drawImage(img, x, y);
+                            return;
+                        case Style.BACKGROUND_IMAGE_ALIGNED_TOP_RIGHT:
+                            g.setColor(s.getBgColor());
+                            g.fillRect(x, y, width, height, s.getBgTransparency());
+                            g.drawImage(img, x + width - iW, y);
+                            return;
+                        case Style.BACKGROUND_IMAGE_ALIGNED_BOTTOM_LEFT:
+                            g.setColor(s.getBgColor());
+                            g.fillRect(x, y, width, height, s.getBgTransparency());
+                            g.drawImage(img, x, y + (height - iH));
+                            return;
+                        case Style.BACKGROUND_IMAGE_ALIGNED_BOTTOM_RIGHT:
+                            g.setColor(s.getBgColor());
+                            g.fillRect(x, y, width, height, s.getBgTransparency());
+                            g.drawImage(img, x + width - iW, y + (height - iH));
+                            return;
+                    }
+                } 
+                
                 impl.paintComponentBackground(g.getGraphics(), x, y, width, height, s);
             }
         }

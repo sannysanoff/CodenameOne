@@ -35,11 +35,20 @@ import com.codename1.ui.util.EventDispatcher;
 import java.util.ArrayList;
 
 /**
- * An optionally multi-line editable region that can display text and allow a user to edit it.
- * Depending on the platform editing might occur in a new screen. Notice that when creating
- * a text area with one row it will act as a text field and never grow beyond that, however 
- * when assigning a greater number of rows the text area becomes multi-line with a minimum
- * number of visible rows, the text area will grow based on its content.
+ * <p>An optionally multi-line editable region that can display text and allow a user to edit it.
+ * By default the text area will grow based on its content.<br>
+ * {@code TextArea} is useful both for text input and for displaying multi-line data, it is used internally
+ * by components such as {@link com.codename1.components.SpanLabel} &amp;  
+ * {@link com.codename1.components.SpanButton}.</p>
+ * 
+ * <p>
+ * {@code TextArea} &amp; {@link com.codename1.ui.TextField} are very similar, we discuss the main differences
+ * between the two {@link com.codename1.ui.TextField here}.  In fact they are so similar that our sample code
+ * below was written for {@link com.codename1.ui.TextField} but should be interchangeable with {@code TextArea}.
+ * </p>
+ * 
+ * <script src="https://gist.github.com/codenameone/fb63dd5d6efdb95932be.js"></script>
+ * <img src="https://www.codenameone.com/img/developer-guide/components-text-component.png" alt="Text field input sample" />
  *
  * @author Chen Fishbein
  */
@@ -1034,19 +1043,16 @@ public class TextArea extends Component {
     public void setRowsGap(int rowsGap) {
         this.rowsGap = rowsGap;
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public void paint(Graphics g) {
-        
-        if(Display.getInstance().isNativeInputSupported() &&
-                Display.getInstance().isTextEditing(this))
-        {
-            System.out.println("OK");
+
+        if(Display.getInstance().isNativeEditorVisible(this)) {
             return;
         }
-        
+
         getUIManager().getLookAndFeel().drawTextArea(g, this);
         paintHint(g);
     }
@@ -1057,7 +1063,7 @@ public class TextArea extends Component {
         }
         super.paintHint(g);
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -1072,14 +1078,14 @@ public class TextArea extends Component {
         }
         return getUIManager().getLookAndFeel().getTextAreaSize(this, true);
     }
-        
+
     /**
      * {@inheritDoc}
      */
     protected Dimension calcScrollSize(){
         return getUIManager().getLookAndFeel().getTextAreaSize(this, false);
     }
-        
+
     /**
      * Add an action listener which is invoked when the text area was modified not during
      * modification. A text <b>field</b> might never fire an action event if it is edited
@@ -1108,7 +1114,7 @@ public class TextArea extends Component {
             actionListeners = null;
         }
     }
-    
+
     /**
      * Notifies listeners of a change to the text area
      */
@@ -1697,4 +1703,19 @@ public class TextArea extends Component {
             Display.getInstance().stopEditing(this);
         }
     }
+
+    /**
+     * {@inheritDoc}
+     * We override get style here to return the selected style when editing
+     * @return the selected style if editing, <code>super.getStyle()</code> otherwise
+     */
+    @Override
+    public Style getStyle() {
+        if(isEditing()) {
+            return getSelectedStyle();
+        }
+        return super.getStyle(); 
+    }
+    
+    
 }

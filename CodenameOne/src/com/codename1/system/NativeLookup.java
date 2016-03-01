@@ -30,14 +30,34 @@ import java.util.HashMap;
  * To understand more 
  * about native interfaces you can check out this 
  * <a href="https://www.codenameone.com/how-do-i---access-native-device-functionality-invoke-native-interfaces.html">
- * quick "How Do I?" tutorial</a>.<br />
+ * quick "How Do I?" tutorial</a>.<br>
  * Alternatively you can dig deeper into <a href="https://www.codenameone.com/blog/integrating-3rd-party-native-sdks-part-1.html">
  * this tutorial for integrating 3rd party native libraries</a>.
  * 
  * @author Shai Almog
  */
 public class NativeLookup {
+    /**
+     * Indicates whether stack traces should be printed when lookup fails
+     */
+    private static boolean verbose = true;
     private static HashMap<Class, Class> interfaceToClassLookup; 
+
+    /**
+     * Indicates whether stack traces should be printed when lookup fails
+     * @return the verbose
+     */
+    public static boolean isVerbose() {
+        return verbose;
+    }
+
+    /**
+     * Indicates whether stack traces should be printed when lookup fails
+     * @param aVerbose the verbose to set
+     */
+    public static void setVerbose(boolean aVerbose) {
+        verbose = aVerbose;
+    }
     private NativeLookup() {}
     
     /**
@@ -60,7 +80,9 @@ public class NativeLookup {
             // special case for JavaSE native interfaces
             return (NativeInterface)Class.forName(c.getName() + "Impl").newInstance();
         } catch (Throwable ex) {
-            ex.printStackTrace();
+            if(verbose) {
+                ex.printStackTrace();
+            }
         } 
         return null;
     }
