@@ -1422,7 +1422,7 @@ public class UIBuilder { //implements Externalizable {
                     break;
 
                 case PROPERTY_LIST_ITEMS_LEGACY:
-                    String[] items = new String[in.readInt()];
+                    Object[] items = new Object[in.readInt()];
                     for(int iter = 0 ; iter < items.length ; iter++) {
                         items[iter] = in.readUTF();
                     }

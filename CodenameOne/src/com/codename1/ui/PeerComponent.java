@@ -23,6 +23,7 @@
  */
 package com.codename1.ui;
 
+import com.codename1.io.Log;
 import com.codename1.ui.geom.Dimension;
 import com.codename1.ui.geom.Rectangle;
 
@@ -218,6 +219,7 @@ public class PeerComponent extends Component {
     }
     
     private void onPositionSizeChangeImpl() {
+        System.out.println("Entering onPositionSizeChangeImpl: "+lastPos.toString());
         if(isInitialized() && getWidth() > 0 && getHeight() > 0) {
             int scrollX = getScrollX();
             int scrollY = getScrollY();
@@ -228,6 +230,7 @@ public class PeerComponent extends Component {
                 lastPos.setY(y);
                 lastPos.getSize().setWidth(getWidth());
                 lastPos.getSize().setHeight(getHeight());
+                System.out.println("Calling onPositionSizeChange in onPositionSizeChangeImpl(): "+lastPos.toString());
                 onPositionSizeChange();
             }        
         }
@@ -236,7 +239,8 @@ public class PeerComponent extends Component {
     /**
      * {@inheritDoc}
      */
-    void onParentPositionChange() {        
+    void onParentPositionChange() {
+        System.out.println("PeerComponent.onParentPositionChange");
         onPositionSizeChangeImpl();
     }
 

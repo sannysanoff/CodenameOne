@@ -45,6 +45,7 @@ import com.codename1.ui.geom.Dimension;
 import com.codename1.ui.list.DefaultListModel;
 import com.codename1.ui.list.ListModel;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
@@ -859,7 +860,7 @@ public class FaceBookAccess {
                 h[iter].put("fetching", Boolean.TRUE);
             }
         }
-        DefaultListModel dl = new DefaultListModel(h) {
+        DefaultListModel dl = new DefaultListModel((Object[])h) {
             public Object getItem(int offset) {
                 Hashtable hash = (Hashtable)super.getItemAt(offset);
                 if(!hash.containsKey("fetching")) {
