@@ -342,7 +342,7 @@ void codenameOneGCMark() {
             }
         }
     }
-    NSLog(@"Mark set %i objects to %i", marked, currentGcMarkValue);
+    //NSLog(@"Mark set %i objects to %i", marked, currentGcMarkValue);
     // since they are immutable this probably doesn't need as much sync as the statics...
     for(int iter = 0 ; iter < CN1_CONSTANT_POOL_SIZE ; iter++) {
         gcMarkObject(d, (JAVA_OBJECT)constantPoolObjects[iter], JAVA_TRUE);
