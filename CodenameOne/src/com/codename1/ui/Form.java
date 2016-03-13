@@ -279,6 +279,7 @@ public class Form extends Container {
      */
     void initTitleBarStatus() {
         if(getUIManager().isThemeConstant("paintsTitleBarBool", false)) {
+            System.out.println("Will create stuff for titlebarstatus...");
             // check if its already added:
             if(((BorderLayout)titleArea.getLayout()).getNorth() == null) {
                 if(getUIManager().isThemeConstant("statusBarScrollsUpBool", true)) {

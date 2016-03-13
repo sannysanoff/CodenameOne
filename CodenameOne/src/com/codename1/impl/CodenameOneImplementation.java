@@ -485,6 +485,7 @@ public abstract class CodenameOneImplementation {
             paintQueueFill = 0;
         }
         if (size > 0) {
+            long l = System.currentTimeMillis();
             Graphics wrapper = getCodenameOneGraphics();
             int dwidth = getDisplayWidth();
             int dheight = getDisplayHeight();
@@ -530,6 +531,7 @@ public abstract class CodenameOneImplementation {
             paintOverlay(wrapper);
             //Log.p("Flushing graphics : "+topX+","+topY+","+bottomX+","+bottomY);
             flushGraphics(topX, topY, bottomX - topX, bottomY - topY);
+            System.out.println("Paint dirty: "+(System.currentTimeMillis()-l));
         }
     }
 

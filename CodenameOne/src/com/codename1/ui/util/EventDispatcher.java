@@ -275,6 +275,7 @@ public class EventDispatcher {
             a.styleChanged(property, source);
             return;
         }
+        if (!isEdt && !fireStyleEventsOnNonEDT) return;     // more optimizations to avoid alloc costs
         StyleListener[] array;
         synchronized(this) {
             array = new StyleListener[listeners.size()];

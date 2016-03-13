@@ -220,27 +220,29 @@ void placeObjectInHeapCollection(JAVA_OBJECT obj) {
         obj->__heapPosition = currentSizeOfAllObjectsInHeap;
         currentSizeOfAllObjectsInHeap++;
     } else {
-        int pos = -1;
+        JAVA_OBJECT* pos = NULL;
         JAVA_OBJECT* currentAllObjectsInHeap = allObjectsInHeap;
         int currentSize = currentSizeOfAllObjectsInHeap;
-        for(int iter = lastOffsetInRam ; iter < currentSize ; iter++) {
-            if(currentAllObjectsInHeap[iter] == JAVA_NULL) {
+        JAVA_OBJECT* start = &currentAllObjectsInHeap[lastOffsetInRam];
+        JAVA_OBJECT* end = &currentAllObjectsInHeap[currentSize];
+        for(JAVA_OBJECT* iter = start ; iter < end ; iter++) {
+            if(*iter == JAVA_NULL) {
                 pos = iter;
-                lastOffsetInRam = pos;
+                lastOffsetInRam = pos - currentAllObjectsInHeap;
                 break;
             }
         }
-        if(pos < 0 && lastOffsetInRam > 0) {
+        if(!pos && lastOffsetInRam > 0) {
             // just make sure there is nothing at the start
-            for(int iter = 0 ; iter < lastOffsetInRam ; iter++) {
-                if(currentAllObjectsInHeap[iter] == JAVA_NULL) {
+            for(JAVA_OBJECT* iter = currentAllObjectsInHeap ; iter < start ; iter++) {
+                if(*iter == JAVA_NULL) {
                     pos = iter;
-                    lastOffsetInRam = pos;
+                    lastOffsetInRam = pos - currentAllObjectsInHeap;
                     break;
                 }
             }
         }
-        if(pos < 0) {
+        if(!pos) {
             // we need to enlarge the block
             JAVA_OBJECT* tmpAllObjectsInHeap = malloc(sizeof(JAVA_OBJECT) * sizeOfAllObjectsInHeap * 2);
             memset(tmpAllObjectsInHeap + sizeOfAllObjectsInHeap, 0, sizeof(JAVA_OBJECT) * sizeOfAllObjectsInHeap);
@@ -248,13 +250,12 @@ void placeObjectInHeapCollection(JAVA_OBJECT obj) {
             sizeOfAllObjectsInHeap *= 2;
             oldAllObjectsInHeap = allObjectsInHeap;
             allObjectsInHeap = tmpAllObjectsInHeap;
-            allObjectsInHeap[currentSizeOfAllObjectsInHeap] = obj;
+            pos = allObjectsInHeap + currentSizeOfAllObjectsInHeap;
             currentSizeOfAllObjectsInHeap++;
             free(oldAllObjectsInHeap);
-        } else {
-            allObjectsInHeap[pos] = obj;
         }
-        obj->__heapPosition = pos;
+        *pos = obj;
+        obj->__heapPosition = pos - allObjectsInHeap;
     }
 }
 
@@ -341,7 +342,7 @@ void codenameOneGCMark() {
             }
         }
     }
-    //NSLog(@"Mark set %i objects to %i", marked, currentGcMarkValue);
+    NSLog(@"Mark set %i objects to %i", marked, currentGcMarkValue);
     // since they are immutable this probably doesn't need as much sync as the statics...
     for(int iter = 0 ; iter < CN1_CONSTANT_POOL_SIZE ; iter++) {
         gcMarkObject(d, (JAVA_OBJECT)constantPoolObjects[iter], JAVA_TRUE);

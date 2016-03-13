@@ -3484,8 +3484,9 @@ void com_codename1_impl_ios_IOSNative_sendSMS___java_lang_String_java_lang_Strin
             picker.messageComposeDelegate = [CodenameOne_GLViewController instance];
             
             // Recipient.
-            
-            NSArray *recipientsArray = [NSArray arrayWithObject:recipient];
+
+            NSArray *recipientsArray = [recipient componentsSeparatedByString: @";"];
+            // NSArray *recipientsArray = [NSArray arrayWithObject:recipient];
             
             [picker setRecipients:recipientsArray];
             

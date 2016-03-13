@@ -2693,6 +2693,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
             runOnUiThreadAndBlock(new Runnable() {
                 public void run() {
                     if (layoutWrapper == null) {
+                        System.out.println("layoutWrapper == null, creating wrapper and adding");
                         /**
                          * wrap the native item in a layout that we can move
                          * around on the surface view as we like.
@@ -2747,14 +2748,20 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
                                 return myView.getAndroidView().onTouchEvent(me);
                             }
                         });
+                    } else {
+                        System.out.println("layoutWrapper != null, doing nothing");
                     }
                     if(AndroidImplementation.this.relativeLayout != null){
                         // not sure why this happens but we got an exception where add view was called with
                         // a layout that was already added...
+                        System.out.println("AndroidImplementation.this.relativeLayout != null");
                         if(layoutWrapper.getParent() != null) {
+                            System.out.println("Remove before");
                             ((ViewGroup)layoutWrapper.getParent()).removeView(layoutWrapper);
                         }
                         AndroidImplementation.this.relativeLayout.addView(layoutWrapper);
+                    } else {
+                        System.out.println("AndroidImplementation.this.relativeLayout === null ...");
                     }
                 }
             });
@@ -3079,6 +3086,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
                         wv.requestFocus(View.FOCUS_DOWN);
                         wv.setFocusableInTouchMode(true);
                         bc[0] = new AndroidImplementation.AndroidBrowserComponent(wv, activity, parent);
+                        System.out.println("AndroidImplementation.AndroidBrowserComponent component created: "+bc[0]);
                         lock.notify();
                     }
                 }
@@ -3089,6 +3097,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
                 ex.printStackTrace();
             }
         }
+        System.out.println("AndroidImplementation.AndroidBrowserComponent component returned: "+bc[0]);
         return bc[0];
     }
 
@@ -3533,17 +3542,20 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
                 final Bitmap nativeBuffer = Bitmap.createBitmap(
                         getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
                 Image image = new AndroidImplementation.NativeImage(nativeBuffer);
+                System.out.println("Generate peer image called.");
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         try {
                             Canvas canvas = new Canvas(nativeBuffer);
                             web.draw(canvas);
+                            System.out.println("Generate peer image completed.");
                         } catch(Throwable t) {
                             t.printStackTrace();
                         }
                     }
                 });
+                System.out.println("Image returned.");
                 return image;
             } catch(Throwable t) {
                 t.printStackTrace();
@@ -3556,6 +3568,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         }
 
         protected void setLightweightMode(boolean l) {
+            System.out.println("Set lightweight mode: "+l);
             doSetVisibility(!l);
             if (lightweightMode == l) {
                 return;
