@@ -114,6 +114,8 @@ public abstract class CodenameOneImplementation {
     private static int pollingMillis = 3 * 60 * 60000;
     private Component editingText;
     private String appArg;
+
+    public static boolean logLongFrames = false;
     
     /**
      * Useful since the content of a single element touch event is often recycled
@@ -531,7 +533,10 @@ public abstract class CodenameOneImplementation {
             paintOverlay(wrapper);
             //Log.p("Flushing graphics : "+topX+","+topY+","+bottomX+","+bottomY);
             flushGraphics(topX, topY, bottomX - topX, bottomY - topY);
-            System.out.println("Paint dirty: "+(System.currentTimeMillis()-l));
+            long dirtyTime = System.currentTimeMillis() - l;
+            if (dirtyTime > 17 && logLongFrames) {
+                System.out.println("Paint dirty: " + dirtyTime);
+            }
         }
     }
 
