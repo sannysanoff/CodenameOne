@@ -55,5 +55,6 @@
 	</array>
     <key>UIAppFonts</key>
     <array>${APP_FONTS}</array>
+  EXTRA
 </dict>
 </plist>

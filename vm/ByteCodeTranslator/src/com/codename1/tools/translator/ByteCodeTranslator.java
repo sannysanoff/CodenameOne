@@ -23,6 +23,8 @@
 
 package com.codename1.tools.translator;
 
+import sun.misc.IOUtils;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -306,9 +308,24 @@ public class ByteCodeTranslator {
                     return rv > 0  ? 1 : (rv < 0 ? -1 : 0);
                 }
             });
-            
+
+            String extraInfoPlist = "";
+
             for(String file : arr) {
                 if (file.endsWith(".h")) {
+                    continue;
+                }
+                if (file.equals("plist")) {
+                    for (File sourceDirectory : sources) {
+                        File fil = new File(sourceDirectory, file);
+                        if (fil.exists()) {
+                            FileInputStream fileInputStream = new FileInputStream(fil);
+                            byte[] plistB = new byte[(int) fil.length()];
+                            fileInputStream.read(plistB);
+                            fileInputStream.close();
+                            extraInfoPlist += new String(plistB);
+                        }
+                    }
                     continue;
                 }
                 if (file.endsWith(PreservingFileOutputStream.NEW_SUFFIX)) {
@@ -465,6 +482,7 @@ public class ByteCodeTranslator {
                     "${PRODUCT_NAME}", appDisplayName,
                     "VERSION_VALUE", appVersion,
                     "VERSION_BUNDLE_VALUE", bundleVersion,
+                    "EXTRA", extraInfoPlist,
                     "${APP_FONTS}", appFonts.toString());
             PreservingFileOutputStream.finishWithNewFile(projectPbx);
             PreservingFileOutputStream.finishWithNewFile(templateInfoPlist);
