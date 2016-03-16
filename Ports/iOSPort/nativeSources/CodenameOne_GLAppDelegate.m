@@ -58,10 +58,12 @@ extern UIView *editingComponent;
 
 @synthesize viewController=_viewController;
 
+NSDictionary *transientLaunchOptions;
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     //beforeDidFinishLaunchingWithOptionsMarkerEntry
-    
+
     // Override point for customization after application launch.
     self.window.rootViewController = self.viewController;
     NSURL *url = (NSURL *)[launchOptions valueForKey:UIApplicationLaunchOptionsURLKey];
@@ -76,6 +78,7 @@ extern UIView *editingComponent;
         }
         com_codename1_ui_Display_setProperty___java_lang_String_java_lang_String(CN1_THREAD_GET_STATE_PASS_ARG o, key, value);
     }
+    transientLaunchOptions = launchOptions;
     com_codename1_impl_ios_IOSImplementation_callback__(CN1_THREAD_GET_STATE_PASS_SINGLE_ARG);
     
     if (launchOptions[UIApplicationLaunchOptionsLocalNotificationKey]) {

@@ -26,17 +26,18 @@ package com.codename1.tools.translator;
 import sun.misc.IOUtils;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.net.URL;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  *
  * @author Shai Almog
  */
 public class ByteCodeTranslator {
-    public static enum OutputType { 
+    private static String headerSearchPath = "";
+
+    public static enum OutputType {
         
         OUTPUT_TYPE_IOS {
             @Override
@@ -92,6 +93,9 @@ public class ByteCodeTranslator {
                         // copy the file to the dest dir
                         if (f.getName().equals("package.html"))
                             continue;
+                        if (f.getName().endsWith(".m") || f.getName().endsWith(".h")) {
+                            originalLocations.put(f.getName(), f.getAbsolutePath());
+                        }
                         copy(new FileInputStream(f), new PreservingFileOutputStream(new File(outputDir, f.getName())));
                     }
                 }
@@ -205,12 +209,20 @@ public class ByteCodeTranslator {
 
             System.out.println("Parsed classes: "+Parser.classes.size());
 
-            File cn1Globals = new File(srcRoot, "cn1_globals.h");
-            copy(ByteCodeTranslator.class.getResourceAsStream("/cn1_globals.h"), new PreservingFileOutputStream(cn1Globals));
-            File cn1GlobalsM = new File(srcRoot, "cn1_globals.m");
-            copy(ByteCodeTranslator.class.getResourceAsStream("/cn1_globals.m"), new PreservingFileOutputStream(cn1GlobalsM));
-            File nativeMethods = new File(srcRoot, "nativeMethods.m");
-            copy(ByteCodeTranslator.class.getResourceAsStream("/nativeMethods.m"), new PreservingFileOutputStream(nativeMethods));
+            copyClasspathResourceToProject("cn1_globals.h", srcRoot);
+            copyClasspathResourceToProject("cn1_globals.m", srcRoot);
+            copyClasspathResourceToProject("nativeMethods.m", srcRoot);
+            copyClasspathResourceToProject("xmlvm.h", srcRoot);
+
+            HashSet<String> allParentDirs = new HashSet<>();
+            for (String s : originalLocations.values()) {
+                allParentDirs.add(new File(s).getParent());
+            }
+            headerSearchPath = originalLocations.values().stream()
+                    .map(x -> new File(x).getParent())
+                    .distinct()
+                    .map(x -> '"'+x+'"')
+                    .collect(Collectors.joining(","));
 
             Parser.writeOutput(srcRoot);
             
@@ -220,9 +232,6 @@ public class ByteCodeTranslator {
             File templatePch = new File(srcRoot, appName + "-Prefix.pch");
             copy(ByteCodeTranslator.class.getResourceAsStream("/template/template/template-Prefix.pch"), new PreservingFileOutputStream(templatePch));
 
-            File xmlvm = new File(srcRoot, "xmlvm.h");
-            copy(ByteCodeTranslator.class.getResourceAsStream("/xmlvm.h"), new PreservingFileOutputStream(xmlvm));
-            
             File projectWorkspaceData = new File(projectXCworkspace, "contents.xcworkspacedata"+ PreservingFileOutputStream.NEW_SUFFIX);
             copy(ByteCodeTranslator.class.getResourceAsStream("/template/template.xcodeproj/project.xcworkspace/contents.xcworkspacedata"), new FileOutputStream(projectWorkspaceData));
             replaceInFile(projectWorkspaceData, "KitchenSink", appName);
@@ -230,6 +239,7 @@ public class ByteCodeTranslator {
             
             File projectPbx = new File(xcproj, "project.pbxproj"+ PreservingFileOutputStream.NEW_SUFFIX);
             copy(ByteCodeTranslator.class.getResourceAsStream("/template/template.xcodeproj/project.pbxproj"), new FileOutputStream(projectPbx));
+            replaceInFile(projectPbx, "#header_search_path#", headerSearchPath);
 
             String[] sourceFiles = srcRoot.list(new FilenameFilter() {
                 @Override
@@ -284,6 +294,7 @@ public class ByteCodeTranslator {
             includeFrameworks.add("libz.dylib");
             includeFrameworks.add("MobileCoreServices.framework");
             includeFrameworks.add("CFNetwork.framework");
+            includeFrameworks.add("AdSupport.framework");
 
             if(!addFrameworks.equalsIgnoreCase("none")) {
                 includeFrameworks.addAll(Arrays.asList(addFrameworks.split(";")));
@@ -312,9 +323,9 @@ public class ByteCodeTranslator {
             String extraInfoPlist = "";
 
             for(String file : arr) {
-                if (file.endsWith(".h")) {
-                    continue;
-                }
+//                if (file.endsWith(".h")) {
+//                    continue;
+//                }
                 if (file.equals("plist")) {
                     for (File sourceDirectory : sources) {
                         File fil = new File(sourceDirectory, file);
@@ -365,7 +376,12 @@ public class ByteCodeTranslator {
                     fileListEntry.append("; path = \"");
                     if(file.endsWith(".m") || file.endsWith(".c") || file.endsWith(".cpp") || file.endsWith(".mm") || file.endsWith(".h") || 
                             file.endsWith(".bundle") || file.endsWith(".xcdatamodeld") || file.endsWith(".hh") || file.endsWith(".hpp") || file.endsWith(".xib")) {
-                        fileListEntry.append(file);
+                        String origLocation = originalLocations.get(file);
+                        if (origLocation != null) {
+                            fileListEntry.append(origLocation);
+                        } else {
+                            fileListEntry.append(file);
+                        }
                     } else {
                         fileListEntry.append(appName);
                         fileListEntry.append("-src/");
@@ -492,7 +508,16 @@ public class ByteCodeTranslator {
             Parser.writeOutput(dest);
         }
     }
-    
+
+    static HashMap<String,String> originalLocations = new HashMap<>();
+
+    private static void copyClasspathResourceToProject(String filename, File projectRoot) throws IOException {
+        File cn1Globals = new File(projectRoot, filename);
+        URL resource = ByteCodeTranslator.class.getResource("/" + filename);
+        originalLocations.put(filename, resource.getPath());
+        copy(ByteCodeTranslator.class.getResourceAsStream("/"+filename), new PreservingFileOutputStream(cn1Globals));
+    }
+
     private static String getFileType(String s) {
         if(s.endsWith(".framework")) {
             return "wrapper.framework";
