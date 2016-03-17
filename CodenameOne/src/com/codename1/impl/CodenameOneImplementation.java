@@ -85,6 +85,7 @@ import java.util.Vector;
  * @author Shai Almog
  */
 public abstract class CodenameOneImplementation {
+
     /**
      * Indicates the range of "hard" RTL bidi characters in unicode
      */

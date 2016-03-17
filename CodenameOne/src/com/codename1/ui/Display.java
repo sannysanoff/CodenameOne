@@ -368,6 +368,7 @@ public final class Display {
 
     private boolean codenameOneRunning = false;
 
+    public static boolean mocking = false;
 
     /**
      * Contains the call serially pending elements
@@ -539,6 +540,12 @@ public final class Display {
      * Private constructor to prevent instanciation
      */
     private Display() {
+    }
+
+    public static void setMocking(CodenameOneImplementation impl) {
+        mocking = true;
+        INSTANCE.impl = impl;
+        INSTANCE.codenameOneRunning = true;
     }
 
     /**
@@ -740,7 +747,7 @@ public final class Display {
      * otherwise false
      */
     public boolean isEdt() {
-        return edt == Thread.currentThread();
+        return edt == Thread.currentThread() || mocking;
     }
 
     /**
@@ -758,7 +765,7 @@ public final class Display {
      * the paint and key handling events
      */
     public void callSerially(Runnable r){
-        if(codenameOneRunning) {
+        if(codenameOneRunning && !mocking) {
             synchronized(lock) {
                 pendingSerialCalls.add(r);
                 lock.notifyAll();

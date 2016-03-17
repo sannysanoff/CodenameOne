@@ -176,7 +176,8 @@ public class CodenameOneThread extends Thread {
             r.run();
         } catch(Throwable err) {
             err.printStackTrace();
-            handleException(err);
+            if (!Display.mocking)
+                handleException(err);
         }
     }
     
