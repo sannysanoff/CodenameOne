@@ -275,6 +275,7 @@ public class ByteCodeTranslator {
             includeFrameworks.add("AudioToolbox.framework");
             includeFrameworks.add("libxml2.dylib");
             includeFrameworks.add("QuartzCore.framework");
+            includeFrameworks.add("CoreTelephony.framework");
             includeFrameworks.add("AddressBook.framework");
             includeFrameworks.add("libsqlite3.dylib");
             includeFrameworks.add("libsqlite3.0.dylib");
@@ -288,7 +289,7 @@ public class ByteCodeTranslator {
             includeFrameworks.add("AVFoundation.framework");
             includeFrameworks.add("CoreVideo.framework");
             includeFrameworks.add("QuickLook.framework");
-            //includeFrameworks.add("iAd.framework");
+            includeFrameworks.add("iAd.framework");
             includeFrameworks.add("CoreMedia.framework");
             includeFrameworks.add("CoreImage.framework");
             includeFrameworks.add("libz.dylib");
