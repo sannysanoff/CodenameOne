@@ -726,12 +726,26 @@ public class ConnectionRequest implements IOProgressListener {
             retry();
             return;
         }
-        if(Display.isInitialized() && !Display.getInstance().isMinimized() &&
-                Dialog.show("Exception", err.toString() + ": for URL " + url + "\n" + err.getMessage(), "Retry", "Cancel")) {
-            retry();
+        final Runnable giveUp = new Runnable() {
+            @Override
+            public void run() {
+                retrying = false;
+                killed = true;
+            }
+        };
+        if(Display.isInitialized() && !Display.getInstance().isMinimized()) {
+            Display.getInstance().callSerially(new Runnable() {
+                @Override
+                public void run() {
+                    if (Dialog.show("Exception", err.toString() + ": for URL " + url + "\n" + err.getMessage(), "Retry", "Cancel")) {
+                        retry();
+                    } else {
+                        giveUp.run();
+                    }
+                }
+            });
         } else {
-            retrying = false;
-            killed = true;
+            giveUp.run();
         }
     }
 
