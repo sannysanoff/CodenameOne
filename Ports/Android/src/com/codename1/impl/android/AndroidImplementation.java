@@ -4426,11 +4426,10 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
                 to.append(recipients[i]);
                 to.append(";");
             }
-            emailIntent = new Intent(Intent.ACTION_SENDTO,
-                    Uri.parse(
-                    "mailto:" + to.toString()
-                    + "?subject=" + Uri.encode(subject)
-                    + "&body=" + Uri.encode(msg.getContent())));        
+            emailIntent = new Intent(Intent.ACTION_SENDTO);
+            emailIntent.setData(Uri.parse("mailto:" + to.toString()));
+            emailIntent.putExtra(Intent.EXTRA_SUBJECT, subject);
+            emailIntent.putExtra(Intent.EXTRA_TEXT, msg.getContent());
         }else{
             if (hasAttachment) {
                 if(msg.getAttachments().size() > 0) {
