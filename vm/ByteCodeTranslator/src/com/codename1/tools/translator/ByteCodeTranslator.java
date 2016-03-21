@@ -93,6 +93,8 @@ public class ByteCodeTranslator {
                         // copy the file to the dest dir
                         if (f.getName().equals("package.html"))
                             continue;
+                        if (f.getName().endsWith(".java"))
+                            continue;
                         if (f.getName().endsWith(".m") || f.getName().endsWith(".h")) {
                             originalLocations.put(f.getName(), f.getAbsolutePath());
                         }

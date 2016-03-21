@@ -62,7 +62,7 @@ public class Parser extends ClassVisitor {
         }
     }
     public static void parse(File sourceFile) throws Exception {
-        System.out.println(sourceFile.getName());
+        System.out.println("parse: "+ sourceFile.getName()+" - " + sourceFile.getParent());
         FileInputStream fis = new FileInputStream(sourceFile);
         ClassReader r = new ClassReader(fis) {
             String clsName;
