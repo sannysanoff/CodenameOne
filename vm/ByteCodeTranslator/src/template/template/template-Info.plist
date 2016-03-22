@@ -5,7 +5,8 @@
 	<key>UIPrerenderedIcon</key>
 	<false/>
 	<key>UIApplicationExitsOnSuspend</key>
-	<false/>
+  <false/>
+  <!--
 	<key>CFBundleIconFiles</key>
 	<array>
 		<string>Icon.png</string>
@@ -18,7 +19,8 @@
 		<string>Icon7@2x.png</string>
 		<string>Icon-76.png</string>
 		<string>Icon-152.png</string>
-	</array>
+  </array>
+    -->
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
