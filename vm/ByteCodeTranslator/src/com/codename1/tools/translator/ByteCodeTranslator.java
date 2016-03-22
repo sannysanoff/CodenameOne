@@ -67,6 +67,10 @@ public class ByteCodeTranslator {
      */
     void execute(File[] sourceDirs, File outputDir) throws Exception {
         for(File f : sourceDirs) {
+            File maybeImagesAssets = new File(f, "Images.xcassets");
+            if (maybeImagesAssets.exists()) {
+                copyDir(maybeImagesAssets, outputDir);
+            }
             execute(f, outputDir);
         }
     }
@@ -198,8 +202,7 @@ public class ByteCodeTranslator {
             File appIconAppiconset = new File(imagesXcassets, "AppIcon.appiconset");
             appIconAppiconset.mkdirs();
             copy(ByteCodeTranslator.class.getResourceAsStream("/Icons.json"), new PreservingFileOutputStream(new File(appIconAppiconset, "Contents.json")));
-            
-            
+
             final File xcproj = new File(root, appName + ".xcodeproj");
             xcproj.mkdirs();
             File projectXCworkspace = new File(xcproj, "project.xcworkspace");

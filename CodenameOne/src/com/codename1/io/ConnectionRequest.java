@@ -714,7 +714,7 @@ public class ConnectionRequest implements IOProgressListener {
      *
      * @param err the exception thrown
      */
-    protected void handleException(Exception err) {
+    protected void handleException(final Exception err) {
         if(killed || failSilently) {
             failureException = err;
             return;
