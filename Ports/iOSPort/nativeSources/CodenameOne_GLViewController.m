@@ -2603,7 +2603,7 @@ BOOL prefersStatusBarHidden = NO;
 -(void)initVars {
     currentTarget = [[NSMutableArray alloc] init];
     upcomingTarget = [[NSMutableArray alloc] init];
-    lightStatusBar = FALSE;
+    lightStatusBar = TRUE;
 }
 
 +(CodenameOne_GLViewController*)instance {
