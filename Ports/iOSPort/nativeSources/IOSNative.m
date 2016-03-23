@@ -1790,6 +1790,12 @@ void repaintUI() {
     }
 }
 
+void com_codename1_impl_ios_IOSNative_setStatusBarLight___boolean(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject,
+                                                            JAVA_BOOLEAN light) {
+    [CodenameOne_GLViewController instance]->lightStatusBar = light;
+    [[CodenameOne_GLViewController instance] setNeedsStatusBarAppearanceUpdate];
+}
+                                                               
 void com_codename1_impl_ios_IOSNative_peerDeinitialized___long(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject, JAVA_LONG peer) {
     dispatch_async(dispatch_get_main_queue(), ^{
         POOL_BEGIN();

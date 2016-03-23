@@ -297,6 +297,7 @@ NSDictionary *transientLaunchOptions;
 #endif
 
 extern void repaintUI();
+extern void isLightBar();
 
 -(void)application:(UIApplication*)application didChangeStatusBarFrame:(CGRect)oldStatusBarFrame {
     repaintUI();

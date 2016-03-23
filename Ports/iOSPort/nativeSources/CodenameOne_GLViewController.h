@@ -142,7 +142,9 @@
     BOOL keyboardIsShown;
     BOOL modifiedViewHeight;
 
+@public
     //ADD_VARIABLES
+    BOOL lightStatusBar;
 }
 
 #ifdef INCLUDE_MOPUB

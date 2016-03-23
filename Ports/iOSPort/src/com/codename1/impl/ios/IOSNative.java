@@ -37,8 +37,10 @@ import java.util.Vector;
  * @author Shai Almog
  */
 public final class IOSNative {
-    
-    
+
+    public IOSNative() {
+    }
+
     //native void startMainThread(Runnable r);
     native void initVM();
     static native void deinitializeVM();
@@ -175,7 +177,9 @@ public final class IOSNative {
     native void calcPreferredSize(long peer, int w, int h, int[] response);
 
     native void updatePeerPositionSize(long peer, int x, int y, int w, int h);
-    
+
+    public native void setStatusBarLight(boolean light);
+
     native void peerInitialized(long peer, int x, int y, int w, int h);
 
     native void peerDeinitialized(long peer);

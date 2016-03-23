@@ -1483,6 +1483,7 @@ enum {
 - (BOOL)compileShader:(GLuint *)shader type:(GLenum)type file:(NSString *)file;
 - (BOOL)linkProgram:(GLuint)prog;
 - (BOOL)validateProgram:(GLuint)prog;
+- (UIStatusBarStyle)preferredStatusBarStyle;
 @end
 
 @implementation CodenameOne_GLViewController
@@ -2431,6 +2432,15 @@ BOOL prefersStatusBarHidden = NO;
     return TRUE;
 }
 
+- (UIStatusBarStyle)preferredStatusBarStyle
+{
+    if (self->lightStatusBar) {
+        return UIStatusBarStyleLightContent;
+    } else {
+        return UIStatusBarStyleDefault;
+    }
+}
+
 - (BOOL)validateProgram:(GLuint)prog
 {
     GLint logLength, status;
@@ -2593,6 +2603,7 @@ BOOL prefersStatusBarHidden = NO;
 -(void)initVars {
     currentTarget = [[NSMutableArray alloc] init];
     upcomingTarget = [[NSMutableArray alloc] init];
+    lightStatusBar = FALSE;
 }
 
 +(CodenameOne_GLViewController*)instance {
