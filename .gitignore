@@ -44,3 +44,6 @@ Ports/iOSPort/nbproject/private/private.properties
 /Ports/JavaSEWithSVGSupport/nbproject/private/
 /Ports/JavaSEWithSVGSupport/build/
 /Ports/JavaSEWithSVGSupport/dist/
+*.iml
+Maven__*.xml
+target

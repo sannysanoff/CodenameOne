@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+                             http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.codenameone</groupId>
+    <version>0.8-SNAPSHOT</version>
+    <artifactId>JavaSE</artifactId>
+    <packaging>jar</packaging>
+    <name>Codename One JavaSE port</name>
+    <description>Core Codenameone Library</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.codenameone</groupId>
+            <artifactId>CodenameOne</artifactId>
+            <version>0.8-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.codenameone</groupId>
+            <artifactId>Factory</artifactId>
+            <version>0.8-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>extra</groupId>
+            <artifactId>extra-cn1-binary-1</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${pom.basedir}/../../../cn1-binaries/javase/Filters.jar</systemPath>
+        </dependency>
+    </dependencies>
+
+    <build>
+
+        <sourceDirectory>src</sourceDirectory>
+        <resources>
+            <resource>
+                <directory>../../ReadySkins</directory>
+            </resource>
+            <resource>
+                <directory>src</directory>
+                <includes>
+                    <include>*.png</include>
+                    <include>*.jpg</include>
+                </includes>
+            </resource>
+        </resources>
+
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.3</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+
+        </plugins>
+
+
+    </build>
+
+
+</project>
