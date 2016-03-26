@@ -104,8 +104,8 @@ public class InfiniteProgress extends Component {
         d.setDialogUIID("Container");
         d.setLayout(new BorderLayout());
         d.addComponent(BorderLayout.CENTER, this);
-        d.setTransitionInAnimator(CommonTransitions.createEmpty());
-        d.setTransitionOutAnimator(CommonTransitions.createEmpty());
+        d.setTransitionInAnimator(null);
+        d.setTransitionOutAnimator(null);
         d.showPacked(BorderLayout.CENTER, false);
         return d;
     }

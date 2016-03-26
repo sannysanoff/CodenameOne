@@ -414,7 +414,7 @@ public final class Display {
     public static final int SHOW_DURING_EDIT_ALLOW_SAVE = 4;
 
     /**
-     * Show will update the current form to which the OK button of the text box
+     * Show will update the currents form to which the OK button of the text box
      * will return
      */
     public static final int SHOW_DURING_EDIT_SET_AS_NEXT = 5;

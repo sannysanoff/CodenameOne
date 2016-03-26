@@ -369,6 +369,7 @@
 				WRAPPER_EXTENSION = app;
  				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_BITCODE = NO;
+        OTHER_LDFLAGS = ( "-ObjC", "-lz",);
 			};
 			name = Debug;
 		};
@@ -386,6 +387,8 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				VALID_ARCHS = "armv7 arm64";
 				WRAPPER_EXTENSION = app;
+        OTHER_LDFLAGS = ( "-ObjC", "-lz",);
+
 			};
 			name = Release;
 		};

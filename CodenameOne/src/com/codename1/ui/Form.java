@@ -1621,7 +1621,8 @@ public class Form extends Container {
         onShow();
         tint = false;
         if (getParent() == null) {
-            com.codename1.ui.Display.getInstance().setCurrent(this, reverse);
+            Display instance = Display.getInstance();
+            instance.setCurrent(this, reverse);
         } else {
             revalidate();
         }
