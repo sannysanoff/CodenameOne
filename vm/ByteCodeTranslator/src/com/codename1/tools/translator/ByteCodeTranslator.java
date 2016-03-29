@@ -219,7 +219,7 @@ public class ByteCodeTranslator {
             copyClasspathResourceToProject("nativeMethods.m", srcRoot);
             copyClasspathResourceToProject("xmlvm.h", srcRoot);
 
-            HashSet<String> allParentDirs = new HashSet<>();
+            HashSet<String> allParentDirs = new HashSet<String>();
             for (String s : originalLocations.values()) {
                 allParentDirs.add(new File(s).getParent());
             }
@@ -515,7 +515,7 @@ public class ByteCodeTranslator {
         }
     }
 
-    static HashMap<String,String> originalLocations = new HashMap<>();
+    static HashMap<String,String> originalLocations = new HashMap<String, String>();
 
     private static void copyClasspathResourceToProject(String filename, File projectRoot) throws IOException {
         File cn1Globals = new File(projectRoot, filename);

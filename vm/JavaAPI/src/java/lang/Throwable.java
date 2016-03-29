@@ -80,6 +80,10 @@ public class Throwable{
         System.out.println(stack);
     }
 
+    public void printStackTrace(java.io.PrintStream stream){
+        stream.println(stack);
+    }
+
     /**
      * Returns a short description of this Throwable object. If this Throwable object was
      * with an error message string, then the result is the concatenation of three strings: The name of the actual class of this object ": " (a colon and a space) The result of the

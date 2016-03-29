@@ -38,9 +38,6 @@ import java.util.Vector;
  */
 public final class IOSNative {
 
-    public IOSNative() {
-    }
-
     //native void startMainThread(Runnable r);
     native void initVM();
     static native void deinitializeVM();
@@ -255,21 +252,21 @@ public final class IOSNative {
     
     // IO methods
 
-    native int writeToFile(byte[] data, String path);
+    public native int writeToFile(byte[] data, String path);
     native int appendToFile(byte[] data, String path);
-    native int getFileSize(String path);
+    public native int getFileSize(String path);
     native long getFileLastModified(String path);
-    native void readFile(String path, byte[] bytes);
+    public native void readFile(String path, byte[] bytes);
 
-    native String getDocumentsDir();
+    public native String getDocumentsDir();
     native String getCachesDir();
     native String getResourcesDir();
-    native void deleteFile(String file);
+    public native void deleteFile(String file);
     native boolean fileExists(String file);
     native boolean isDirectory(String file);
 
-    native int fileCountInDir(String dir);
-    native void listFilesInDir(String dir, String[] files);
+    public native int fileCountInDir(String dir);
+    public native void listFilesInDir(String dir, String[] files);
     native void createDirectory(String dir);
     native void moveFile(String src, String dest);
     
@@ -295,9 +292,9 @@ public final class IOSNative {
     
     native void closeConnection(long peer);
     
-    native String getUDID();
-    native String getOSVersion();
-    native String getDeviceName();
+    public native String getUDID();
+    public native String getOSVersion();
+    public native String getDeviceName();
     
     // location manager
     native long createCLLocation();

@@ -103,6 +103,10 @@ import java.io.ByteArrayOutputStream;
  * @author Shai Almog
  */
 public class IOSImplementation extends CodenameOneImplementation {
+
+    public IOSImplementation() {
+    }
+
     public static IOSNative nativeInstance = new IOSNative();
     private static LocalNotificationCallback localNotificationCallback;
     private static PurchaseCallback purchaseCallback;
@@ -114,7 +118,7 @@ public class IOSImplementation extends CodenameOneImplementation {
     private NativeGraphics currentlyDrawingOn;
     //private NativeImage backBuffer;
     private NativeGraphics globalGraphics;
-    static IOSImplementation instance;
+    public static IOSImplementation instance;
     private TextArea currentEditing;
     private static boolean initialized;
     private Lifecycle life;
