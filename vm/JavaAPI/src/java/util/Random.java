@@ -123,4 +123,15 @@ public class Random{
         this.seed = (seed ^ multiplier) & ((1L << 48) - 1);
     }
 
+        public void nextBytes(byte[] bytes) {
+                  for (int i = 0, len = bytes.length; i < len; )
+                                for (int rnd = nextInt(),
+                                                         n = Math.min(len - i, Integer.SIZE/Byte.SIZE);
+                                                                          n-- > 0; rnd >>= Byte.SIZE)
+                                                  bytes[i++] = (byte)rnd;
+                      }
+
+
+
+
 }
