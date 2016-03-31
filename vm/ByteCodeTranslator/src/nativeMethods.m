@@ -1177,6 +1177,7 @@ JAVA_DOUBLE java_lang_StringToReal_parseDblImpl___java_lang_String_int_R_double(
     return db;
 }
 
+/*
 void initMethodStack(CODENAME_ONE_THREAD_STATE, JAVA_OBJECT __cn1ThisObject, int stackSize, int localsStackSize, int classNameId, int methodNameId) {
 #ifdef CN1_INCLUDE_NPE_CHECKS
     if(__cn1ThisObject == JAVA_NULL) {
@@ -1190,6 +1191,7 @@ void initMethodStack(CODENAME_ONE_THREAD_STATE, JAVA_OBJECT __cn1ThisObject, int
     threadStateData->callStackMethod[threadStateData->callStackOffset] = methodNameId;
     threadStateData->callStackOffset++;
 }
+*/
 
 void releaseForReturn(CODENAME_ONE_THREAD_STATE, int cn1LocalsBeginInThread) {
     threadStateData->threadObjectStackOffset = cn1LocalsBeginInThread;

@@ -229,7 +229,7 @@ public class BasicInstruction extends Instruction implements AssignableExpressio
                 break;
 
             case Opcodes.POP2:
-                b.append("    popMany(threadStateData, 2, &SP); /* POP2 */\n");
+                b.append("    POP_MANY(2); /* POP2 */\n");
                 break;
 
             /*case Opcodes.DUP:

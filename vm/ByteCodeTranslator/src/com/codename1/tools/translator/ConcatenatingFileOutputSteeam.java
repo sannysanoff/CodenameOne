@@ -10,7 +10,7 @@ import java.io.IOException;
  */
 public class ConcatenatingFileOutputSteeam extends java.io.OutputStream {
 
-    public static final int MODULO = 32;
+    public static final int MODULO = 256;
 
     ByteArrayOutputStream []dest = new ByteArrayOutputStream[MODULO];
     ByteArrayOutputStream current;

@@ -204,10 +204,12 @@ typedef struct clazz*       JAVA_CLASS;
 
 #define BC_DSTORE(local) dlocals_##local##_ = (*(--SP)).data.d;
 
-#define BC_ASTORE(local) { SP--; \
+// first store then release stack, so reference is kept somewhere.
+#define BC_ASTORE(local) {  \
     locals[local].type = CN1_TYPE_INVALID; \
-    locals[local].data.o = (*SP).data.o; \
+    locals[local].data.o = (SP[-1]).data.o; \
     locals[local].type = CN1_TYPE_OBJECT; \
+    SP--; \
     }
 
 // todo map instanceof and throw typecast exception
@@ -216,12 +218,12 @@ typedef struct clazz*       JAVA_CLASS;
 #define BC_SWAP() swapStack(SP)
 
 
-#define POP_INT() (*pop(&SP)).data.i
-#define POP_OBJ() (*pop(&SP)).data.o
-#define POP_OBJ_NO_RELEASE() (*pop(&SP)).data.o
-#define POP_LONG() (*pop(&SP)).data.l
-#define POP_DOUBLE() (*pop(&SP)).data.d
-#define POP_FLOAT() (*pop(&SP)).data.f
+#define POP_INT() (*(--SP)).data.i
+#define POP_OBJ() (*(--SP)).data.o
+#define POP_OBJ_NO_RELEASE() (*(--SP)).data.o
+#define POP_LONG() (*(--SP)).data.l
+#define POP_DOUBLE() (*(--SP)).data.d
+#define POP_FLOAT() (*(--SP)).data.f
 
 #define PEEK_INT(offset) SP[-offset].data.i
 #define PEEK_OBJ(offset) SP[-offset].data.o
@@ -229,46 +231,61 @@ typedef struct clazz*       JAVA_CLASS;
 #define PEEK_DOUBLE(offset) SP[-offset].data.d
 #define PEEK_FLOAT(offset) SP[-offset].data.f
 
-#define POP_MANY(offset) popMany(threadStateData, offset, &SP)
+// #define POP_MANY(offset) popMany(threadStateData, offset, &SP)
+
+#define POP_MANY(cnt) \
+    { int count = cnt; \
+    while(count > 0) { \
+        --SP; \
+        javaTypes t = SP->type; \
+        if(t == CN1_TYPE_DOUBLE || t == CN1_TYPE_LONG) { \
+            count -= 2; \
+        } else { \
+            count--; \
+        } \
+    } \
+    }
+
+
 
 #define BC_IADD() { \
     SP--; \
-    SP[-1].data.i = SP[-1].data.i + (*SP).data.i; \
+    SP[-1].data.i += (*SP).data.i; \
 }
 
 #define BC_LADD() { \
     SP--; \
-    SP[-1].data.l = SP[-1].data.l + (*SP).data.l; \
+    SP[-1].data.l += (*SP).data.l; \
 }
 
 #define BC_FADD() { \
     SP--; \
-    SP[-1].data.f = SP[-1].data.f + (*SP).data.f; \
+    SP[-1].data.f += (*SP).data.f; \
 }
 
 #define BC_DADD() { \
     SP--; \
-    SP[-1].data.d = SP[-1].data.d + (*SP).data.d; \
+    SP[-1].data.d += (*SP).data.d; \
 }
 
 #define BC_IMUL() { \
     SP--; \
-    SP[-1].data.i = SP[-1].data.i * (*SP).data.i; \
+    SP[-1].data.i *= (*SP).data.i; \
 }
 
 #define BC_LMUL() { \
     SP--; \
-    SP[-1].data.l = SP[-1].data.l * (*SP).data.l; \
+    SP[-1].data.l *= (*SP).data.l; \
 }
 
 #define BC_FMUL() { \
     SP--; \
-    SP[-1].data.f = SP[-1].data.f * (*SP).data.f; \
+    SP[-1].data.f *= (*SP).data.f; \
 }
 
 #define BC_DMUL() { \
     SP--; \
-    SP[-1].data.d = SP[-1].data.d * (*SP).data.d; \
+    SP[-1].data.d *= (*SP).data.d; \
 }
 
 #define BC_INEG() SP[-1].data.i *= -1
@@ -281,32 +298,32 @@ typedef struct clazz*       JAVA_CLASS;
 
 #define BC_IAND() { \
     SP--; \
-    SP[-1].data.i = SP[-1].data.i & (*SP).data.i; \
+    SP[-1].data.i &= (*SP).data.i; \
 }
 
 #define BC_LAND() { \
     SP--; \
-    SP[-1].data.l = SP[-1].data.l & (*SP).data.l; \
+    SP[-1].data.l &= (*SP).data.l; \
 }
 
 #define BC_IOR() { \
     SP--; \
-    SP[-1].data.i = SP[-1].data.i | (*SP).data.i; \
+    SP[-1].data.i |= (*SP).data.i; \
 }
 
 #define BC_LOR() { \
     SP--; \
-    SP[-1].data.l = SP[-1].data.l | (*SP).data.l; \
+    SP[-1].data.l |= (*SP).data.l; \
 }
 
 #define BC_IXOR() { \
     SP--; \
-    SP[-1].data.i = SP[-1].data.i ^ (*SP).data.i; \
+    SP[-1].data.i ^= (*SP).data.i; \
 }
 
 #define BC_LXOR() { \
     SP--; \
-    SP[-1].data.l = SP[-1].data.l ^ (*SP).data.l; \
+    SP[-1].data.l ^= (*SP).data.l; \
 }
 
 #define BC_I2L() SP[-1].data.l = SP[-1].data.i
@@ -370,59 +387,66 @@ typedef struct clazz*       JAVA_CLASS;
     (*SP).data.o = ppX; (*SP).type = CN1_TYPE_OBJECT; \
     SP++; }
 
+/*
+#define PUSH_INT(value) { JAVA_INT v = value; *(SP++) = (struct elementStruct) {CN1_TYPE_INT, (elementUnion){.i = v}}; }
+#define PUSH_LONG(value) { JAVA_LONG v = value; *(SP++) = (struct elementStruct) {CN1_TYPE_LONG, (elementUnion){.l = v}}; }
+#define PUSH_DOUBLE(value) { JAVA_DOUBLE v = value; *(SP++) = (struct elementStruct) {CN1_TYPE_DOUBLE, (elementUnion){.d = v}}; }
+#define PUSH_FLOAT(value) { JAVA_FLOAT v = value; *(SP++) = (struct elementStruct) {CN1_TYPE_FLOAT, (elementUnion){.f = v}}; }
+ */
+
 #define PUSH_INT(value) { JAVA_INT pInt = value; (*SP).type = CN1_TYPE_INT; \
-    (*SP).data.i = pInt; \
-    SP++; }
+        (*SP).data.i = pInt; \
+        SP++; }
 
 #define PUSH_LONG(value) { JAVA_LONG plong = value; (*SP).type = CN1_TYPE_LONG; \
-    (*SP).data.l = plong; \
-    SP++; }
+        (*SP).data.l = plong; \
+        SP++; }
 
 #define PUSH_DOUBLE(value) { JAVA_DOUBLE pdob = value; (*SP).type = CN1_TYPE_DOUBLE; \
-    (*SP).data.d = pdob; \
-    SP++; }
+        (*SP).data.d = pdob; \
+        SP++; }
 
 #define PUSH_FLOAT(value) { JAVA_FLOAT pFlo = value; (*SP).type = CN1_TYPE_FLOAT; \
-    (*SP).data.f = pFlo; \
-    SP++; }
+        (*SP).data.f = pFlo; \
+        SP++; }
 
 #define POP_MANY_AND_PUSH_OBJ(value, offset) {  \
     JAVA_OBJECT pObj = value; SP[-offset].type = CN1_TYPE_INVALID; \
     SP[-offset].data.o = pObj; SP[-offset].type = CN1_TYPE_OBJECT; \
-    popMany(threadStateData, MAX(1, offset) - 1, &SP); }
+    POP_MANY(MAX(1, offset) - 1); }
 
 #define POP_MANY_AND_PUSH_INT(value, offset) {  \
     JAVA_INT pInt = value; SP[-offset].type = CN1_TYPE_INT; \
     SP[-offset].data.i = pInt; \
-    popMany(threadStateData, MAX(1, offset) - 1, &SP); }
+    POP_MANY(MAX(1, offset) - 1); }
 
 #define POP_MANY_AND_PUSH_LONG(value, offset) {  \
     JAVA_LONG pLong = value; SP[-offset].type = CN1_TYPE_LONG; \
     SP[-offset].data.l = pLong; \
-    popMany(threadStateData, MAX(1, offset) - 1, &SP); }
+    POP_MANY(MAX(1, offset) - 1); }
 
 #define POP_MANY_AND_PUSH_DOUBLE(value, offset) {  \
     JAVA_DOUBLE pDob = value; SP[-offset].type = CN1_TYPE_DOUBLE; \
     SP[-offset].data.d = pDob; \
-    popMany(threadStateData, MAX(1, offset) - 1, &SP); }
+    POP_MANY(MAX(1, offset) - 1); }
 
 #define POP_MANY_AND_PUSH_FLOAT(value, offset) {  \
     JAVA_FLOAT pFlo = value; SP[-offset].type = CN1_TYPE_FLOAT; \
     SP[-offset].data.f = pFlo; \
-    popMany(threadStateData, MAX(1, offset) - 1, &SP); }
+    POP_MANY(MAX(1, offset) - 1); }
 
 
-#define BC_IDIV() SP--; SP[-1].data.i = SP[-1].data.i / (*SP).data.i
+#define BC_IDIV() SP--; SP[-1].data.i /= (*SP).data.i
 
-#define BC_LDIV() SP--; SP[-1].data.l = SP[-1].data.l / (*SP).data.l
+#define BC_LDIV() SP--; SP[-1].data.l /= (*SP).data.l
 
-#define BC_FDIV() SP--; SP[-1].data.f = SP[-1].data.f / (*SP).data.f
+#define BC_FDIV() SP--; SP[-1].data.f /= (*SP).data.f
 
-#define BC_DDIV() SP--; SP[-1].data.d = SP[-1].data.d / (*SP).data.d
+#define BC_DDIV() SP--; SP[-1].data.d /= (*SP).data.d
 
-#define BC_IREM() SP--; SP[-1].data.i = SP[-1].data.i % (*SP).data.i
+#define BC_IREM() SP--; SP[-1].data.i %= (*SP).data.i
 
-#define BC_LREM() SP--; SP[-1].data.l = SP[-1].data.l % (*SP).data.l
+#define BC_LREM() SP--; SP[-1].data.l %= (*SP).data.l
 
 #define BC_FREM() SP--; SP[-1].data.f = fmod(SP[-1].data.f, (*SP).data.f)
 
@@ -539,13 +563,13 @@ if(SP[-1].type == CN1_TYPE_LONG || SP[-1].type == CN1_TYPE_DOUBLE) {\
 
 #define BC_LUSHR() SP--; SP[-1].data.l = (((unsigned long long)SP[-1].data.l) >> (0x3f & ((unsigned long long)(*SP).data.l)))
 
-#define BC_ISUB() SP--; SP[-1].data.i = (SP[-1].data.i - (*SP).data.i)
+#define BC_ISUB() SP--; SP[-1].data.i -= (*SP).data.i
 
-#define BC_LSUB() SP--; SP[-1].data.l = (SP[-1].data.l - (*SP).data.l)
+#define BC_LSUB() SP--; SP[-1].data.l -= (*SP).data.l
 
-#define BC_FSUB() SP--; SP[-1].data.f = (SP[-1].data.f - (*SP).data.f)
+#define BC_FSUB() SP--; SP[-1].data.f -= (*SP).data.f
 
-#define BC_DSUB() SP--; SP[-1].data.d = (SP[-1].data.d - (*SP).data.d)
+#define BC_DSUB() SP--; SP[-1].data.d -= (*SP).data.d
 
 extern JAVA_OBJECT* constantPoolObjects;
 
@@ -703,7 +727,7 @@ struct ThreadLocalData {
 
 //#define BLOCK_FOR_GC() while(threadStateData->threadBlockedByGC) { usleep(500); }
 
-#define __CN1_DEBUG_INFO(line) threadStateData->callStackLine[threadStateData->callStackOffset - 1] = line;
+#define __CN1_DEBUG_INFO(line) *_callStackLine = line;
 
 // we need to throw stack overflow error but its unavailable here...
 /*#define ENTERING_CODENAME_ONE_METHOD(classIdNumber, methodIdNumber) { \
@@ -868,25 +892,46 @@ extern JAVA_OBJECT newString(CODENAME_ONE_THREAD_STATE, int length, JAVA_CHAR da
 extern JAVA_OBJECT newStringFromCString(CODENAME_ONE_THREAD_STATE, const char *str);
 extern void initConstantPool();
 
-extern void initMethodStack(CODENAME_ONE_THREAD_STATE, JAVA_OBJECT __cn1ThisObject, int stackSize, int localsStackSize, int classNameId, int methodNameId);
+//extern void initMethodStack(CODENAME_ONE_THREAD_STATE, JAVA_OBJECT __cn1ThisObject, int stackSize, int localsStackSize, int classNameId, int methodNameId);
+
+#define initMethodStack(__cn1ThisObject,  stackSize,  localsStackSize,  classNameId,  methodNameId) \
+    if(__cn1ThisObject == JAVA_NULL) { THROW_NULL_POINTER_EXCEPTION(); } \
+    if (localsStackSize + stackSize > 0) { \
+        memset(&threadStateData->threadObjectStack[threadStateData->threadObjectStackOffset], 0, sizeof(struct elementStruct) * (localsStackSize + stackSize)); \
+        threadStateData->threadObjectStackOffset += localsStackSize + stackSize; \
+    } \
+    CODENAME_ONE_ASSERT(threadStateData->callStackOffset < CN1_MAX_STACK_CALL_DEPTH - 1); \
+    threadStateData->callStackClass[threadStateData->callStackOffset] = classNameId; \
+    threadStateData->callStackMethod[threadStateData->callStackOffset] = methodNameId; \
+    threadStateData->callStackOffset++; \
+    JAVA_INT _tmpInt1, _tmpInt2; \
+    JAVA_LONG _tmpLong; \
+    JAVA_DOUBLE _tmpDouble; \
+    JAVA_FLOAT _tmpFloat; \
+    JAVA_OBJECT _tmpObj1, _tmpObj2; \
+
+
+
 
 // we need to zero out the values with memset otherwise we will run into a problem
 // when invoking release on pre-existing object which might be garbage
 #define DEFINE_METHOD_STACK(stackSize, localsStackSize, spPosition, classNameId, methodNameId) \
     const int cn1LocalsBeginInThread = threadStateData->threadObjectStackOffset; \
-    struct elementStruct* locals = &threadStateData->threadObjectStack[cn1LocalsBeginInThread]; \
-    struct elementStruct* stack = &threadStateData->threadObjectStack[threadStateData->threadObjectStackOffset + localsStackSize]; \
-    struct elementStruct* SP = &stack[spPosition]; \
-    initMethodStack(threadStateData, (JAVA_OBJECT)1, stackSize,localsStackSize, classNameId, methodNameId); \
-    const int currentCodenameOneCallStackOffset = threadStateData->callStackOffset;
+    struct elementStruct* const locals = &threadStateData->threadObjectStack[cn1LocalsBeginInThread]; \
+    struct elementStruct* const stack = &threadStateData->threadObjectStack[threadStateData->threadObjectStackOffset + localsStackSize]; \
+    register struct elementStruct* SP = &stack[spPosition]; \
+    initMethodStack((JAVA_OBJECT)1, stackSize,localsStackSize, classNameId, methodNameId) \
+    const int currentCodenameOneCallStackOffset = threadStateData->callStackOffset; \
+    int * const _callStackLine = &threadStateData->callStackLine[currentCodenameOneCallStackOffset - 1];
 
 #define DEFINE_INSTANCE_METHOD_STACK(stackSize, localsStackSize, spPosition, classNameId, methodNameId) \
     const int cn1LocalsBeginInThread = threadStateData->threadObjectStackOffset; \
-    struct elementStruct* locals = &threadStateData->threadObjectStack[cn1LocalsBeginInThread]; \
-    struct elementStruct* stack = &threadStateData->threadObjectStack[threadStateData->threadObjectStackOffset + localsStackSize]; \
-    struct elementStruct* SP = &stack[spPosition]; \
-    initMethodStack(threadStateData, __cn1ThisObject, stackSize,localsStackSize, classNameId, methodNameId); \
-    const int currentCodenameOneCallStackOffset = threadStateData->callStackOffset;
+    struct elementStruct* const locals = &threadStateData->threadObjectStack[cn1LocalsBeginInThread]; \
+    struct elementStruct* const stack = &threadStateData->threadObjectStack[threadStateData->threadObjectStackOffset + localsStackSize]; \
+    register struct elementStruct* SP = &stack[spPosition]; \
+    initMethodStack(__cn1ThisObject, stackSize,localsStackSize, classNameId, methodNameId) \
+    const int currentCodenameOneCallStackOffset = threadStateData->callStackOffset; \
+    int * const _callStackLine = &threadStateData->callStackLine[currentCodenameOneCallStackOffset - 1];
 
 
 #ifdef __OBJC__
@@ -954,7 +999,7 @@ static inline struct elementStruct* popAndRelease(CODENAME_ONE_THREAD_STATE, str
 */
 
 extern struct elementStruct* pop(struct elementStruct**sp);
-extern void popMany(CODENAME_ONE_THREAD_STATE, int count, struct elementStruct**sp);
+//extern void popMany(CODENAME_ONE_THREAD_STATE, int count, struct elementStruct**sp);
 
 
 #define swapStack(sp) { \

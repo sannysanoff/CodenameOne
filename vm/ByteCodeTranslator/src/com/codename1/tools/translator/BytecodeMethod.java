@@ -435,160 +435,179 @@ public class BytecodeMethod {
         return false;
     }
     
-    public void appendMethodC(StringBuilder b) {
-        if(nativeMethod) {
-            return;
-        }
-        appendCMethodPrefix(b, "");
-        b.append(" {\n");
-        if(eliminated) {
-            if(returnType.isVoid()) {
-                b.append("    return;\n}\n\n");
-            } else {
-                b.append("    return 0;\n}\n\n");
+    public void appendMethodC(StringBuilder _b) {
+        StringBuilder b = new StringBuilder();
+        try {
+            if (nativeMethod) {
+                return;
             }
-            return;
-        }
-            
-        b.append(declaration);
-        
-        boolean hasInstructions = true;
-        if(optimizerOn) {
-            hasInstructions = optimize();
-        }
-        
-        if(hasInstructions) {
-            Set<String> added = new HashSet<String>();
-            for (LocalVariable lv : localVariables) {
-                String variableName = lv.getQualifier() + "locals_"+lv.getIndex()+"_";
-                if (!added.contains(variableName) && lv.getQualifier() != 'o') {
-                    added.add(variableName);
-                    b.append("    ");
-                    switch (lv.getQualifier()) {
-                        case 'i' :
-                            b.append("JAVA_INT"); break;
-                        case 'l' :
-                            b.append("JAVA_LONG"); break;
-                        case 'f' :
-                            b.append("JAVA_FLOAT"); break;
-                        case 'd' :
-                            b.append("JAVA_DOUBLE"); break;
-                    }
-                    b.append(" ").append(lv.getQualifier()).append("locals_").append(lv.getIndex()).append("_; /* ").append(lv.getOrigName()).append(" */\n");
-                }
-            }
-            
-            if(staticMethod) {
-                if(methodName.equals("__CLINIT__")) {
-                    b.append("    DEFINE_METHOD_STACK(");
+            appendCMethodPrefix(b, "");
+            b.append(" {\n");
+            if (eliminated) {
+                if (returnType.isVoid()) {
+                    b.append("    return;\n}\n\n");
                 } else {
-                    b.append("    __STATIC_INITIALIZER_");
-                    b.append(clsName.replace('/', '_').replace('$', '_'));
-                    b.append("(threadStateData);\n    DEFINE_METHOD_STACK(");
+                    b.append("    return 0;\n}\n\n");
                 }
-            } else {
-                b.append("    DEFINE_INSTANCE_METHOD_STACK(");
+                return;
             }
-            b.append(maxStack);
-            b.append(", ");
-            b.append(maxLocals);
-            b.append(", 0, ");
-            b.append(Parser.addToConstantPool(clsName));
-            b.append(", ");
-            b.append(Parser.addToConstantPool(methodName));
-            b.append(");\n");
-            int startOffset = 0;
-            if(synchronizedMethod) {
-                if(staticMethod) {
-                    b.append("    monitorEnter(threadStateData, (JAVA_OBJECT)&class__");
-                    b.append(clsName);
-                    b.append(");\n");
-                } else {
-                    b.append("    monitorEnter(threadStateData, __cn1ThisObject);\n");
-                }
-            }
-            if(!staticMethod) {
-                b.append("    locals[0].data.o = __cn1ThisObject; locals[0].type = CN1_TYPE_OBJECT; ");
-                startOffset++;
-            }
-            int localsOffset = startOffset;
-            for(int iter = 0 ; iter < arguments.size() ; iter++) {
-                ByteCodeMethodArg arg = arguments.get(iter);
-                if (arg.getQualifier() == 'o') {
-                    b.append("    locals[");
-                    b.append(localsOffset);
-                    b.append("].data.");
 
-                    b.append(arg.getQualifier());
-                    b.append(" = __cn1Arg");
-                    b.append(iter + 1);
-                    b.append(";\n");
-                    b.append("    locals[");
-                    b.append(localsOffset);
-                    b.append("].type = CN1_TYPE_OBJECT;\n");
-                   
-                } else {
-                    b.append("    ");
-                    if (!hasLocalVariableWithIndex(arg.getQualifier(), localsOffset)) {
-                        switch (arg.getQualifier()) {
-                            case 'i' : b.append("JAVA_INT"); break;
-                            case 'f' : b.append("JAVA_FLOAT"); break;
-                            case 'd' : b.append("JAVA_DOUBLE"); break;
-                            case 'l' : b.append("JAVA_LONG"); break;
-                            default: b.append("JAVA_INT"); break;
+            b.append(declaration);
+
+            boolean hasInstructions = true;
+            if (optimizerOn) {
+                hasInstructions = optimize();
+            }
+
+            if (hasInstructions) {
+                Set<String> added = new HashSet<String>();
+                for (LocalVariable lv : localVariables) {
+                    String variableName = lv.getQualifier() + "locals_" + lv.getIndex() + "_";
+                    if (!added.contains(variableName) && lv.getQualifier() != 'o') {
+                        added.add(variableName);
+                        b.append("    ");
+                        switch (lv.getQualifier()) {
+                            case 'i':
+                                b.append("JAVA_INT");
+                                break;
+                            case 'l':
+                                b.append("JAVA_LONG");
+                                break;
+                            case 'f':
+                                b.append("JAVA_FLOAT");
+                                break;
+                            case 'd':
+                                b.append("JAVA_DOUBLE");
+                                break;
                         }
-                        b.append(" ");
-                        
+                        b.append(" ").append(lv.getQualifier()).append("locals_").append(lv.getIndex()).append("_; /* ").append(lv.getOrigName()).append(" */\n");
                     }
-                    b.append(arg.getQualifier());
-                    b.append("locals_");
-                    b.append(localsOffset);
-                    b.append("_");
-                    b.append(" = __cn1Arg");
-                    b.append(iter + 1);
-                    b.append(";\n");
                 }
-                // For now we'll still allocate space for locals that we're not using
-                // so we keep the indexes the same for objects.
-                localsOffset++;
-                if(arg.isDoubleOrLong()) {
+
+                if (staticMethod) {
+                    if (methodName.equals("__CLINIT__")) {
+                        b.append("    DEFINE_METHOD_STACK(");
+                    } else {
+                        b.append("    __STATIC_INITIALIZER_");
+                        b.append(clsName.replace('/', '_').replace('$', '_'));
+                        b.append("(threadStateData);\n    DEFINE_METHOD_STACK(");
+                    }
+                } else {
+                    b.append("    DEFINE_INSTANCE_METHOD_STACK(");
+                }
+                b.append(maxStack);
+                b.append(", ");
+                b.append(maxLocals);
+                b.append(", 0, ");
+                b.append(Parser.addToConstantPool(clsName));
+                b.append(", ");
+                b.append(Parser.addToConstantPool(methodName));
+                b.append(");\n");
+                int startOffset = 0;
+                if (synchronizedMethod) {
+                    if (staticMethod) {
+                        b.append("    monitorEnter(threadStateData, (JAVA_OBJECT)&class__");
+                        b.append(clsName);
+                        b.append(");\n");
+                    } else {
+                        b.append("    monitorEnter(threadStateData, __cn1ThisObject);\n");
+                    }
+                }
+                if (!staticMethod) {
+                    b.append("    locals[0].data.o = __cn1ThisObject; locals[0].type = CN1_TYPE_OBJECT; ");
+                    startOffset++;
+                }
+                int localsOffset = startOffset;
+                for (int iter = 0; iter < arguments.size(); iter++) {
+                    ByteCodeMethodArg arg = arguments.get(iter);
+                    if (arg.getQualifier() == 'o') {
+                        b.append("    locals[");
+                        b.append(localsOffset);
+                        b.append("].data.");
+
+                        b.append(arg.getQualifier());
+                        b.append(" = __cn1Arg");
+                        b.append(iter + 1);
+                        b.append(";\n");
+                        b.append("    locals[");
+                        b.append(localsOffset);
+                        b.append("].type = CN1_TYPE_OBJECT;\n");
+
+                    } else {
+                        b.append("    ");
+                        if (!hasLocalVariableWithIndex(arg.getQualifier(), localsOffset)) {
+                            switch (arg.getQualifier()) {
+                                case 'i':
+                                    b.append("JAVA_INT");
+                                    break;
+                                case 'f':
+                                    b.append("JAVA_FLOAT");
+                                    break;
+                                case 'd':
+                                    b.append("JAVA_DOUBLE");
+                                    break;
+                                case 'l':
+                                    b.append("JAVA_LONG");
+                                    break;
+                                default:
+                                    b.append("JAVA_INT");
+                                    break;
+                            }
+                            b.append(" ");
+
+                        }
+                        b.append(arg.getQualifier());
+                        b.append("locals_");
+                        b.append(localsOffset);
+                        b.append("_");
+                        b.append(" = __cn1Arg");
+                        b.append(iter + 1);
+                        b.append(";\n");
+                    }
+                    // For now we'll still allocate space for locals that we're not using
+                    // so we keep the indexes the same for objects.
                     localsOffset++;
+                    if (arg.isDoubleOrLong()) {
+                        localsOffset++;
+                    }
                 }
             }
-        }
-        
-        BasicInstruction.setSynchronizedMethod(synchronizedMethod, staticMethod, clsName);
-        TryCatch.reset();
-        BasicInstruction.setHasInstructions(hasInstructions);
-        for(Instruction i : instructions) {
-            i.setMaxes(maxStack, maxLocals);
-            i.appendInstruction(b, instructions);
-        }
-        if(instructions.size() == 0) {
-            if(returnType.isVoid()) {
-                b.append("    return;\n}\n\n");
+
+            BasicInstruction.setSynchronizedMethod(synchronizedMethod, staticMethod, clsName);
+            TryCatch.reset();
+            BasicInstruction.setHasInstructions(hasInstructions);
+            for (Instruction i : instructions) {
+                i.setMaxes(maxStack, maxLocals);
+                i.appendInstruction(b, instructions);
+            }
+            if (instructions.size() == 0) {
+                if (returnType.isVoid()) {
+                    b.append("    return;\n}\n\n");
+                } else {
+                    b.append("    return 0;\n}\n\n");
+                }
+                return;
+            }
+            Instruction inst = instructions.get(instructions.size() - 1);
+            int lastInstruction = inst.getOpcode();
+            if (lastInstruction == -1 || inst instanceof LabelInstruction) {
+                if (instructions.size() > 2) {
+                    inst = instructions.get(instructions.size() - 2);
+                    lastInstruction = inst.getOpcode();
+                }
+            }
+            if (lastInstruction == Opcodes.RETURN || lastInstruction == Opcodes.ARETURN || lastInstruction == Opcodes.IRETURN || lastInstruction == Opcodes.LRETURN ||
+                    lastInstruction == Opcodes.FRETURN || lastInstruction == Opcodes.DRETURN || lastInstruction == -1) {
+                b.append("}\n\n");
             } else {
-                b.append("    return 0;\n}\n\n");
+                if (returnType.isVoid()) {
+                    b.append("    return;\n}\n\n");
+                } else {
+                    b.append("    return 0;\n}\n\n");
+                }
             }
-            return;
-        }
-        Instruction inst = instructions.get(instructions.size() - 1);
-        int lastInstruction = inst.getOpcode();
-        if(lastInstruction == -1 || inst instanceof LabelInstruction) {
-            if(instructions.size() > 2) {
-                inst = instructions.get(instructions.size() - 2);
-                lastInstruction = inst.getOpcode();
-            }
-        }
-        if(lastInstruction == Opcodes.RETURN || lastInstruction == Opcodes.ARETURN || lastInstruction == Opcodes.IRETURN || lastInstruction == Opcodes.LRETURN ||
-                lastInstruction == Opcodes.FRETURN || lastInstruction == Opcodes.DRETURN || lastInstruction == -1) {
-            b.append("}\n\n");
-        } else {
-            if(returnType.isVoid()) {
-                b.append("    return;\n}\n\n");
-            } else {
-                b.append("    return 0;\n}\n\n");
-            }
+        } finally {
+            _b.append(b.toString());
         }
     }
     

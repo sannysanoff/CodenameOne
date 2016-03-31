@@ -166,6 +166,8 @@ public class Field extends Instruction implements AssignableExpression {
     
     @Override
     public void appendInstruction(StringBuilder b) {
+        StringBuilder newBody;
+        StringBuilder newPrefix;
         b.append("    ");
         switch(opcode) {
             case Opcodes.GETSTATIC:
@@ -195,30 +197,39 @@ public class Field extends Instruction implements AssignableExpression {
                 break;
             case Opcodes.PUTSTATIC:
                 //b.append("SAFE_RETAIN(1);\n    ");
-                b.append("set_static_");
-                b.append(owner.replace('/', '_').replace('$', '_'));
-                b.append("_");
-                b.append(name.replace('/', '_').replace('$', '_'));
-                b.append("(threadStateData, ");
+                newBody = new StringBuilder();
+
+                newBody.append("set_static_");
+                newBody.append(owner.replace('/', '_').replace('$', '_'));
+                newBody.append("_");
+                newBody.append(name.replace('/', '_').replace('$', '_'));
+                newBody.append("(threadStateData, ");
                 switch(desc.charAt(0)) {
                     case 'L':
                     case '[':
-                        b.append("PEEK_OBJ(1));\n    SP--;\n");
+                        b.append("_tmpObj1 = PEEK_OBJ(1);");
+                        newBody.append("_tmpObj1);\n    SP--;\n");
+                        b.append(newBody.toString());
                         return;
                     case 'D':
-                        b.append("POP_DOUBLE");
+                        b.append("_tmpDouble = POP_DOUBLE();");
+                        newBody.append("_tmpDouble");
                         break;
                     case 'F':
-                        b.append("POP_FLOAT");
+                        b.append("_tmpFloat = POP_FLOAT();");
+                        newBody.append("_tmpFloat");
                         break;
                     case 'J':
-                        b.append("POP_LONG");
+                        b.append("_tmpLong = POP_LONG();");
+                        newBody.append("_tmpLong");
                         break;
                     default:
-                        b.append("POP_INT");
+                        b.append("_tmpInt1 = POP_INT();");
+                        newBody.append("_tmpInt1");
                         break;
                 }
-                b.append("());\n");
+                newBody.append(");\n");
+                b.append(newBody.toString());
                 break;
             case Opcodes.GETFIELD:
                 switch(desc.charAt(0)) {
@@ -251,39 +262,48 @@ public class Field extends Instruction implements AssignableExpression {
                 break;
             case Opcodes.PUTFIELD:
                 //b.append("SAFE_RETAIN(1);\n    ");
-                b.append("set_field_");
-                b.append(owner.replace('/', '_').replace('$', '_'));
-                b.append("_");
-                b.append(name);
-                b.append("(threadStateData, ");
+                newBody = new StringBuilder();
+                newBody.append("set_field_");
+                newBody.append(owner.replace('/', '_').replace('$', '_'));
+                newBody.append("_");
+                newBody.append(name);
+                newBody.append("(threadStateData, ");
                 switch(desc.charAt(0)) {
                     case 'L':
                     case '[':
-                        b.append("PEEK_OBJ");
+                        b.append("_tmpObj1 = PEEK_OBJ(1);");
                         if(useThis) {
-                            b.append("(1), __cn1ThisObject);\n    SP--;\n");
+                            newBody.append("_tmpObj1, __cn1ThisObject);\n    SP--;\n");
                         } else {
-                            b.append("(1), PEEK_OBJ(2));\n    POP_MANY(2);\n");
+                            b.append("_tmpObj2 = PEEK_OBJ(2);");
+                            newBody.append("_tmpObj1, _tmpObj2);\n    POP_MANY(2);\n");
                         }
+                        b.append(newBody.toString());
                         return;
                     case 'D':
-                        b.append("POP_DOUBLE");
+                        b.append("_tmpDouble = POP_DOUBLE();");
+                        newBody.append("_tmpDouble");
                         break;
                     case 'F':
-                        b.append("POP_FLOAT");
+                        b.append("_tmpFloat = POP_FLOAT();");
+                        newBody.append("_tmpFloat");
                         break;
                     case 'J':
-                        b.append("POP_LONG");
+                        b.append("_tmpLong = POP_LONG();");
+                        newBody.append("_tmpLong");
                         break;
                     default:
-                        b.append("POP_INT");
+                        b.append("_tmpInt1 = POP_INT();");
+                        newBody.append("_tmpInt1");
                         break;
                 }
                 if(useThis) {
-                    b.append("(), __cn1ThisObject);\n");
+                    newBody.append(", __cn1ThisObject);\n");
                 } else {
-                    b.append("(), POP_OBJ());\n");
+                    b.append("_tmpObj2 = POP_OBJ();");
+                    newBody.append(", _tmpObj2);\n");
                 }
+                b.append(newBody.toString());
                 break;
         }
     }

@@ -83,7 +83,7 @@ public class MultiArray extends Instruction {
     }
 
     @Override
-    public void appendInstruction(StringBuilder b, List<Instruction> l) {
+    public void appendInstruction(StringBuilder fullB, List<Instruction> l) {
         int actualDim = dims;
         /*int offset = 0;
         offset = desc.indexOf('[', offset);
@@ -91,15 +91,18 @@ public class MultiArray extends Instruction {
             actualDim++;
             offset = desc.indexOf('[', offset);
         }*/
-        switch(actualDim) {
+        StringBuilder b = new StringBuilder();
+        int nVars = 1;
+        switch (actualDim) {
             case 2:
-                b.append("    PUSH_OBJ(alloc2DArray(threadStateData, (*(--SP)).data.i, ");
-                switch(dims) {
+                b.append("    PUSH_OBJ(alloc2DArray(threadStateData, _tmpI1, ");
+                switch (dims) {
                     case 1:
                         b.append("-1");
                         break;
                     case 2:
-                        b.append("(*(--SP)).data.i");
+                        nVars++;
+                        b.append("_tmpI2");
                         break;
                 }
                 b.append(", &class_array2__");
@@ -107,27 +110,29 @@ public class MultiArray extends Instruction {
                 b.append(", &class_array1__");
                 b.append(actualType);
                 b.append(", sizeof(");
-                if(actualType.startsWith("JAVA_")) {
+                if (actualType.startsWith("JAVA_")) {
                     b.append(actualType);
                 } else {
                     b.append("JAVA_OBJECT");
                 }
-                b.append("))); /* MULTIANEWARRAY */\n");
+                b.append("))); /* MULTIANEWARRAY */");
                 break;
-                
+
             case 3:
-                b.append("    PUSH_OBJ(alloc3DArray(threadStateData, POP_INT(), ");
-                switch(dims) {
+                b.append("    PUSH_OBJ(alloc3DArray(threadStateData, _tmpI1, ");
+                switch (dims) {
                     case 1:
                         b.append("-1, -1");
                         break;
-                        
+
                     case 2:
-                        b.append("POP_INT(), -1");
+                        nVars++;
+                        b.append("_tmpI2, -1");
                         break;
-                        
+
                     case 3:
-                        b.append("POP_INT(), POP_INT()");
+                        nVars+=2;
+                        b.append("_tmpI2, _tmpI3");
                         break;
                 }
                 b.append(", &class_array3__");
@@ -137,31 +142,34 @@ public class MultiArray extends Instruction {
                 b.append(", &class_array1__");
                 b.append(actualType);
                 b.append(", sizeof(");
-                if(actualType.startsWith("JAVA_")) {
+                if (actualType.startsWith("JAVA_")) {
                     b.append(actualType);
                 } else {
                     b.append("JAVA_OBJECT");
                 }
-                b.append("))); /* MULTIANEWARRAY */\n");
+                b.append("))); /* MULTIANEWARRAY */");
                 break;
-                
+
             case 4:
-                b.append("    PUSH_OBJ(alloc4DArray(threadStateData, POP_INT(), ");
-                switch(dims) {
+                b.append("    PUSH_OBJ(alloc4DArray(threadStateData, _tmpI1, ");
+                switch (dims) {
                     case 1:
                         b.append("-1, -1, -1");
                         break;
-                        
+
                     case 2:
-                        b.append("POP_INT(), -1, -1");
+                        nVars++;
+                        b.append("_tmpI2, -1, -1");
                         break;
-                        
+
                     case 3:
-                        b.append("POP_INT(), POP_INT(), -1");
+                        nVars+=2;
+                        b.append("_tmpI2, _tmpI3, -1");
                         break;
-                        
+
                     case 4:
-                        b.append("POP_INT(), POP_INT(), POP_INT()");
+                        nVars+=3;
+                        b.append("_tmpI2, _tmpI3, _tmpI4");
                         break;
                 }
                 b.append(", &class_array4__");
@@ -173,15 +181,20 @@ public class MultiArray extends Instruction {
                 b.append(", &class_array1__");
                 b.append(actualType);
                 b.append(", sizeof(");
-                if(actualType.startsWith("JAVA_")) {
+                if (actualType.startsWith("JAVA_")) {
                     b.append(actualType);
                 } else {
                     b.append("JAVA_OBJECT");
                 }
-                b.append("))); /* MULTIANEWARRAY */\n");
+                b.append("))); /* MULTIANEWARRAY */");
                 break;
         }
-        
+        fullB.append("{");
+        for (int i = 0; i < nVars; i++)
+            fullB.append("int _tmpI" + (i + 1) + "=POP_INT();");
+        fullB.append(b);
+        fullB.append("}\n");
+
     }
 
 }
