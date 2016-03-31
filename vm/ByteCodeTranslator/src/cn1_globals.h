@@ -172,8 +172,9 @@ typedef enum {
 // type must be first so memsetting will first reset the type then the data preventing the GC
 // from mistakingly detecting an object
 struct elementStruct {
-    javaTypes type;
+    javaTypes type;   // for padding
     elementUnion data;
+    javaTypes _dummy;
 };
 
 
@@ -185,53 +186,23 @@ typedef struct clazz*       JAVA_CLASS;
 #define JAVA_TRUE ((JAVA_BOOLEAN) 1)
 
 
-#define BC_ILOAD(local) { \
-    (*SP).type = CN1_TYPE_INT; \
-    (*SP).data.i = ilocals_##local##_; \
-    SP++; \
-}
+#define BC_ILOAD(local) (*(SP++)) = (struct elementStruct) {CN1_TYPE_INT, (elementUnion){.i = ilocals_##local##_}}
 
-#define BC_LLOAD(local) { \
-    (*SP).type = CN1_TYPE_LONG; \
-    (*SP).data.l = llocals_##local##_; \
-    SP++; \
-}
+#define BC_LLOAD(local) (*(SP++)) = (struct elementStruct) {CN1_TYPE_LONG, (elementUnion){.l = llocals_##local##_}}
 
-#define BC_FLOAD(local) { \
-    (*SP).type = CN1_TYPE_FLOAT; \
-    (*SP).data.f = flocals_##local##_; \
-    SP++; \
-}
+#define BC_FLOAD(local)  (*(SP++)) = (struct elementStruct) {CN1_TYPE_FLOAT, (elementUnion){.f = flocals_##local##_}}
 
-#define BC_DLOAD(local) { \
-    (*SP).type = CN1_TYPE_DOUBLE; \
-    (*SP).data.d = dlocals_##local##_; \
-    SP++; \
-}
+#define BC_DLOAD(local)  (*(SP++)) = (struct elementStruct) {CN1_TYPE_DOUBLE, (elementUnion){.d = dlocals_##local##_}}
 
-#define BC_ALOAD(local) { \
-    (*SP).type = CN1_TYPE_INVALID; \
-    (*SP).data.o = locals[local].data.o; \
-    (*SP).type = CN1_TYPE_OBJECT; \
-    SP++; \
-}
+#define BC_ALOAD(local) {*SP = locals[local]; SP++;}
 
+#define BC_ISTORE(local) ilocals_##local##_ = (*(--SP)).data.i;
 
-#define BC_ISTORE(local) { SP--; \
-    ilocals_##local##_ = (*SP).data.i; \
-    }
+#define BC_LSTORE(local) llocals_##local##_ = (*(--SP)).data.l;
 
-#define BC_LSTORE(local) { SP--; \
-    llocals_##local##_ = (*SP).data.l; \
-    }
+#define BC_FSTORE(local) flocals_##local##_ = (*(--SP)).data.f;
 
-#define BC_FSTORE(local) { SP--; \
-    flocals_##local##_ = (*SP).data.f; \
-    }
-
-#define BC_DSTORE(local) { SP--; \
-    dlocals_##local##_ = (*SP).data.d; \
-    }
+#define BC_DSTORE(local) dlocals_##local##_ = (*(--SP)).data.d;
 
 #define BC_ASTORE(local) { SP--; \
     locals[local].type = CN1_TYPE_INVALID; \
