@@ -38,6 +38,7 @@ public final class Byte{
      * See Also:Constant Field Values
      */
     public static final byte MIN_VALUE = -128;
+    public static final int SIZE = 8;
 
     private byte value;
     

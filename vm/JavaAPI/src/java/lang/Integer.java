@@ -46,6 +46,7 @@ public final class Integer{
      * See Also:Constant Field Values
      */
     public static final int MIN_VALUE=-2147483648;
+    public static final int SIZE=32;
 
     private int value;
     
