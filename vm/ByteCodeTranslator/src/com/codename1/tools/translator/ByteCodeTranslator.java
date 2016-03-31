@@ -222,6 +222,7 @@ public class ByteCodeTranslator {
             HashSet<String> allParentDirs = new HashSet<String>();
             for (String s : originalLocations.values()) {
                 allParentDirs.add(new File(s).getParent());
+                // delete from dest project dir, because they are linked directly
             }
             headerSearchPath = originalLocations.values().stream()
                     .map(x -> new File(x).getParent())
@@ -385,6 +386,7 @@ public class ByteCodeTranslator {
                         String origLocation = originalLocations.get(file);
                         if (origLocation != null) {
                             fileListEntry.append(origLocation);
+                            new File(srcRoot, new File(file).getName()).delete();
                         } else {
                             fileListEntry.append(file);
                         }
@@ -520,8 +522,19 @@ public class ByteCodeTranslator {
     private static void copyClasspathResourceToProject(String filename, File projectRoot) throws IOException {
         File cn1Globals = new File(projectRoot, filename);
         URL resource = ByteCodeTranslator.class.getResource("/" + filename);
-        originalLocations.put(filename, resource.getPath());
-        copy(ByteCodeTranslator.class.getResourceAsStream("/"+filename), new PreservingFileOutputStream(cn1Globals));
+        if (resource == null) {
+            // deleted from java compile artifact with purpose of linking.
+            // property must be supplied where to take it.
+            String translatorSourceDir = System.getProperty("TranslatorSourceDir");
+            if (translatorSourceDir != null) {
+                resource = new URL("file://"+translatorSourceDir+"/"+filename);
+            }
+        }
+        String path = resource.getPath();
+        if (!new File(path).exists())
+            throw new FileNotFoundException(path);
+        originalLocations.put(filename, path);
+        copy(resource.openStream(), new PreservingFileOutputStream(cn1Globals));
     }
 
     private static String getFileType(String s) {
