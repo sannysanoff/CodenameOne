@@ -206,7 +206,6 @@ typedef struct clazz*       JAVA_CLASS;
 
 // first store then release stack, so reference is kept somewhere.
 #define BC_ASTORE(local) {  \
-    locals[local].type = CN1_TYPE_INVALID; \
     locals[local].data.o = (SP[-1]).data.o; \
     locals[local].type = CN1_TYPE_OBJECT; \
     SP--; \
@@ -379,11 +378,11 @@ typedef struct clazz*       JAVA_CLASS;
 // we assign the value to trigger the expression in the macro
 // then set the type to invalid first so we don't get a race condition where the value is
 // incomplete and the GC goes crazy
-#define PUSH_POINTER(value) { JAVA_OBJECT ppX = value; (*SP).type = CN1_TYPE_INVALID; \
+#define PUSH_POINTER(value) { JAVA_OBJECT ppX = value;  \
     (*SP).data.o = ppX; (*SP).type = CN1_TYPE_OBJECT; \
     SP++; }
 
-#define PUSH_OBJ(value)  { JAVA_OBJECT ppX = value; (*SP).type = CN1_TYPE_INVALID; \
+#define PUSH_OBJ(value)  { JAVA_OBJECT ppX = value;  \
     (*SP).data.o = ppX; (*SP).type = CN1_TYPE_OBJECT; \
     SP++; }
 
@@ -411,7 +410,7 @@ typedef struct clazz*       JAVA_CLASS;
         SP++; }
 
 #define POP_MANY_AND_PUSH_OBJ(value, offset) {  \
-    JAVA_OBJECT pObj = value; SP[-offset].type = CN1_TYPE_INVALID; \
+    JAVA_OBJECT pObj = value;  \
     SP[-offset].data.o = pObj; SP[-offset].type = CN1_TYPE_OBJECT; \
     POP_MANY(MAX(1, offset) - 1); }
 
@@ -487,7 +486,6 @@ typedef struct clazz*       JAVA_CLASS;
 
 #define BC_DUP()  { \
         JAVA_LONG plong = SP[-1].data.l; \
-        (*SP).type = CN1_TYPE_INVALID; \
         (*SP).data.l = plong; (*SP).type = CN1_TYPE_LONG; \
         SP++; \
     } \
@@ -500,8 +498,6 @@ if(SP[-1].type == CN1_TYPE_LONG || SP[-1].type == CN1_TYPE_DOUBLE) {\
     { \
         JAVA_LONG plong = SP[-2].data.l; \
         JAVA_LONG plong2 = SP[-1].data.l; \
-        (*SP).type = CN1_TYPE_INVALID; \
-        SP[1].type = CN1_TYPE_INVALID; \
         (*SP).data.l = plong; \
         SP[1].data.l = plong2; \
         SP+=2; \
@@ -588,7 +584,6 @@ extern int instanceofFunction(int sourceClass, int destId);
 #define BC_INSTANCEOF(typeOfInstanceOf) { \
     if(SP[-1].data.o != JAVA_NULL) { \
         int tmpInstanceOfId = GET_CLASS_ID(SP[-1].data.o); \
-        SP[-1].type = CN1_TYPE_INVALID; \
         SP[-1].data.i = instanceofFunction( typeOfInstanceOf, tmpInstanceOfId ); \
     } \
     SP[-1].type = CN1_TYPE_INT; \
@@ -615,7 +610,7 @@ extern int instanceofFunction(int sourceClass, int destId);
     }
 
 #define BC_AALOAD() { CHECK_ARRAY_ACCESS(2, SP[-1].data.i); \
-    SP--; SP[-1].type = CN1_TYPE_INVALID; \
+    SP--;  \
     SP[-1].data.o = ((JAVA_ARRAY_OBJECT*) (*(JAVA_ARRAY)SP[-1].data.o).data)[(*SP).data.i]; \
     SP[-1].type = CN1_TYPE_OBJECT;  }
 

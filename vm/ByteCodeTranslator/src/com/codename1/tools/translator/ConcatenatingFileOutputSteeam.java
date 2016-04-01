@@ -46,7 +46,7 @@ public class ConcatenatingFileOutputSteeam extends java.io.OutputStream {
         for (int i = 0; i < dest.length; i++) {
             ByteArrayOutputStream byteArrayOutputStream = dest[i];
             File destFile = new File(outputDirectory, "concatenated_" + i+"."+ByteCodeTranslator.output.extension());
-            if (dest == null || dest[i].size() ==0) {
+            if (dest[i] == null || dest[i].size() ==0) {
                 destFile.delete();
             } else {
                 PreservingFileOutputStream pfos = new PreservingFileOutputStream(destFile);
