@@ -173,7 +173,7 @@ typedef enum {
 // from mistakingly detecting an object
 struct elementStruct {
     javaTypes type;   // for padding
-//    javaTypes _dummy;
+    javaTypes _dummy;
     elementUnion data;
 };
 
@@ -185,11 +185,11 @@ typedef struct clazz*       JAVA_CLASS;
 #define JAVA_FALSE ((JAVA_BOOLEAN) 0)
 #define JAVA_TRUE ((JAVA_BOOLEAN) 1)
 
-#define MKINT(val) ((struct elementStruct) {CN1_TYPE_INT, (elementUnion){.i = val}})
-#define MKFLOAT(val) ((struct elementStruct) {CN1_TYPE_FLOAT, (elementUnion){.f = val}})
-#define MKLONG(val) ((struct elementStruct) {CN1_TYPE_LONG, (elementUnion){.l = val}})
-#define MKDOUBLE(val) ((struct elementStruct) {CN1_TYPE_DOUBLE, (elementUnion){.d = val}})
-#define MKOBJECT(val) ((struct elementStruct) {CN1_TYPE_OBJECT, (elementUnion){.o = val}})
+#define MKINT(val) ((struct elementStruct) {CN1_TYPE_INT, 0, (elementUnion){.i = val}})
+#define MKFLOAT(val) ((struct elementStruct) {CN1_TYPE_FLOAT, 0, (elementUnion){.f = val}})
+#define MKLONG(val) ((struct elementStruct) {CN1_TYPE_LONG, 0, (elementUnion){.l = val}})
+#define MKDOUBLE(val) ((struct elementStruct) {CN1_TYPE_DOUBLE, 0, (elementUnion){.d = val}})
+#define MKOBJECT(val) ((struct elementStruct) {CN1_TYPE_OBJECT, 0, (elementUnion){.o = val}})
 
 #define BC_ILOAD(local) *(SP++) = MKINT(ilocals_##local##_)
 
@@ -660,7 +660,9 @@ struct ThreadLocalData {
 
 //#define BLOCK_FOR_GC() while(threadStateData->threadBlockedByGC) { usleep(500); }
 
-#define __CN1_DEBUG_INFO(line) threadStateData->callStackLine[threadStateData->callStackOffset - 1] = line;
+//#define __CN1_DEBUG_INFO(line) threadStateData->callStackLine[threadStateData->callStackOffset - 1] = line;
+
+#define __CN1_DEBUG_INFO(line)
 
 // we need to throw stack overflow error but its unavailable here...
 /*#define ENTERING_CODENAME_ONE_METHOD(classIdNumber, methodIdNumber) { \
