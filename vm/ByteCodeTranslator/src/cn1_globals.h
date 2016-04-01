@@ -173,8 +173,8 @@ typedef enum {
 // from mistakingly detecting an object
 struct elementStruct {
     javaTypes type;   // for padding
+//    javaTypes _dummy;
     elementUnion data;
-    javaTypes _dummy;
 };
 
 
@@ -185,30 +185,31 @@ typedef struct clazz*       JAVA_CLASS;
 #define JAVA_FALSE ((JAVA_BOOLEAN) 0)
 #define JAVA_TRUE ((JAVA_BOOLEAN) 1)
 
+#define MKINT(val) ((struct elementStruct) {CN1_TYPE_INT, (elementUnion){.i = val}})
+#define MKFLOAT(val) ((struct elementStruct) {CN1_TYPE_FLOAT, (elementUnion){.f = val}})
+#define MKLONG(val) ((struct elementStruct) {CN1_TYPE_LONG, (elementUnion){.l = val}})
+#define MKDOUBLE(val) ((struct elementStruct) {CN1_TYPE_DOUBLE, (elementUnion){.d = val}})
+#define MKOBJECT(val) ((struct elementStruct) {CN1_TYPE_OBJECT, (elementUnion){.o = val}})
 
-#define BC_ILOAD(local) (*(SP++)) = (struct elementStruct) {CN1_TYPE_INT, (elementUnion){.i = ilocals_##local##_}}
+#define BC_ILOAD(local) *(SP++) = MKINT(ilocals_##local##_)
 
-#define BC_LLOAD(local) (*(SP++)) = (struct elementStruct) {CN1_TYPE_LONG, (elementUnion){.l = llocals_##local##_}}
+#define BC_LLOAD(local) *(SP++) = MKLONG(llocals_##local##_)
 
-#define BC_FLOAD(local)  (*(SP++)) = (struct elementStruct) {CN1_TYPE_FLOAT, (elementUnion){.f = flocals_##local##_}}
+#define BC_FLOAD(local)  *(SP++) = MKFLOAT(flocals_##local##_)
 
-#define BC_DLOAD(local)  (*(SP++)) = (struct elementStruct) {CN1_TYPE_DOUBLE, (elementUnion){.d = dlocals_##local##_}}
+#define BC_DLOAD(local)  *(SP++) = MKDOUBLE(dlocals_##local##_)
 
-#define BC_ALOAD(local) {*SP = locals[local]; SP++;}
+#define BC_ALOAD(local) *(SP++) = locals[local]
 
-#define BC_ISTORE(local) ilocals_##local##_ = (*(--SP)).data.i;
+#define BC_ISTORE(local) ilocals_##local##_ = (*(--SP)).data.i
 
-#define BC_LSTORE(local) llocals_##local##_ = (*(--SP)).data.l;
+#define BC_LSTORE(local) llocals_##local##_ = (*(--SP)).data.l
 
-#define BC_FSTORE(local) flocals_##local##_ = (*(--SP)).data.f;
+#define BC_FSTORE(local) flocals_##local##_ = (*(--SP)).data.f
 
-#define BC_DSTORE(local) dlocals_##local##_ = (*(--SP)).data.d;
+#define BC_DSTORE(local) dlocals_##local##_ = (*(--SP)).data.d
 
-#define BC_ASTORE(local) { SP--; \
-    locals[local].type = CN1_TYPE_INVALID; \
-    locals[local].data.o = (*SP).data.o; \
-    locals[local].type = CN1_TYPE_OBJECT; \
-    }
+#define BC_ASTORE(local) locals[local] = MKOBJECT((--SP)->data.o)
 
 // todo map instanceof and throw typecast exception
 #define BC_CHECKCAST(type)

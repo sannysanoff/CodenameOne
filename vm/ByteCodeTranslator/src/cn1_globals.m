@@ -295,6 +295,7 @@ void codenameOneGCMark() {
         struct ThreadLocalData* t = allThreads[iter];
         unlockCriticalSection();
         if(t != 0) {
+            //NSLog(@"Mark thread %lld lw=%d", t->threadId, t->lightweightThread);
             if(t->currentThreadObject != JAVA_NULL) {
                 gcMarkObject(t, t->currentThreadObject, JAVA_FALSE);
             }
@@ -727,7 +728,7 @@ typedef void (*gcMarkFunctionPointer)(CODENAME_ONE_THREAD_STATE, JAVA_OBJECT obj
 //int recursionBlockerPosition = 0;
 int recursionKey = 1;
 void gcMarkObject(CODENAME_ONE_THREAD_STATE, JAVA_OBJECT obj, JAVA_BOOLEAN force) {
-    if(obj == JAVA_NULL || obj->__codenameOneParentClsReference == 0 || obj->__codenameOneParentClsReference == (&class__java_lang_Class)) {
+    if(obj == JAVA_NULL || obj == (JAVA_OBJECT)1 || obj->__codenameOneParentClsReference == 0 || obj->__codenameOneParentClsReference == (&class__java_lang_Class)) {
         return;
     }
 
