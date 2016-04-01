@@ -486,7 +486,7 @@ public class BytecodeMethod {
 
                 if (staticMethod) {
                     if (methodName.equals("__CLINIT__")) {
-                        b.append("    DEFINE_METHOD_STACK(");
+                        b.append("    DEFINE_METHOD_STACK_NOREGISTER(");
                     } else {
                         b.append("    __STATIC_INITIALIZER_");
                         b.append(clsName.replace('/', '_').replace('$', '_'));

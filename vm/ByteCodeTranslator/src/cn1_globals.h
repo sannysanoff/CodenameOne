@@ -896,14 +896,18 @@ extern void initConstantPool();
 
 #define initMethodStack(__cn1ThisObject,  stackSize,  localsStackSize,  classNameId,  methodNameId) \
     if(__cn1ThisObject == JAVA_NULL) { THROW_NULL_POINTER_EXCEPTION(); } \
+    const int cn1LocalsBeginInThread = threadStateData->threadObjectStackOffset; \
+    struct elementStruct* const locals = &threadStateData->threadObjectStack[cn1LocalsBeginInThread]; \
+    struct elementStruct* const stack = &threadStateData->threadObjectStack[threadStateData->threadObjectStackOffset + localsStackSize]; \
     if (localsStackSize + stackSize > 0) { \
         memset(&threadStateData->threadObjectStack[threadStateData->threadObjectStackOffset], 0, sizeof(struct elementStruct) * (localsStackSize + stackSize)); \
         threadStateData->threadObjectStackOffset += localsStackSize + stackSize; \
     } \
-    CODENAME_ONE_ASSERT(threadStateData->callStackOffset < CN1_MAX_STACK_CALL_DEPTH - 1); \
+    if (0) CODENAME_ONE_ASSERT(threadStateData->callStackOffset < CN1_MAX_STACK_CALL_DEPTH - 1); \
     threadStateData->callStackClass[threadStateData->callStackOffset] = classNameId; \
     threadStateData->callStackMethod[threadStateData->callStackOffset] = methodNameId; \
     threadStateData->callStackOffset++; \
+    const int currentCodenameOneCallStackOffset = threadStateData->callStackOffset; \
     JAVA_INT _tmpInt1, _tmpInt2; \
     JAVA_LONG _tmpLong; \
     JAVA_DOUBLE _tmpDouble; \
@@ -916,22 +920,20 @@ extern void initConstantPool();
 // we need to zero out the values with memset otherwise we will run into a problem
 // when invoking release on pre-existing object which might be garbage
 #define DEFINE_METHOD_STACK(stackSize, localsStackSize, spPosition, classNameId, methodNameId) \
-    const int cn1LocalsBeginInThread = threadStateData->threadObjectStackOffset; \
-    struct elementStruct* const locals = &threadStateData->threadObjectStack[cn1LocalsBeginInThread]; \
-    struct elementStruct* const stack = &threadStateData->threadObjectStack[threadStateData->threadObjectStackOffset + localsStackSize]; \
-    register struct elementStruct* SP = &stack[spPosition]; \
     initMethodStack((JAVA_OBJECT)1, stackSize,localsStackSize, classNameId, methodNameId) \
-    const int currentCodenameOneCallStackOffset = threadStateData->callStackOffset; \
-    int * const _callStackLine = &threadStateData->callStackLine[currentCodenameOneCallStackOffset - 1];
+    register int * const _callStackLine = &threadStateData->callStackLine[currentCodenameOneCallStackOffset - 1]; \
+    register struct elementStruct* SP = &stack[spPosition]; \
+
+#define DEFINE_METHOD_STACK_NOREGISTER(stackSize, localsStackSize, spPosition, classNameId, methodNameId) \
+    initMethodStack((JAVA_OBJECT)1, stackSize,localsStackSize, classNameId, methodNameId) \
+    int * const _callStackLine = &threadStateData->callStackLine[currentCodenameOneCallStackOffset - 1]; \
+    struct elementStruct* SP = &stack[spPosition]; \
+    *_callStackLine = (int)&SP;     // force non-register
 
 #define DEFINE_INSTANCE_METHOD_STACK(stackSize, localsStackSize, spPosition, classNameId, methodNameId) \
-    const int cn1LocalsBeginInThread = threadStateData->threadObjectStackOffset; \
-    struct elementStruct* const locals = &threadStateData->threadObjectStack[cn1LocalsBeginInThread]; \
-    struct elementStruct* const stack = &threadStateData->threadObjectStack[threadStateData->threadObjectStackOffset + localsStackSize]; \
-    register struct elementStruct* SP = &stack[spPosition]; \
     initMethodStack(__cn1ThisObject, stackSize,localsStackSize, classNameId, methodNameId) \
-    const int currentCodenameOneCallStackOffset = threadStateData->callStackOffset; \
-    int * const _callStackLine = &threadStateData->callStackLine[currentCodenameOneCallStackOffset - 1];
+    register int * const _callStackLine = &threadStateData->callStackLine[currentCodenameOneCallStackOffset - 1]; \
+    register struct elementStruct* SP = &stack[spPosition]; \
 
 
 #ifdef __OBJC__
