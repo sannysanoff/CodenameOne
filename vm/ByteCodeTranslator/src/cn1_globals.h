@@ -234,42 +234,42 @@ typedef struct clazz*       JAVA_CLASS;
 
 #define BC_IADD() { \
     SP--; \
-    SP[-1].data.i = SP[-1].data.i + (*SP).data.i; \
+    SP[-1].data.i += (*SP).data.i; \
 }
 
 #define BC_LADD() { \
     SP--; \
-    SP[-1].data.l = SP[-1].data.l + (*SP).data.l; \
+    SP[-1].data.l += (*SP).data.l; \
 }
 
 #define BC_FADD() { \
     SP--; \
-    SP[-1].data.f = SP[-1].data.f + (*SP).data.f; \
+    SP[-1].data.f += (*SP).data.f; \
 }
 
 #define BC_DADD() { \
     SP--; \
-    SP[-1].data.d = SP[-1].data.d + (*SP).data.d; \
+    SP[-1].data.d += (*SP).data.d; \
 }
 
 #define BC_IMUL() { \
     SP--; \
-    SP[-1].data.i = SP[-1].data.i * (*SP).data.i; \
+    SP[-1].data.i *= (*SP).data.i; \
 }
 
 #define BC_LMUL() { \
     SP--; \
-    SP[-1].data.l = SP[-1].data.l * (*SP).data.l; \
+    SP[-1].data.l *= (*SP).data.l; \
 }
 
 #define BC_FMUL() { \
     SP--; \
-    SP[-1].data.f = SP[-1].data.f * (*SP).data.f; \
+    SP[-1].data.f *= (*SP).data.f; \
 }
 
 #define BC_DMUL() { \
     SP--; \
-    SP[-1].data.d = SP[-1].data.d * (*SP).data.d; \
+    SP[-1].data.d *= (*SP).data.d; \
 }
 
 #define BC_INEG() SP[-1].data.i *= -1
@@ -282,32 +282,32 @@ typedef struct clazz*       JAVA_CLASS;
 
 #define BC_IAND() { \
     SP--; \
-    SP[-1].data.i = SP[-1].data.i & (*SP).data.i; \
+    SP[-1].data.i &= (*SP).data.i; \
 }
 
 #define BC_LAND() { \
     SP--; \
-    SP[-1].data.l = SP[-1].data.l & (*SP).data.l; \
+    SP[-1].data.l &= (*SP).data.l; \
 }
 
 #define BC_IOR() { \
     SP--; \
-    SP[-1].data.i = SP[-1].data.i | (*SP).data.i; \
+    SP[-1].data.i |= (*SP).data.i; \
 }
 
 #define BC_LOR() { \
     SP--; \
-    SP[-1].data.l = SP[-1].data.l | (*SP).data.l; \
+    SP[-1].data.l |= (*SP).data.l; \
 }
 
 #define BC_IXOR() { \
     SP--; \
-    SP[-1].data.i = SP[-1].data.i ^ (*SP).data.i; \
+    SP[-1].data.i ^= (*SP).data.i; \
 }
 
 #define BC_LXOR() { \
     SP--; \
-    SP[-1].data.l = SP[-1].data.l ^ (*SP).data.l; \
+    SP[-1].data.l ^= (*SP).data.l; \
 }
 
 #define BC_I2L() SP[-1].data.l = SP[-1].data.i
@@ -363,67 +363,45 @@ typedef struct clazz*       JAVA_CLASS;
 // we assign the value to trigger the expression in the macro
 // then set the type to invalid first so we don't get a race condition where the value is
 // incomplete and the GC goes crazy
-#define PUSH_POINTER(value) { JAVA_OBJECT ppX = value; (*SP).type = CN1_TYPE_INVALID; \
-    (*SP).data.o = ppX; (*SP).type = CN1_TYPE_OBJECT; \
-    SP++; }
-
-#define PUSH_OBJ(value)  { JAVA_OBJECT ppX = value; (*SP).type = CN1_TYPE_INVALID; \
-    (*SP).data.o = ppX; (*SP).type = CN1_TYPE_OBJECT; \
-    SP++; }
-
-#define PUSH_INT(value) { JAVA_INT pInt = value; (*SP).type = CN1_TYPE_INT; \
-    (*SP).data.i = pInt; \
-    SP++; }
-
-#define PUSH_LONG(value) { JAVA_LONG plong = value; (*SP).type = CN1_TYPE_LONG; \
-    (*SP).data.l = plong; \
-    SP++; }
-
-#define PUSH_DOUBLE(value) { JAVA_DOUBLE pdob = value; (*SP).type = CN1_TYPE_DOUBLE; \
-    (*SP).data.d = pdob; \
-    SP++; }
-
-#define PUSH_FLOAT(value) { JAVA_FLOAT pFlo = value; (*SP).type = CN1_TYPE_FLOAT; \
-    (*SP).data.f = pFlo; \
-    SP++; }
+#define PUSH_POINTER(value) { JAVA_OBJECT ppX = value; *(SP++) = MKOBJECT(ppX); }
+#define PUSH_OBJ(value) { JAVA_OBJECT ppX = value; *(SP++) = MKOBJECT(ppX); }
+#define PUSH_INT(value) { JAVA_INT v = value; *(SP++) = MKINT(v); }
+#define PUSH_LONG(value) { JAVA_LONG v = value; *(SP++) = MKLONG(v); }
+#define PUSH_DOUBLE(value) { JAVA_DOUBLE v = value; *(SP++) = MKDOUBLE(v); }
+#define PUSH_FLOAT(value) { JAVA_FLOAT v = value; *(SP++) = MKFLOAT(v); }
 
 #define POP_MANY_AND_PUSH_OBJ(value, offset) {  \
-    JAVA_OBJECT pObj = value; SP[-offset].type = CN1_TYPE_INVALID; \
-    SP[-offset].data.o = pObj; SP[-offset].type = CN1_TYPE_OBJECT; \
+    JAVA_OBJECT v = value; SP[-offset] = MKOBJECT(v); \
     popMany(threadStateData, MAX(1, offset) - 1, &SP); }
 
 #define POP_MANY_AND_PUSH_INT(value, offset) {  \
-    JAVA_INT pInt = value; SP[-offset].type = CN1_TYPE_INT; \
-    SP[-offset].data.i = pInt; \
+    JAVA_INT v = value; SP[-offset] = MKINT(v); \
     popMany(threadStateData, MAX(1, offset) - 1, &SP); }
 
 #define POP_MANY_AND_PUSH_LONG(value, offset) {  \
-    JAVA_LONG pLong = value; SP[-offset].type = CN1_TYPE_LONG; \
-    SP[-offset].data.l = pLong; \
+    JAVA_LONG v = value; SP[-offset] = MKLONG(v); \
     popMany(threadStateData, MAX(1, offset) - 1, &SP); }
 
 #define POP_MANY_AND_PUSH_DOUBLE(value, offset) {  \
-    JAVA_DOUBLE pDob = value; SP[-offset].type = CN1_TYPE_DOUBLE; \
-    SP[-offset].data.d = pDob; \
+    JAVA_DOUBLE v = value; SP[-offset] = MKDOUBLE(v); \
     popMany(threadStateData, MAX(1, offset) - 1, &SP); }
 
 #define POP_MANY_AND_PUSH_FLOAT(value, offset) {  \
-    JAVA_FLOAT pFlo = value; SP[-offset].type = CN1_TYPE_FLOAT; \
-    SP[-offset].data.f = pFlo; \
+    JAVA_FLOAT v = value; SP[-offset] = MKFLOAT(v); \
     popMany(threadStateData, MAX(1, offset) - 1, &SP); }
 
 
-#define BC_IDIV() SP--; SP[-1].data.i = SP[-1].data.i / (*SP).data.i
+#define BC_IDIV() SP--; SP[-1].data.i /= (*SP).data.i
 
-#define BC_LDIV() SP--; SP[-1].data.l = SP[-1].data.l / (*SP).data.l
+#define BC_LDIV() SP--; SP[-1].data.l /= (*SP).data.l
 
-#define BC_FDIV() SP--; SP[-1].data.f = SP[-1].data.f / (*SP).data.f
+#define BC_FDIV() SP--; SP[-1].data.f /= (*SP).data.f
 
-#define BC_DDIV() SP--; SP[-1].data.d = SP[-1].data.d / (*SP).data.d
+#define BC_DDIV() SP--; SP[-1].data.d /= (*SP).data.d
 
-#define BC_IREM() SP--; SP[-1].data.i = SP[-1].data.i % (*SP).data.i
+#define BC_IREM() SP--; SP[-1].data.i %= (*SP).data.i
 
-#define BC_LREM() SP--; SP[-1].data.l = SP[-1].data.l % (*SP).data.l
+#define BC_LREM() SP--; SP[-1].data.l %= (*SP).data.l
 
 #define BC_FREM() SP--; SP[-1].data.f = fmod(SP[-1].data.f, (*SP).data.f)
 
@@ -462,58 +440,36 @@ typedef struct clazz*       JAVA_CLASS;
     } \
     SP[-1].type = CN1_TYPE_INT;
 
-#define BC_DUP()  { \
-        JAVA_LONG plong = SP[-1].data.l; \
-        (*SP).type = CN1_TYPE_INVALID; \
-        (*SP).data.l = plong; (*SP).type = CN1_TYPE_LONG; \
-        SP++; \
-    } \
-    SP[-1].type = SP[-2].type; 
+#define BC_DUP()  { *SP = SP[-1]; SP++; }
 
 #define BC_DUP2()  \
 if(SP[-1].type == CN1_TYPE_LONG || SP[-1].type == CN1_TYPE_DOUBLE) {\
     BC_DUP(); \
 } else {\
     { \
-        JAVA_LONG plong = SP[-2].data.l; \
-        JAVA_LONG plong2 = SP[-1].data.l; \
-        (*SP).type = CN1_TYPE_INVALID; \
-        SP[1].type = CN1_TYPE_INVALID; \
-        (*SP).data.l = plong; \
-        SP[1].data.l = plong2; \
-        SP+=2; \
+        *SP = SP[-2];\
+        SP[1] = SP[-1];\
+        SP+=2;\
     } \
-    SP[-1].type = SP[-3].type; \
-    SP[-2].type = SP[-4].type; \
 }
 
 #define BC_DUP2_X1() {\
-    (*SP).data.l = SP[-1].data.l; \
-    SP[-1].data.l = SP[-2].data.l; \
-    SP[-2].data.l = (*SP).data.l; \
-    (*SP).type = SP[-1].type; \
-    SP[-1].type = SP[-2].type; \
-    SP[-2].type = (*SP).type; \
+    *SP = SP[-1]; \
+    SP[-1] = SP[-2]; \
+    SP[-2] = *SP; \
     SP++; \
 }
 
 #define BC_DUP2_X2() { \
     if (SP[-2].type == CN1_TYPE_LONG || SP[-2].type == CN1_TYPE_DOUBLE) {\
-        (*SP).data.l = SP[-1].data.l; \
-        SP[-1].data.l = SP[-2].data.l; \
-        SP[-2].data.l = (*SP).data.l; \
-        (*SP).type = SP[-1].type; \
-        SP[-1].type = SP[-2].type; \
-        SP[-2].type = (*SP).type; \
+            *SP = SP[-1]; \
+            SP[-1] = SP[-2]; \
+            SP[-2] = *SP; \
     } else {\
-        (*SP).data.l = SP[-1].data.l; \
-        SP[-1].data.l = SP[-2].data.l; \
-        SP[-2].data.l = SP[-3].data.l; \
-        SP[-3].data.l = (*SP).data.l; \
-        (*SP).type = SP[-1].type; \
-        SP[-1].type = SP[-2].type; \
-        SP[-2].type = SP[-3].type; \
-        SP[-3].type = (*SP).type; \
+        *SP = SP[-1]; \
+        SP[-1] = SP[-2]; \
+        SP[-2] = SP[-3]; \
+        SP[-3] = *SP; \
     }\
     SP++; \
 }
@@ -540,13 +496,13 @@ if(SP[-1].type == CN1_TYPE_LONG || SP[-1].type == CN1_TYPE_DOUBLE) {\
 
 #define BC_LUSHR() SP--; SP[-1].data.l = (((unsigned long long)SP[-1].data.l) >> (0x3f & ((unsigned long long)(*SP).data.l)))
 
-#define BC_ISUB() SP--; SP[-1].data.i = (SP[-1].data.i - (*SP).data.i)
+#define BC_ISUB() SP--; SP[-1].data.i -= ((*SP).data.i)
 
-#define BC_LSUB() SP--; SP[-1].data.l = (SP[-1].data.l - (*SP).data.l)
+#define BC_LSUB() SP--; SP[-1].data.l -= ((*SP).data.l)
 
-#define BC_FSUB() SP--; SP[-1].data.f = (SP[-1].data.f - (*SP).data.f)
+#define BC_FSUB() SP--; SP[-1].data.f -= ((*SP).data.f)
 
-#define BC_DSUB() SP--; SP[-1].data.d = (SP[-1].data.d - (*SP).data.d)
+#define BC_DSUB() SP--; SP[-1].data.d -= ((*SP).data.d)
 
 extern JAVA_OBJECT* constantPoolObjects;
 
