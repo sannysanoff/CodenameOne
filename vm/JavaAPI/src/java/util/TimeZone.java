@@ -31,26 +31,26 @@ public abstract class TimeZone{
      * style may yield GMT offsets like {@code GMT-08:00}.
      */
     public static final int SHORT = 0;
-    
+
     /**
      * The long display name style, such as {@code Pacific Daylight Time}.
      * Requests for this style may yield GMT offsets like {@code GMT-08:00}.
      */
     public static final int LONG = 1;
-    
+
     static final TimeZone GMT = new SimpleTimeZone(0, "GMT"); // Greenwich Mean Time
-    
+
     private static TimeZone defaultTimeZone;
-    
+
     private String ID;
 
-    public TimeZone(){         
+    public TimeZone(){
     }
 
     void setID(String id) {
         ID = id;
     }
-    
+
     /**
      * Gets all the available IDs supported.
      */
@@ -102,12 +102,12 @@ public abstract class TimeZone{
     int getDSTSavings() {
         return useDaylightTime() ? 3600000 : 0;
     }
-    
-    
+
+
     boolean inDaylightTime(Date time) {
         return false;
     }
-    
+
     /**
      * Gets the ID of this time zone.
      */
@@ -128,9 +128,29 @@ public abstract class TimeZone{
     /**
      * Gets the TimeZone for the given ID.
      */
-    public static java.util.TimeZone getTimeZone(java.lang.String ID){
-        // TODO
-        return getDefault();
+    public static java.util.TimeZone getTimeZone(final java.lang.String tzone){
+        TimeZone tz = new TimeZone() {
+            @Override
+            public int getOffset(int era, int year, int month, int day, int dayOfWeek, int timeOfDayMillis) {
+                return getTimezoneOffset(tzone, year, month + 1, day, timeOfDayMillis);
+            }
+
+            @Override
+            public int getRawOffset() {
+                return getTimezoneRawOffset(tzone);
+            }
+
+            boolean inDaylightTime(Date time) {
+                return isTimezoneDST(tzone, time.getTime());
+            }
+
+            @Override
+            public boolean useDaylightTime() {
+                return true;
+            }
+        };
+        tz.ID = tzone;
+        return tz;
     }
 
     /**
