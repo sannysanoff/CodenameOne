@@ -129,6 +129,30 @@ public abstract class TimeZone{
      * Gets the TimeZone for the given ID.
      */
     public static java.util.TimeZone getTimeZone(final java.lang.String tzone){
+        if ("UTC".equals(tzone)) {
+            TimeZone tz = new TimeZone() {
+                @Override
+                public int getOffset(int era, int year, int month, int day, int dayOfWeek, int timeOfDayMillis) {
+                    return 0;
+                }
+
+                @Override
+                public int getRawOffset() {
+                    return 0;
+                }
+
+                boolean inDaylightTime(Date time) {
+                    return false;
+                }
+
+                @Override
+                public boolean useDaylightTime() {
+                    return false;
+                }
+            };
+            tz.ID = tzone;
+            return tz;
+        }
         TimeZone tz = new TimeZone() {
             @Override
             public int getOffset(int era, int year, int month, int day, int dayOfWeek, int timeOfDayMillis) {
