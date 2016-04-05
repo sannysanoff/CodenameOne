@@ -120,6 +120,11 @@ static GLuint getOGLProgram(){
     GLErrorLog;
     glBindTexture(GL_TEXTURE_2D, tex);
     GLErrorLog;
+    // enable smooth image interpolation during minification and magnification (no mipmap sorry)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    GLErrorLog;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    GLErrorLog;
     //float blankPixelsW = actualImageWidthP2 - actualImageWidth;
     //float blankPixelsH = actualImageHeightP2 - actualImageHeight;
     //w += ceil(blankPixelsW * w / actualImageWidth);//nextPowerOf2(w);//actualImageWidthP2 - actualImageWidth;
@@ -212,6 +217,7 @@ static GLuint getOGLProgram(){
     
     glBindTexture(GL_TEXTURE_2D, 0);
     GLErrorLog;
+
     
     //glUseProgram(CN1activeProgram);
     //GLErrorLog;

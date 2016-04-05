@@ -1121,8 +1121,16 @@ public class IOSImplementation extends CodenameOneImplementation {
         return n;
     }
 
-    private long scale(long peer, int width, int height) {
-        return nativeInstance.scale(peer, width, height);
+    @Override
+    public Object scaleAccurate(Object nativeImage, int width, int height) {
+        if (width == 0 || height == 0 || true) return scale(nativeImage, width, height);
+        // at the time, IOS interpolates every image on OPENGL level.
+        NativeImage ni = (NativeImage)nativeImage;
+        return scaleAccurate(ni.peer, width, height);   // not finished, do not use.
+    }
+
+    private long scaleAccurate(long peer, int width, int height) {
+        return nativeInstance.scaleAccurate(peer, width, height);
     }
 
     public int getSoftkeyCount() {

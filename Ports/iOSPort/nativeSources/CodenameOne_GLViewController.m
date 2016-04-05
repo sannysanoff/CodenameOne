@@ -613,6 +613,32 @@ void* Java_com_codename1_impl_ios_IOSImplementation_scaleImpl
     return 0;
 }
 
+void* Java_com_codename1_impl_ios_IOSImplementation_scaleAccurateImpl
+(void* peer, int width, int height) {
+    // NOT used
+    GLUIImage* img = (GLUIImage*)peer;
+    CGRect newRect = CGRectIntegral(CGRectMake(0, 0, width, height));
+    CGImageRef imageRef = [img getImage].CGImage;
+    CGSize newSize = CGSizeMake(width, height);
+    UIGraphicsBeginImageContextWithOptions(newSize, NO, 0);
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    
+    CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
+    CGAffineTransform flipVertical = CGAffineTransformMake(1, 0, 0, -1, 0, newSize.height);
+    
+    CGContextConcatCTM(context, flipVertical);
+    CGContextDrawImage(context, newRect, imageRef);
+    
+    CGImageRef newImageRef = CGBitmapContextCreateImage(context);
+    UIImage *newImage = [UIImage imageWithCGImage:newImageRef];
+    
+    CGImageRelease(newImageRef);
+    UIGraphicsEndImageContext();
+    
+    GLUIImage *retval = [[GLUIImage alloc] initWithImage:newImage];
+    return (BRIDGE_CAST void*)retval;
+}
+
 int maxVal(int a, int b) {
     if(a > b) {
         return a;

@@ -52,6 +52,7 @@ public final class IOSNative {
     native long createImage(byte[] data, int[] widthHeight);
     native long createImageNSData(long nsData, int[] widthHeight);
     native long scale(long peer, int width, int height);
+    native long scaleAccurate(long peer, int width, int height);
     native void setNativeClippingMutable(int x, int y, int width, int height, boolean firstClip);
     native void setNativeClippingGlobal(int x, int y, int width, int height, boolean firstClip);
     native void nativeDrawLineMutable(int color, int alpha, int x1, int y1, int x2, int y2);
