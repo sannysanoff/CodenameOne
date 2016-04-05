@@ -154,6 +154,7 @@ class AndroidGraphics {
         dest.bottom = y + h;
         dest.left = x;
         dest.right = x + w;
+        paint.setFilterBitmap(true);
         canvas.drawBitmap(b, src, dest, paint);
     }
 
