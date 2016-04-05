@@ -1433,7 +1433,13 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
                 false);
     }
 
-//    @Override
+    @Override
+    public Object scaleAccurate(Object nativeImage, int width, int height) {
+        return Bitmap.createScaledBitmap((Bitmap) nativeImage, width, height,
+                true);
+    }
+
+    //    @Override
 //    public Object rotate(Object image, int degrees) {
 //        Matrix matrix = new Matrix();
 //        matrix.postRotate(degrees);

@@ -757,6 +757,18 @@ public abstract class CodenameOneImplementation {
      */
     public abstract Object scale(Object nativeImage, int width, int height);
 
+    /**
+     * Scales a native image with the best quality and returns the scaled version
+     *
+     * @param nativeImage image to scale
+     * @param width width of the resulting image
+     * @param height height of the resulting image
+     * @return scaled image instance
+     */
+    public Object scaleAccurate(Object nativeImage, int width, int height) {
+        return scale(nativeImage, width, height);
+    }
+
     private static int round(double d) {
         double f = Math.floor(d);
         double c = Math.ceil(d);

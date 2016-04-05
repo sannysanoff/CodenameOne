@@ -3505,6 +3505,34 @@ public class JavaSEPort extends CodenameOneImplementation {
         return createImage(destinationArray, width, height);
     }
 
+    @Override
+    public Object scaleAccurate(Object nativeImage, int width, int height) {
+        checkEDT();
+
+        BufferedImage image = (BufferedImage) nativeImage;
+        int srcWidth = image.getWidth();
+        int srcHeight = image.getHeight();
+
+        if (perfMonitor != null) {
+            perfMonitor.printToLog("Accurately scaling image from width: " + srcWidth + " height: " + srcHeight
+                    + " to width: " + width + " height: " + height
+                    + " size (bytes) " + (width * height * 4));
+        }
+
+        // no need to scale
+        if (srcWidth == width && srcHeight == height) {
+            return image;
+        }
+
+        java.awt.Image scaled = image.getScaledInstance(width, height, java.awt.Image.SCALE_AREA_AVERAGING);
+        BufferedImage bufferedScaled = new BufferedImage(scaled.getWidth(null), scaled.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = bufferedScaled.createGraphics();
+        // g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g2d.drawImage(scaled, 0, 0, width, height, null);
+
+        return bufferedScaled;
+    }
+
     private void scaleArray(BufferedImage currentImage, int srcWidth, int srcHeight, int height, int width, int[] currentArray, int[] destinationArray) {
         // Horizontal Resize
         int yRatio = (srcHeight << 16) / height;

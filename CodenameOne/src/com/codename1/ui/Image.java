@@ -917,7 +917,11 @@ public class Image {
     public Image scaled(int width, int height) {        
         return scaledImpl(width, height);
     }
-    
+
+    public Image scaledAccurate(int width, int height) {
+        return scaledAccurateImpl(width, height);
+    }
+
     /**
      * Returns a scaled version of this image image using the given width and height, 
      * this is a fast algorithm that preserves translucent information.
@@ -960,6 +964,47 @@ public class Image {
     }
 
     /**
+     * Returns a scaled version of this image image using the given width and height,
+     * this is a fast algorithm that preserves translucent information.
+     * The method accepts -1 to preserve aspect ratio in the given axis.
+     *
+     * @param width width for the scaling
+     * @param height height of the scaled image
+     * @return new image instance scaled to the given height and width
+     */
+    Image scaledAccurateImpl(int width, int height) {
+        if(width == -1) {
+            return scaledHeight(height);
+        }
+        if(height == -1) {
+            return scaledWidth(width);
+        }
+        Dimension d = new Dimension(width, height);
+        Image i = getCachedImage(d);
+        if(i != null) {
+            return i;
+        }
+
+        if(svgData != null){
+            try {
+                i = createSVG(svgBaseURL, animated, svgData);
+            } catch (IOException ex) {
+                i = new Image(this.image);
+            }
+        }else{
+            i = new Image(this.image);
+        }
+        i.scaleCache = scaleCache;
+        i.scaleAccurate(width, height);
+        i.transform = this.transform;
+        i.animated = animated;
+        i.svgBaseURL = svgBaseURL;
+        i.svgData = svgData;
+        cacheImage(new Dimension(width, height), i);
+        return i;
+    }
+
+    /**
      * Returns the platform specific image implementation, <strong>warning</strong> the
      * implementation class can change between revisions of Codename One and platforms.
      *
@@ -982,7 +1027,21 @@ public class Image {
     public void scale(int width, int height) {
         image = Display.impl.scale(image, width, height);
     }//resize image
-    
+
+    /**
+     * Scale the image to the given width and height, this is a fast algorithm
+     * that preserves translucent information
+     *
+     * @param width width for the scaling
+     * @param height height of the scaled image
+     *
+     * @deprecated scale should return an image rather than modify the image in place
+     * use scaled(int, int) instead
+     */
+    public void scaleAccurate(int width, int height) {
+        image = Display.impl.scaleAccurate(image, width, height);
+    }//resize image
+
     boolean scaleArray(int srcWidth, int srcHeight, int height, int width, int[] currentArray, int[] destinationArray) {
         // Horizontal Resize
         int yRatio = (srcHeight << 16) / height;
