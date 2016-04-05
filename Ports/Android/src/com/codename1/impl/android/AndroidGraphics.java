@@ -138,6 +138,7 @@ class AndroidGraphics {
     public void drawImage(Object img, int x, int y) {
         canvas.save();
         canvas.concat(getTransformMatrix());
+        paint.setFilterBitmap(true);
         canvas.drawBitmap((Bitmap) img, x, y, paint);
         canvas.restore();
     }
@@ -193,6 +194,7 @@ class AndroidGraphics {
         BitmapShader shader = new BitmapShader(b, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
         Paint tilePainter = new Paint();
         tilePainter.setShader(shader);
+        tilePainter.setFilterBitmap(true);
         tilePainter.setAntiAlias(false);
         canvas.translate(x, y);
         canvas.concat(getTransformMatrix());
