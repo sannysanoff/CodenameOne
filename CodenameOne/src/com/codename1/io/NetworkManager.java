@@ -268,6 +268,7 @@ public class NetworkManager {
 
                         currentRequest.performOperation();
                     } catch(IOException e) {
+                        System.out.println("Exception while working with URL: "+currentRequest.getUrl()+" : " + e.toString());
                         if(!currentRequest.isFailSilently()) {
                             if(!handleException(currentRequest, e)) {
                                 currentRequest.handleIOException(e);
@@ -277,6 +278,7 @@ public class NetworkManager {
                             e.printStackTrace();
                         }
                     } catch(RuntimeException er) {
+                        System.out.println("Exception while working with URL: "+currentRequest.getUrl()+" : " + er.toString());
                         if(!currentRequest.isFailSilently()) {
                             if(!handleException(currentRequest, er)) {
                                 currentRequest.handleRuntimeException(er);
