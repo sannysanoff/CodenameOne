@@ -498,9 +498,10 @@ JAVA_LONG com_codename1_impl_ios_IOSNative_scale___long_int_int(CN1_THREAD_STATE
 JAVA_LONG com_codename1_impl_ios_IOSNative_scaleAccurate___long_int_int_R_long(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject, JAVA_LONG n1, JAVA_INT n2, JAVA_INT n3)
 {
     POOL_BEGIN();
-    JAVA_LONG i = (JAVA_LONG)Java_com_codename1_impl_ios_IOSImplementation_scaleAccurateImpl(n1, n2, n3);
+    //JAVA_LONG i = (JAVA_LONG)Java_com_codename1_impl_ios_IOSImplementation_scaleAccurateImpl(n1, n2, n3);
     POOL_END();
-    return i;
+    //return i;
+    return 0;
 }
 
 
