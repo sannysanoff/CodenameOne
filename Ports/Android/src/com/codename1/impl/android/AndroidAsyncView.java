@@ -1806,8 +1806,6 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
                 @Override
                 public void execute(AndroidGraphics underlying) {
                     Paint p = underlying.getPaint();
-                    imagePaint.setFilterBitmap(true);
-                    p.setFilterBitmap(true);
                     underlying.setPaint(imagePaint);
                     imagePaint.setAlpha(alph);
                     underlying.drawImage(img, x, y, w, h);
