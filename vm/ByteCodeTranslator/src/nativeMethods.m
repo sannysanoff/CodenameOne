@@ -1177,6 +1177,9 @@ JAVA_DOUBLE java_lang_StringToReal_parseDblImpl___java_lang_String_int_R_double(
     return db;
 }
 
+int maxCallStackOffset = 0;
+int maxObjectStackOffset = 0;
+
 void initMethodStack(CODENAME_ONE_THREAD_STATE, JAVA_OBJECT __cn1ThisObject, int stackSize, int localsStackSize, int classNameId, int methodNameId) {
 #ifdef CN1_INCLUDE_NPE_CHECKS
     if(__cn1ThisObject == JAVA_NULL) {
@@ -1185,7 +1188,20 @@ void initMethodStack(CODENAME_ONE_THREAD_STATE, JAVA_OBJECT __cn1ThisObject, int
 #endif
     memset(&threadStateData->threadObjectStack[threadStateData->threadObjectStackOffset], 0, sizeof(struct elementStruct) * (localsStackSize + stackSize));
     threadStateData->threadObjectStackOffset += localsStackSize + stackSize;
+    /*
+    if (threadStateData->threadObjectStackOffset > maxObjectStackOffset) {
+        printf("New Stack Peak: %d\n", threadStateData->threadObjectStackOffset);
+        maxObjectStackOffset = threadStateData->threadObjectStackOffset;
+    }
+     */
     CODENAME_ONE_ASSERT(threadStateData->callStackOffset < CN1_MAX_STACK_CALL_DEPTH - 1);
+    CODENAME_ONE_ASSERT(threadStateData->threadObjectStackOffset < CN1_MAX_OBJECT_STACK_DEPTH - 1);
+    /*
+    if (threadStateData->callStackOffset > maxCallStackOffset) {
+        printf("New Stack Peak: %d\n", threadStateData->callStackOffset);
+        maxCallStackOffset = threadStateData->callStackOffset;
+    }
+     */
     threadStateData->callStackClass[threadStateData->callStackOffset] = classNameId;
     threadStateData->callStackMethod[threadStateData->callStackOffset] = methodNameId;
     threadStateData->callStackOffset++;

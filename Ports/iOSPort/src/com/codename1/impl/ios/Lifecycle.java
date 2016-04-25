@@ -94,4 +94,10 @@ public class Lifecycle {
      */
     public void headphonesDisconnected() {
     }
+
+    /**
+     * memory warning
+     */
+    public void applicationDidReceiveMemoryWarning() {
+    }
 }

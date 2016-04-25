@@ -6803,6 +6803,16 @@ public class IOSImplementation extends CodenameOneImplementation {
             instance.life.applicationDidEnterBackground();
         }
     }
+
+    /**
+     *
+     */
+    public static void applicationDidReceiveMemoryWarning() {
+        minimized = true;
+        if(instance.life != null) {
+            instance.life.applicationDidReceiveMemoryWarning();
+        }
+    }
     /**
      * Indicates whether the application should handle the given URL, defaults to true
      * @param url the URL to handle

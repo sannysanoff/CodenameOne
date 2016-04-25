@@ -2054,10 +2054,12 @@ public class Style {
      * @param l a style listener
      */
     public void addStyleListener(StyleListener l) {
-        if (listeners == null) {
-            listeners = new EventDispatcher();
+        if (false) {
+            if (listeners == null) {
+                listeners = new EventDispatcher();
+            }
+            listeners.addListener(l);
         }
-        listeners.addListener(l);
     }
 
     /**

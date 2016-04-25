@@ -133,6 +133,10 @@ NSDictionary *transientLaunchOptions;
 #endif
 }
 
+- (void)applicationDidReceiveMemoryWarning:(UIApplication *)application {
+    com_codename1_impl_ios_IOSImplementation_applicationDidReceiveMemoryWarning__(CN1_THREAD_GET_STATE_PASS_SINGLE_ARG);
+}
+
 // implemented this way so this will compile on older versions of xcode
 - (void)application:(UIApplication *)application didRegisterUserNotificationSettings:(id)notificationSettings {
     if (pendingRemoteNotificationRegistrations > 0) {
