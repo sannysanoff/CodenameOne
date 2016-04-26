@@ -6808,7 +6808,6 @@ public class IOSImplementation extends CodenameOneImplementation {
      *
      */
     public static void applicationDidReceiveMemoryWarning() {
-        minimized = true;
         if(instance.life != null) {
             instance.life.applicationDidReceiveMemoryWarning();
         }
