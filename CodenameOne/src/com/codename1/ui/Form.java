@@ -2400,6 +2400,7 @@ public class Form extends Container {
     @Override
     public void pointerDragged(int[] x, int[] y) {
         // disable the drag stop flag if we are dragging again
+        if (x == null || x.length == 0 || y == null || y.length == 0) return;
         if(dragStopFlag) {
             pointerPressed(x, y);
         }

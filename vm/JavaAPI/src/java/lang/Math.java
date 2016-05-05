@@ -201,5 +201,14 @@ public final class Math{
         }
         return (int) floor(f + 0.5f);
     }
+
+        public static double signum(double d) {
+                  return (d == 0.0 ? 0 : (d < 0 ? -1 : 1));
+        }
+
+        public static double signum(float d) {
+                  return (d == 0.0 ? 0 : (d < 0 ? -1 : 1));
+        }
+
     
 }

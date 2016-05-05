@@ -42,10 +42,7 @@ import com.codename1.ui.plaf.Border;
 import com.codename1.ui.plaf.LookAndFeel;
 import com.codename1.ui.plaf.UIManager;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * <p>The component class is the basis of all UI widgets in Codename One, to arrange multiple components 
@@ -4768,6 +4765,11 @@ public class Component implements Animation, StyleListener {
             hintLabel.setX(getX());
             hintLabel.setWidth(getWidth());
             hintLabel.paint(g);
+            System.out.println(new Date() + " Paint hint label: "+hintLabel.getText());
+        } else {
+            if (hintLabel != null){
+                System.out.println(new Date() + " NO Paint hint label: " + hintLabel.getText());
+            }
         }
     }
 
