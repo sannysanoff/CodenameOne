@@ -206,7 +206,7 @@ public final class Math{
                   return (d == 0.0 ? 0 : (d < 0 ? -1 : 1));
         }
 
-        public static double signum(float d) {
+        public static float signum(float d) {
                   return (d == 0.0 ? 0 : (d < 0 ? -1 : 1));
         }
 
