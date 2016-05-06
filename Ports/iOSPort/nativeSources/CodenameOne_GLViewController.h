@@ -45,7 +45,7 @@
 //#define INCLUDE_FACEBOOK_CONNECT
 #ifdef INCLUDE_FACEBOOK_CONNECT
 #import "FBSDKCoreKit.h"
-#import "FBSDKAppInviteDialog.h"
+//#import "FBSDKAppInviteDialog.h"
 #endif
 
 #define NOT_INCLUDE_ZOOZ
@@ -117,7 +117,7 @@
         ,GPPSignInDelegate
 #endif
 #ifdef INCLUDE_FACEBOOK_CONNECT
-        ,FBSDKAppInviteDialogDelegate
+        //,FBSDKAppInviteDialogDelegate
 #endif
 > {
 @private

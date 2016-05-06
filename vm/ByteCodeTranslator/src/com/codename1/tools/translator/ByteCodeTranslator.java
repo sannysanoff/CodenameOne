@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
  */
 public class ByteCodeTranslator {
     private static String headerSearchPath = "";
+    private static String extraCPPDefines = "";
 
     public static enum OutputType {
         
@@ -346,6 +347,19 @@ public class ByteCodeTranslator {
                     }
                     continue;
                 }
+                if (file.equals("extra_cpp_defines")) {
+                    for (File sourceDirectory : sources) {
+                        File fil = new File(sourceDirectory, file);
+                        if (fil.exists()) {
+                            FileInputStream fileInputStream = new FileInputStream(fil);
+                            byte[] buf = new byte[(int) fil.length()];
+                            fileInputStream.read(buf);
+                            fileInputStream.close();
+                            extraCPPDefines += new String(buf);
+                        }
+                    }
+                    continue;
+                }
                 if (file.endsWith(PreservingFileOutputStream.NEW_SUFFIX)) {
                     file = file.substring(0, file.length()-PreservingFileOutputStream.NEW_SUFFIX.length());
                 } else {
@@ -508,6 +522,7 @@ public class ByteCodeTranslator {
                     "VERSION_BUNDLE_VALUE", bundleVersion,
                     "EXTRA", extraInfoPlist,
                     "${APP_FONTS}", appFonts.toString());
+            replaceInFile(projectPbx, "#extra_cpp_defines#", extraCPPDefines);
             PreservingFileOutputStream.finishWithNewFile(projectPbx);
             PreservingFileOutputStream.finishWithNewFile(templateInfoPlist);
             PreservingFileOutputStream.finishWithNewFile(projectWorkspaceData);

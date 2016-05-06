@@ -3226,6 +3226,7 @@ UIPopoverController* popoverControllerInstance;
 }
 
 #ifdef INCLUDE_FACEBOOK_CONNECT
+#if 0
 extern void com_codename1_social_FacebookImpl_inviteDidCompleteSuccessfully__(CN1_THREAD_STATE_SINGLE_ARG);
 extern void com_codename1_social_FacebookImpl_inviteDidFailWithError___int_java_lang_String(CN1_THREAD_STATE_MULTI_ARG JAVA_INT code, JAVA_OBJECT message);
 /*!
@@ -3251,6 +3252,7 @@ extern void com_codename1_social_FacebookImpl_inviteDidFailWithError___int_java_
     NSLog(@"%@", [error localizedDescription]);
     com_codename1_social_FacebookImpl_inviteDidFailWithError___int_java_lang_String(CN1_THREAD_GET_STATE_PASS_ARG 0, fromNSString(CN1_THREAD_GET_STATE_PASS_ARG [error localizedDescription]));
 }
+#endif
 #endif
 @end
 

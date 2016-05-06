@@ -35,8 +35,8 @@ JAVA_BOOLEAN publishPermission = 0;
 #include "com_codename1_social_LoginCallback.h"
 #include "com_codename1_social_FacebookImpl.h"
 #import "FBSDKLoginKit.h"
-#import "FBSDKAppInviteContent.h"
-#import "FBSDKAppInviteDialog.h"
+//#import "FBSDKAppInviteContent.h"
+//#import "FBSDKAppInviteDialog.h"
 
 
 #ifdef NEW_CODENAME_ONE_VM
@@ -142,6 +142,7 @@ JAVA_BOOLEAN com_codename1_impl_ios_IOSNative_hasPublishPermissions__(JAVA_OBJEC
 }
 
 JAVA_VOID com_codename1_impl_ios_IOSNative_inviteFriends___java_lang_String_java_lang_String(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT me, JAVA_OBJECT appLinkUrl, JAVA_OBJECT previewImageUrl) {
+#if 0
     dispatch_sync(dispatch_get_main_queue(), ^{
         POOL_BEGIN();
         FBSDKAppInviteContent *content =[[FBSDKAppInviteContent alloc] init];
@@ -154,6 +155,7 @@ JAVA_VOID com_codename1_impl_ios_IOSNative_inviteFriends___java_lang_String_java
                                      delegate:[CodenameOne_GLViewController instance]];
         POOL_END();
     });
+#endif
 }
 
 

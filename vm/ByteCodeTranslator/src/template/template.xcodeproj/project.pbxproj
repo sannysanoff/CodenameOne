@@ -289,6 +289,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
+          #extra_cpp_defines#
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -348,6 +349,10 @@
 				VALID_ARCHS = "armv7 arm64";
 				HEADER_SEARCH_PATHS = (
 					#header_search_path#
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+          #extra_cpp_defines#
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
