@@ -166,8 +166,9 @@ public class FacebookConnect extends Login{
 
     @Override
     public boolean isNativeLoginSupported() {
-        return isFacebookSDKSupported();
-                
+        //return isFacebookSDKSupported();
+        return false;
+
     }
 
     @Override
