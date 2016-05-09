@@ -4765,10 +4765,10 @@ public class Component implements Animation, StyleListener {
             hintLabel.setX(getX());
             hintLabel.setWidth(getWidth());
             hintLabel.paint(g);
-            System.out.println(new Date() + " Paint hint label: "+hintLabel.getText());
+            //System.out.println(new Date() + " Paint hint label: "+hintLabel.getText());
         } else {
             if (hintLabel != null){
-                System.out.println(new Date() + " NO Paint hint label: " + hintLabel.getText());
+                //System.out.println(new Date() + " NO Paint hint label: " + hintLabel.getText());
             }
         }
     }

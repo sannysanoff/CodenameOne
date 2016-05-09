@@ -207,16 +207,16 @@ public class Oauth2 {
      */
     public void showAuthentication(ActionListener al) {
         final Form old = Display.getInstance().getCurrent();
-        InfiniteProgress inf = new InfiniteProgress();
-        final Dialog progress = inf.showInifiniteBlocking();
+        //InfiniteProgress inf = new InfiniteProgress();
+        //final Dialog progress = inf.showInifiniteBlocking();
         Form authenticationForm = new Form("Login");
         authenticationForm.setScrollable(false);
         if (old != null) {
             Command cancel = new Command("Cancel") {
                 public void actionPerformed(ActionEvent ev) {
-                    if (Display.getInstance().getCurrent() == progress) {
-                        progress.dispose();
-                    }
+//                    if (Display.getInstance().getCurrent() == progress) {
+//                        progress.dispose();
+//                    }
                     old.showBack();
                 }
             };
@@ -224,7 +224,8 @@ public class Oauth2 {
             authenticationForm.setBackCommand(cancel);
         }
         authenticationForm.setLayout(new BorderLayout());
-        authenticationForm.addComponent(BorderLayout.CENTER, createLoginComponent(al, authenticationForm, old, progress));
+        authenticationForm.addComponent(BorderLayout.CENTER, createLoginComponent(al, authenticationForm, old, null));
+        authenticationForm.show();
     }
 
     private Component createLoginComponent(final ActionListener al, final Form frm, final Form backToForm, final Dialog progress) {
@@ -255,6 +256,7 @@ public class Oauth2 {
 
             @Override
             public void onLoad(String url) {
+                System.out.println("WebBrowser: onLoad: "+url);
                 handleURL(url, this, al, frm, backToForm, progress);
             }
 
@@ -268,8 +270,10 @@ public class Oauth2 {
 
     private void handleURL(String url, WebBrowser web, final ActionListener al, final Form frm, final Form backToForm, final Dialog progress) {
         if ((url.startsWith(redirectURI))) {
-            if (Display.getInstance().getCurrent() == progress) {
-                progress.dispose();
+            if (progress != null) {
+                if (Display.getInstance().getCurrent() == progress) {
+                    progress.dispose();
+                }
             }
 
             web.stop();
@@ -382,7 +386,9 @@ public class Oauth2 {
             }
         } else {
             if (frm != null && Display.getInstance().getCurrent() != frm) {
-                progress.dispose();
+                if (progress != null)
+                    progress.dispose();
+                System.out.println("Oauth2: frm.show()");
                 frm.show();
             }
         }

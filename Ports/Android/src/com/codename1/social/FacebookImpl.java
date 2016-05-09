@@ -125,16 +125,20 @@ public class FacebookImpl extends FacebookConnect {
 
     @Override
     public com.codename1.io.AccessToken getAccessToken() {
-        AccessToken fbToken = AccessToken.getCurrentAccessToken();
-        if (fbToken != null) {
-            String token = fbToken.getToken();
-            Date ex = fbToken.getExpires();
-            long diff = ex.getTime() - System.currentTimeMillis();
-            diff = diff / 1000;
-            com.codename1.io.AccessToken cn1Token = new com.codename1.io.AccessToken(token, "" + diff);
-            return cn1Token;
+        if (isNativeLoginSupported()) {
+            AccessToken fbToken = AccessToken.getCurrentAccessToken();
+            if (fbToken != null) {
+                String token = fbToken.getToken();
+                Date ex = fbToken.getExpires();
+                long diff = ex.getTime() - System.currentTimeMillis();
+                diff = diff / 1000;
+                com.codename1.io.AccessToken cn1Token = new com.codename1.io.AccessToken(token, "" + diff);
+                return cn1Token;
+            }
+            return null;
+        } else {
+            return super.getAccessToken();
         }
-        return null;
     }
 
     @Override
