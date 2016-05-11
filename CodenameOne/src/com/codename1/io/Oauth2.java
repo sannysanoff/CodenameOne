@@ -231,7 +231,7 @@ public class Oauth2 {
         authenticationForm.show();
     }
 
-    protected Component createLoginComponent(final ActionListener al, final Form frm, final Form backToForm, final Dialog progress, boolean[] authCancelled) {
+    protected Component createLoginComponent(final ActionListener al, final Form frm, final Form backToForm, final Dialog progress, final boolean[] authCancelled) {
 
         String URL = oauth2URL + "?client_id=" + clientId
                 + "&redirect_uri=" + Util.encodeUrl(redirectURI);
