@@ -28,14 +28,11 @@ import com.codename1.io.FileSystemStorage;
 import com.codename1.io.MultipartRequest;
 import com.codename1.io.NetworkEvent;
 import com.codename1.io.NetworkManager;
-import com.codename1.io.Util;
 import com.codename1.ui.Dialog;
-import com.codename1.ui.Display;
-import com.codename1.ui.Form;
-import com.codename1.ui.Image;
 import com.codename1.ui.events.ActionEvent;
 import com.codename1.ui.events.ActionListener;
 import com.codename1.ui.util.Resources;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -60,7 +57,7 @@ public class FacebookShare extends ShareService {
      */
     public void actionPerformed(ActionEvent evt) {
         if (!FaceBookAccess.getInstance().isAuthenticated()) {
-            FaceBookAccess.getInstance().showAuthentication(this);
+            FaceBookAccess.getInstance().showAuthentication(this, null);
             return;
         }
         if (evt.getSource() instanceof Exception) {

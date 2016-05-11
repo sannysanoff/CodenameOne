@@ -130,7 +130,7 @@ public class FaceBookAccess {
      * @param al a listener that will receive at its source either a token for 
      * the service or an exception in case of a failure
      */
-    public void showAuthentication(final ActionListener al) {
+    public void showAuthentication(final ActionListener al, ActionListener backAction) {
         createOAuth().showAuthentication(new ActionListener() {
 
             public void actionPerformed(ActionEvent evt) {
@@ -144,7 +144,7 @@ public class FaceBookAccess {
                 }
                 al.actionPerformed(evt);
             }
-        });
+        }, backAction);
     }
 
     /**

@@ -72,7 +72,7 @@ public class LikeButton extends Button implements ActionListener {
             if(permissions != null) {
                 FaceBookAccess.setPermissions(permissions);            
             }
-            FaceBookAccess.getInstance().showAuthentication(this);
+            FaceBookAccess.getInstance().showAuthentication(this, null);
             return;
         }
         if(evt.getSource() instanceof Exception) {

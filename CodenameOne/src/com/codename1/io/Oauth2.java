@@ -23,19 +23,15 @@
  */
 package com.codename1.io;
 
-import com.codename1.components.InfiniteProgress;
 import com.codename1.components.WebBrowser;
-import com.codename1.ui.Command;
-import com.codename1.ui.Component;
-import com.codename1.ui.Dialog;
-import com.codename1.ui.Display;
-import com.codename1.ui.Form;
+import com.codename1.ui.*;
 import com.codename1.ui.animations.CommonTransitions;
 import com.codename1.ui.events.ActionEvent;
 import com.codename1.ui.events.ActionListener;
 import com.codename1.ui.html.DocumentInfo;
 import com.codename1.ui.layouts.BorderLayout;
 import com.codename1.util.regex.StringReader;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
@@ -205,7 +201,7 @@ public class Oauth2 {
      * @return a component that should be displayed to the user in order to
      * perform the authentication
      */
-    public void showAuthentication(ActionListener al) {
+    public void showAuthentication(ActionListener al, final ActionListener backAction) {
         final Form old = Display.getInstance().getCurrent();
         //InfiniteProgress inf = new InfiniteProgress();
         //final Dialog progress = inf.showInifiniteBlocking();
@@ -217,6 +213,10 @@ public class Oauth2 {
 //                    if (Display.getInstance().getCurrent() == progress) {
 //                        progress.dispose();
 //                    }
+
+                    if (backAction != null) {
+                        backAction.actionPerformed(ev);
+                    }
                     old.showBack();
                 }
             };
@@ -228,7 +228,7 @@ public class Oauth2 {
         authenticationForm.show();
     }
 
-    private Component createLoginComponent(final ActionListener al, final Form frm, final Form backToForm, final Dialog progress) {
+    protected Component createLoginComponent(final ActionListener al, final Form frm, final Form backToForm, final Dialog progress) {
 
         String URL = oauth2URL + "?client_id=" + clientId
                 + "&redirect_uri=" + Util.encodeUrl(redirectURI);

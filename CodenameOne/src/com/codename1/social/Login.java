@@ -113,6 +113,11 @@ public abstract class Login {
 
                 }
 
+            }, new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent evt) {
+                    callback.loginFailed("User cancelled");
+                }
             });
 
         }
