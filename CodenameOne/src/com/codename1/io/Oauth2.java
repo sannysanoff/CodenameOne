@@ -202,7 +202,7 @@ public class Oauth2 {
      * perform the authentication
      */
     public void showAuthentication(ActionListener al, final ActionListener backAction) {
-        boolean[] authCancelled = { false };
+        final boolean[] authCancelled = { false };
         final Form old = Display.getInstance().getCurrent();
         //InfiniteProgress inf = new InfiniteProgress();
         //final Dialog progress = inf.showInifiniteBlocking();
