@@ -166,7 +166,7 @@ public class Oauth2 {
             login.setLayout(new BorderLayout());
             login.setScrollable(false);
 
-            Component html = createLoginComponent(null, null, null, null);
+            Component html = createLoginComponent(null, null, null, null, null);
             login.addComponent(BorderLayout.CENTER, html);
             login.setScrollable(false);
             login.setDialogUIID("Container");
@@ -190,7 +190,7 @@ public class Oauth2 {
      * perform the authentication
      */
     public Component createAuthComponent(ActionListener al) {
-        return createLoginComponent(al, null, null, null);
+        return createLoginComponent(al, null, null, null, null);
     }
 
     /**
@@ -202,6 +202,7 @@ public class Oauth2 {
      * perform the authentication
      */
     public void showAuthentication(ActionListener al, final ActionListener backAction) {
+        boolean[] authCancelled = { false };
         final Form old = Display.getInstance().getCurrent();
         //InfiniteProgress inf = new InfiniteProgress();
         //final Dialog progress = inf.showInifiniteBlocking();
@@ -214,6 +215,8 @@ public class Oauth2 {
 //                        progress.dispose();
 //                    }
 
+                    authCancelled[0] = true;
+
                     if (backAction != null) {
                         backAction.actionPerformed(ev);
                     }
@@ -224,11 +227,11 @@ public class Oauth2 {
             authenticationForm.setBackCommand(cancel);
         }
         authenticationForm.setLayout(new BorderLayout());
-        authenticationForm.addComponent(BorderLayout.CENTER, createLoginComponent(al, authenticationForm, old, null));
+        authenticationForm.addComponent(BorderLayout.CENTER, createLoginComponent(al, authenticationForm, old, null, authCancelled));
         authenticationForm.show();
     }
 
-    protected Component createLoginComponent(final ActionListener al, final Form frm, final Form backToForm, final Dialog progress) {
+    protected Component createLoginComponent(final ActionListener al, final Form frm, final Form backToForm, final Dialog progress, boolean[] authCancelled) {
 
         String URL = oauth2URL + "?client_id=" + clientId
                 + "&redirect_uri=" + Util.encodeUrl(redirectURI);
@@ -256,6 +259,9 @@ public class Oauth2 {
 
             @Override
             public void onLoad(String url) {
+                if (authCancelled != null && authCancelled[0]) {
+                    return;
+                }
                 System.out.println("WebBrowser: onLoad: "+url);
                 handleURL(url, this, al, frm, backToForm, progress);
             }
@@ -385,7 +391,9 @@ public class Oauth2 {
                 }
             }
         } else {
-            if (frm != null && Display.getInstance().getCurrent() != frm) {
+            if (frm != null &&
+                    Display.getInstance().getCurrent() != frm &&
+                    frm.getComponentCount() > 0) {
                 if (progress != null)
                     progress.dispose();
                 System.out.println("Oauth2: frm.show()");
