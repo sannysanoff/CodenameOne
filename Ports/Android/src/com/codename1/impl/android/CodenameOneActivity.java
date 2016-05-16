@@ -34,6 +34,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -61,7 +62,7 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class CodenameOneActivity extends Activity {
+public class CodenameOneActivity extends FragmentActivity {
 
     private Menu menu;
     private boolean nativeMenu = false;
