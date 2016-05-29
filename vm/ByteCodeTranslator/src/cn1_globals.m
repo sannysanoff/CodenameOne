@@ -17,7 +17,7 @@
 
 int currentGcMarkValue = 1;
 extern JAVA_BOOLEAN lowMemoryMode;
-//#define DEBUG_GC_OBJECTS_IN_HEAP
+#define DEBUG_GC_OBJECTS_IN_HEAP
 
 struct clazz class_array1__JAVA_BOOLEAN = {
     DEBUG_GC_INIT 0, 999999, 0, 0, 0, 0, 0, 0, 0, 0, cn1_array_1_id_JAVA_BOOLEAN, "boolean[]", JAVA_TRUE, 1, &class__java_lang_Boolean, JAVA_TRUE, &class__java_lang_Object, EMPTY_INTERFACES, 0, 0, 0
@@ -349,8 +349,10 @@ void codenameOneGCMark() {
     }
 }
 
-#ifdef DEBUG_GC_OBJECTS_IN_HEAP
 int totalAllocatedHeap = 0;
+int totalAllocatedCount = 0;
+
+#ifdef DEBUG_GC_OBJECTS_IN_HEAP
 int getObjectSize(JAVA_OBJECT o) {
     int* ptr = (int*)o;
     ptr--;
@@ -381,14 +383,15 @@ void preSweepCount(CODENAME_ONE_THREAD_STATE) {
 void printObjectsPostSweep(CODENAME_ONE_THREAD_STATE) {
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
     
+    const int LIMIT = 20000; // cn1_array_3_id_java_util_Vector + 1;
     // this should be the last class used
-    int classTypeCount[cn1_array_3_id_java_util_Vector + 1];
-    int sizeInHeapForType[cn1_array_3_id_java_util_Vector + 1];
-    memset(classTypeCount, 0, sizeof(int) * cn1_array_3_id_java_util_Vector + 1);
-    memset(sizeInHeapForType, 0, sizeof(int) * cn1_array_3_id_java_util_Vector + 1);
+    int classTypeCount[LIMIT];
+    int sizeInHeapForType[LIMIT];
+    memset(classTypeCount, 0, sizeof(int) * LIMIT);
+    memset(sizeInHeapForType, 0, sizeof(int) * LIMIT);
     int nullSpaces = 0;
-    const char** arrayOfNames = malloc(sizeof(char*) * cn1_array_3_id_java_util_Vector + 1);
-    memset(arrayOfNames, 0, sizeof(char*) * cn1_array_3_id_java_util_Vector + 1);
+    const char** arrayOfNames = malloc(sizeof(char*) * LIMIT);
+    memset(arrayOfNames, 0, sizeof(char*) * LIMIT);
     
     int t = currentSizeOfAllObjectsInHeap;
     for(int iter = 0 ; iter < t ; iter++) {
@@ -635,6 +638,7 @@ JAVA_OBJECT codenameOneGcMalloc(CODENAME_ONE_THREAD_STATE, int size, struct claz
     }
 #ifdef DEBUG_GC_OBJECTS_IN_HEAP
     totalAllocatedHeap += size;
+    totalAllocatedCount++;
     int* ptr = (int*)malloc(size + sizeof(int));
     *ptr = size;
     ptr++;
@@ -715,6 +719,7 @@ void codenameOneGcFree(CODENAME_ONE_THREAD_STATE, JAVA_OBJECT obj) {
     int* ptr = (int*)obj;
     ptr--;
     totalAllocatedHeap -= *ptr;
+    totalAllocatedCount--;
     free(ptr);
 #else
     free(obj);

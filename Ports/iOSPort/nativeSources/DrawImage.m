@@ -205,6 +205,9 @@ static GLuint getOGLProgram(){
     glVertexAttribPointer(vertexCoordAtt, 2, GL_FLOAT, GL_FALSE, 0, vertexes);
     GLErrorLog;
     
+    if (width > 100 && height > 100) {
+        NSLog(@"Actual draw large image: w=%d h=%d x=%d y=%d", width, height, x, y);
+    }
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     GLErrorLog;
     
