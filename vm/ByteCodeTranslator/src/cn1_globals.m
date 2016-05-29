@@ -726,38 +726,39 @@ void codenameOneGcFree(CODENAME_ONE_THREAD_STATE, JAVA_OBJECT obj) {
 #endif
 }
 
-typedef void (*gcMarkFunctionPointer)(CODENAME_ONE_THREAD_STATE, JAVA_OBJECT obj, JAVA_BOOLEAN force);
 
 //JAVA_OBJECT* recursionBlocker = 0;
 //int recursionBlockerPosition = 0;
 int recursionKey = 1;
+/*
 void gcMarkObject(CODENAME_ONE_THREAD_STATE, JAVA_OBJECT obj, JAVA_BOOLEAN force) {
     if(obj == JAVA_NULL || obj->__codenameOneParentClsReference == 0 || obj->__codenameOneParentClsReference == (&class__java_lang_Class)) {
-        return;
-    }
-
-    // if this is a Class object or already marked this should be ignored
-    if(obj->__codenameOneGcMark == currentGcMarkValue) {
-        if(force) {
-            if(obj->__codenameOneReferenceCount == recursionKey) {
-                return;
+        //
+    } else {
+        // if this is a Class object or already marked this should be ignored
+        if(obj->__codenameOneGcMark == currentGcMarkValue) {
+            if(force) {
+                if(obj->__codenameOneReferenceCount == recursionKey) {
+                    //
+                } else {
+                    obj->__codenameOneReferenceCount = recursionKey;
+                    obj->__codenameOneGcMark = currentGcMarkValue;
+                    gcMarkFunctionPointer fp = obj->__codenameOneParentClsReference->markFunction;
+                    if(fp != 0) {
+                        fp(threadStateData, obj, force);
+                    }
+                }
             }
-            obj->__codenameOneReferenceCount = recursionKey;
+        } else {
             obj->__codenameOneGcMark = currentGcMarkValue;
             gcMarkFunctionPointer fp = obj->__codenameOneParentClsReference->markFunction;
             if(fp != 0) {
                 fp(threadStateData, obj, force);
             }
         }
-        return;
-        
-    }
-    obj->__codenameOneGcMark = currentGcMarkValue;
-    gcMarkFunctionPointer fp = obj->__codenameOneParentClsReference->markFunction;
-    if(fp != 0) {
-        fp(threadStateData, obj, force);
     }
 }
+ */
 
 void gcMarkArrayObject(CODENAME_ONE_THREAD_STATE, JAVA_OBJECT obj, JAVA_BOOLEAN force) {
     if(obj == JAVA_NULL) {

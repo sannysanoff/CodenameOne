@@ -1194,10 +1194,12 @@ public class IOSImplementation extends CodenameOneImplementation {
         ((NativeGraphics)graphics).font = (NativeFont)font;
     }
 
+    //static int loadClipBoundsCount = 0;
     
     void loadClipBounds(Object graphics){
         NativeGraphics ng = (NativeGraphics)graphics;
         if ( ng.clipDirty){
+            //System.out.println("loadClipBounds: "+ (++loadClipBoundsCount));
             ng.clipDirty = false;
             if ( ng.isTransformSupported()){
 
@@ -1293,15 +1295,17 @@ public class IOSImplementation extends CodenameOneImplementation {
     public void popClip(Object graphics){
         ((NativeGraphics)graphics).popClip();
     }
-    
+
+    //static int setClipCount = 0;
     public void setClip(Object graphics, int x, int y, int width, int height) {
         NativeGraphics ng = ((NativeGraphics)graphics);
-        
+
         ng.checkControl();
         ng.clipApplied = false;
         boolean isTransformSupported = ng.isTransformSupported();
         
         if ( isTransformSupported ){
+            //System.out.println("setClip: "+ (++setClipCount));
             if ( ng.transform == null ){
                 ng.transform = Transform.makeIdentity();
             }

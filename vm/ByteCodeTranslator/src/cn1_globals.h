@@ -731,6 +731,9 @@ const int currentCodenameOneCallStackOffset = threadStateData->callStackOffset;
 
 extern struct ThreadLocalData* getThreadLocalData();
 
+extern int recursionKey;
+
+
 #define DEFINE_EXCEPTION_HANDLING_CONSTANTS() int methodBlockOffset = threadStateData->tryBlockOffset
 
 #define BEGIN_TRY(classId, destinationJump) {\
@@ -912,7 +915,7 @@ JAVA_OBJECT codenameOneGcMalloc(CODENAME_ONE_THREAD_STATE, int size, struct claz
 void codenameOneGcFree(CODENAME_ONE_THREAD_STATE, JAVA_OBJECT obj);
 
 extern int currentGcMarkValue;
-extern void gcMarkObject(CODENAME_ONE_THREAD_STATE, JAVA_OBJECT obj, JAVA_BOOLEAN force);
+//extern void gcMarkObject(CODENAME_ONE_THREAD_STATE, JAVA_OBJECT obj, JAVA_BOOLEAN force);
 extern void gcMarkArrayObject(CODENAME_ONE_THREAD_STATE, JAVA_OBJECT obj, JAVA_BOOLEAN force);
 extern JAVA_BOOLEAN removeObjectFromHeapCollection(CODENAME_ONE_THREAD_STATE, JAVA_OBJECT o);
 
@@ -967,5 +970,35 @@ extern void popMany(CODENAME_ONE_THREAD_STATE, int count, struct elementStruct**
 }
 
 extern struct clazz class__java_lang_Class;
+
+typedef void (*gcMarkFunctionPointer)(CODENAME_ONE_THREAD_STATE, JAVA_OBJECT obj, JAVA_BOOLEAN force);
+
+#define gcMarkObject(threadStateData, _obj, force) \
+{ \
+    register JAVA_OBJECT obj = _obj; \
+    if(obj == JAVA_NULL || obj->__codenameOneParentClsReference == 0 || obj->__codenameOneParentClsReference == (&class__java_lang_Class)) { \
+    } else {    \
+        if(obj->__codenameOneGcMark == currentGcMarkValue) {    \
+            if(force) { \
+                if(obj->__codenameOneReferenceCount == recursionKey) {  \
+                } else {    \
+                    obj->__codenameOneReferenceCount = recursionKey;    \
+                    obj->__codenameOneGcMark = currentGcMarkValue;  \
+                    gcMarkFunctionPointer fp = obj->__codenameOneParentClsReference->markFunction;  \
+                    if(fp != 0) {   \
+                        fp(threadStateData, obj, force);    \
+                    }   \
+                }   \
+            }   \
+        } else {        \
+            obj->__codenameOneGcMark = currentGcMarkValue;  \
+            gcMarkFunctionPointer fp = obj->__codenameOneParentClsReference->markFunction;  \
+            if(fp != 0) {   \
+                fp(threadStateData, obj, force);    \
+            }   \
+        }   \
+    }   \
+}
+
 
 #endif //__CN1GLOBALS__
