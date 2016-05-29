@@ -3765,7 +3765,8 @@ public class JavaSEPort extends CodenameOneImplementation {
     /**
      * @inheritDoc
      */
-    public void setClip(Object graphics, int x, int y, int width, int height) {
+    public void setClip(Object graphics,
+                        int x, int y, int width, int height) {
         checkEDT();
         Graphics2D nativeGraphics = getGraphics(graphics);
         nativeGraphics.setClip(x, y, width, height);
@@ -3811,11 +3812,7 @@ public class JavaSEPort extends CodenameOneImplementation {
         }
         
     }
-    
-    
 
-    
-    
     
     /**
      * @inheritDoc

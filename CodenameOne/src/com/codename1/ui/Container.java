@@ -23,6 +23,8 @@
  */
 package com.codename1.ui;
 
+import com.codename1.impl.ClipImplementation;
+import com.codename1.impl.LightweightClipImplementation;
 import com.codename1.ui.animations.Animation;
 import com.codename1.ui.animations.Motion;
 import com.codename1.ui.animations.Transition;
@@ -1280,6 +1282,10 @@ public class Container extends Component implements Iterable<Component>{
             layoutContainer();
         }
         g.translate(getX(), getY());
+        ClipImplementation oldClipImplementation = null;
+        if (isUseLightweightClip()) {
+            oldClipImplementation = g.setClipImplementation(new LightweightClipImplementation(g.getClipX(), g.getClipY(), g.getClipWidth(), g.getClipHeight()));
+        }
         int size = components.size();
         int clipX1 = g.getClipX();
         int clipX2 = g.getClipX() + g.getClipWidth();
@@ -1324,7 +1330,11 @@ public class Container extends Component implements Iterable<Component>{
             paintGlass(g);
         }
         g.translate(tx, ty);
+        if (isUseLightweightClip()) {
+            g.setClipImplementation(oldClipImplementation);
+        }
         g.translate(-getX(), -getY());
+
     }
 
     /**

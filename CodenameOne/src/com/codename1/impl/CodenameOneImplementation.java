@@ -84,7 +84,7 @@ import java.util.Vector;
  * 
  * @author Shai Almog
  */
-public abstract class CodenameOneImplementation {
+public abstract class CodenameOneImplementation implements ClipImplementation {
 
     /**
      * Indicates the range of "hard" RTL bidi characters in unicode
@@ -1188,41 +1188,10 @@ public abstract class CodenameOneImplementation {
      * @param graphics the graphics context
      * @return the clipping rectangle.
      */
+    @Override
     public Rectangle getClipRect(Object graphics) {
         return new Rectangle(getClipX(graphics), getClipY(graphics), new Dimension(getClipWidth(graphics), getClipHeight(graphics)));
     }
-
-    /**
-     * Returns the clipping coordinate
-     * 
-     * @param graphics the graphics context
-     * @return the clipping coordinate
-     */
-    public abstract int getClipX(Object graphics);
-
-    /**
-     * Returns the clipping coordinate
-     * 
-     * @param graphics the graphics context
-     * @return the clipping coordinate
-     */
-    public abstract int getClipY(Object graphics);
-
-    /**
-     * Returns the clipping coordinate
-     * 
-     * @param graphics the graphics context
-     * @return the clipping coordinate
-     */
-    public abstract int getClipWidth(Object graphics);
-
-    /**
-     * Returns the clipping coordinate
-     * 
-     * @param graphics the graphics context
-     * @return the clipping coordinate
-     */
-    public abstract int getClipHeight(Object graphics);
 
     /**
      * Installs a new clipping rectangle
@@ -1230,6 +1199,7 @@ public abstract class CodenameOneImplementation {
      * @param graphics the graphics context
      * @param rect rectangle representing the new clipping area
      */
+    @Override
     public void setClipRect(Object graphics, Rectangle rect) {
         Dimension d = rect.getSize();
         setClip(graphics, rect.getX(), rect.getY(), d.getWidth(), d.getHeight());
@@ -1248,19 +1218,7 @@ public abstract class CodenameOneImplementation {
         return this.getClipRect(graphics);
     }
     */
-   
 
-    /**
-     * Installs a new clipping rectangle
-     * 
-     * @param graphics the graphics context
-     * @param x coordinate
-     * @param y coordinate
-     * @param width size
-     * @param height size
-     * @param rect rectangle representing the new clipping area
-     */
-    public abstract void setClip(Object graphics, int x, int y, int width, int height);
 
     /**
      * Changes the current clipping rectangle to subset the current clipping with
@@ -1269,24 +1227,12 @@ public abstract class CodenameOneImplementation {
      * @param graphics the graphics context
      * @param rect rectangle representing the new clipping area
      */
+    @Override
     public void clipRect(Object graphics, Rectangle rect) {
         Dimension d = rect.getSize();
         clipRect(graphics, rect.getX(), rect.getY(), d.getWidth(), d.getHeight());
     }
 
-    /**
-     * Changes the current clipping rectangle to subset the current clipping with
-     * the given clipping.
-     * 
-     * @param graphics the graphics context
-     * @param x coordinate
-     * @param y coordinate
-     * @param width size
-     * @param height size
-     * @param rect rectangle representing the new clipping area
-     */
-    public abstract void clipRect(Object graphics, int x, int y, int width, int height);
-    
     // ----- BEGIN CLIP STACK METHODS ---  ADDED TO HELP SUPPORT TRANSFORMATIONS
     // in the clip.
     
@@ -1296,6 +1242,7 @@ public abstract class CodenameOneImplementation {
      * by {@link #popClip}.
      * @param graphics The native graphics context.
      */
+    @Override
     public void pushClip(Object graphics){
         
     }
@@ -1308,6 +1255,7 @@ public abstract class CodenameOneImplementation {
      * @param graphics The native graphics context.
      * @return The clip that was popped off the top of the clip stack.
      */
+    @Override
     public void popClip(Object graphics){
         // NOt implemented yet... need to implement.
         
