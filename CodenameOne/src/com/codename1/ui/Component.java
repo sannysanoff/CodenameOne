@@ -24,9 +24,7 @@
 package com.codename1.ui;
 
 import com.codename1.cloud.BindTarget;
-import com.codename1.impl.ClipImplementation;
 import com.codename1.impl.CodenameOneImplementation;
-import com.codename1.impl.LightweightClipImplementation;
 import com.codename1.ui.util.EventDispatcher;
 import com.codename1.ui.geom.Point;
 import com.codename1.ui.geom.Rectangle;
@@ -201,8 +199,7 @@ public class Component implements Animation, StyleListener {
 
     private boolean hideInPortrait;
     private int scrollOpacity = 0xff;
-    private boolean useLightweightClip = false;
-
+            
     /**
      * Indicates the decrement units for the scroll opacity
      */
@@ -310,15 +307,6 @@ public class Component implements Animation, StyleListener {
     
     boolean isDragAndDropInitialized() {
         return dragAndDropInitialized;
-    }
-
-    public boolean isUseLightweightClip() {
-        return useLightweightClip;
-    }
-
-    public void setUseLightweightClip(boolean useLightweightClip) {
-        // not ready yet.
-        //this.useLightweightClip = useLightweightClip;
     }
 
     /**
@@ -1280,11 +1268,6 @@ public class Component implements Animation, StyleListener {
         int oY = g.getClipY();
         int oWidth = g.getClipWidth();
         int oHeight = g.getClipHeight();
-        ClipImplementation oldClipImplementation = null;
-        if (isUseLightweightClip()) {
-            oldClipImplementation = g.setClipImplementation(new LightweightClipImplementation(oX, oY, oWidth, oHeight));
-        }
-
         if (bounds.intersects(oX, oY, oWidth, oHeight)) {
             Style s = getStyle();
             if(s.getOpacity() < 255 && g.isAlphaSupported()) {
@@ -1299,9 +1282,6 @@ public class Component implements Animation, StyleListener {
             g.setClip(oX, oY, oWidth, oHeight);
         } else {
             Display.impl.nothingWithinComponentPaint(this);
-        }
-        if (isUseLightweightClip()) {
-            g.setClipImplementation(oldClipImplementation);
         }
     }
 
@@ -1491,10 +1471,7 @@ public class Component implements Animation, StyleListener {
         int clipY = g.getClipY();
         int clipW = g.getClipWidth();
         int clipH = g.getClipHeight();
-        ClipImplementation oldClipImplementation = null;
-        if (isUseLightweightClip()) {
-            oldClipImplementation = g.setClipImplementation(new LightweightClipImplementation(clipX, clipY, clipW, clipH));
-        }
+        //g.pushClip();
         Container parent = getParent();
         int translateX = 0;
         int translateY = 0;
@@ -1531,11 +1508,9 @@ public class Component implements Animation, StyleListener {
         g.translate(-translateX, -translateY);
 
         paintGlassImpl(g);
-
+        
         g.setClip(clipX, clipY, clipW, clipH);
-        if (isUseLightweightClip()) {
-            g.setClipImplementation(oldClipImplementation);
-        }
+        //g.popClip();
     }
 
     /**

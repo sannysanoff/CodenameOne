@@ -23,7 +23,6 @@
  */
 package com.codename1.ui;
 
-import com.codename1.impl.ClipImplementation;
 import com.codename1.ui.geom.GeneralPath;
 import com.codename1.impl.CodenameOneImplementation;
 import com.codename1.ui.geom.Shape;
@@ -44,7 +43,6 @@ public final class Graphics {
     private Font current = Font.getDefaultFont();
 
     private CodenameOneImplementation impl;
-    private ClipImplementation clipImpl;
     private Object nativeGraphics;
 
     private Object[] nativeGraphicsState;
@@ -58,7 +56,6 @@ public final class Graphics {
     Graphics(Object nativeGraphics) {
         setGraphics(nativeGraphics);
         impl = Display.impl;
-        clipImpl = impl;
     }
 
     /**
@@ -170,7 +167,7 @@ public final class Graphics {
      * @return the x clipping position
      */
     public int getClipX() {
-        return clipImpl.getClipX(nativeGraphics) - xTranslate;
+        return impl.getClipX(nativeGraphics) - xTranslate;
     }
 
     /**
@@ -195,7 +192,7 @@ public final class Graphics {
      * @return the y clipping position
      */
     public int getClipY() {
-        return clipImpl.getClipY(nativeGraphics) - yTranslate;
+        return impl.getClipY(nativeGraphics) - yTranslate;
     }
 
     /**
@@ -204,7 +201,7 @@ public final class Graphics {
      * @return the clip width
      */
     public int getClipWidth() {
-        return clipImpl.getClipWidth(nativeGraphics);
+        return impl.getClipWidth(nativeGraphics);
     }
 
     /**
@@ -213,7 +210,7 @@ public final class Graphics {
      * @return the clip height
      */
     public int getClipHeight() {
-        return clipImpl.getClipHeight(nativeGraphics);
+        return impl.getClipHeight(nativeGraphics);
     }
 
     /**
@@ -226,7 +223,7 @@ public final class Graphics {
      * @param height the height of the rectangle to intersect the clip with
      */
     public void clipRect(int x, int y, int width, int height) {
-        clipImpl.clipRect(nativeGraphics, xTranslate + x, yTranslate + y, width, height);
+        impl.clipRect(nativeGraphics, xTranslate + x, yTranslate + y, width, height);
     }
 
     /**
@@ -238,7 +235,7 @@ public final class Graphics {
      * @param height the height of the new clip rectangle.
      */
     public void setClip(int x, int y, int width, int height) {
-        clipImpl.setClip(nativeGraphics, xTranslate + x, yTranslate + y, width, height);
+        impl.setClip(nativeGraphics, xTranslate + x, yTranslate + y, width, height);
     }
     
     /**
@@ -246,14 +243,14 @@ public final class Graphics {
      * using {@link #popClip}.
      */
     public void pushClip(){
-        clipImpl.pushClip(nativeGraphics);
+        impl.pushClip(nativeGraphics);
     }
     
     /**
      * Pops the top clip from the clip stack and sets it as the current clip.
      */
     public void popClip(){
-        clipImpl.popClip(nativeGraphics);
+        impl.popClip(nativeGraphics);
     }
 
     /**
@@ -1141,11 +1138,5 @@ public final class Graphics {
      */
     public float getScaleY() {
         return scaleY;
-    }
-
-    public ClipImplementation setClipImplementation(ClipImplementation newImplementation) {
-        ClipImplementation ci = this.clipImpl;
-        this.clipImpl = newImplementation;
-        return ci;
     }
 }
