@@ -25,20 +25,18 @@ package com.codename1.impl.android;
 
 import android.app.Activity;
 import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.database.Cursor;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.PowerManager;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
+import android.widget.Toast;
 import com.codename1.payment.Product;
 import com.codename1.payment.PurchaseCallback;
 import com.codename1.payments.v3.IabException;
@@ -53,11 +51,8 @@ import com.codename1.ui.Form;
 import com.codename1.ui.Image;
 import com.codename1.ui.events.ActionEvent;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -71,6 +66,7 @@ public class CodenameOneActivity extends FragmentActivity {
     private boolean waitingForResult;
     private boolean background;
     private Vector intentResult = new Vector();
+    boolean requestForPermission = false;
     
     //private final Object lock = new Object();
     private Inventory inventory;
@@ -279,6 +275,12 @@ public class CodenameOneActivity extends FragmentActivity {
         nativeMenu = enable;
     }
 
+    @Override
+    public void onBackPressed() {
+        Display.getInstance().keyPressed(AndroidImplementation.DROID_IMPL_KEY_BACK);
+        Display.getInstance().keyReleased(AndroidImplementation.DROID_IMPL_KEY_BACK);
+    }
+    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -530,14 +532,24 @@ public class CodenameOneActivity extends FragmentActivity {
 
     @Override
     public void startActivityForResult(Intent intent, int requestCode) {
-        waitingForResult = true;
+        Bundle extra = intent.getExtras();
+        if(extra != null && extra.containsKey("WaitForResult") && !extra.getBoolean("WaitForResult")){
+            waitingForResult = false;            
+        }else{
+            waitingForResult = true;
+        }
         intentResult = new Vector();
         super.startActivityForResult(intent, requestCode);
     }
 
     @Override
     public void startActivity(Intent intent) {
-        waitingForResult = true;
+        Bundle extra = intent.getExtras();
+        if(extra != null && extra.containsKey("WaitForResult") && !extra.getBoolean("WaitForResult")){
+            waitingForResult = false;            
+        }else{
+            waitingForResult = true;
+        }
         super.startActivity(intent);
     }
 
@@ -649,4 +661,24 @@ public class CodenameOneActivity extends FragmentActivity {
         return true;
     }
 
+    public void setRequestForPermission(boolean requestForPermission) {
+        this.requestForPermission = requestForPermission;
+    }
+
+    public boolean isRequestForPermission() {
+        return requestForPermission;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+
+        if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            Log.i("Codename One", "PERMISSION_GRANTED");
+        } else {
+            // Permission Denied
+            Toast.makeText(this, "Permission is denied", Toast.LENGTH_SHORT).show();
+        }
+        requestForPermission = false;
+    }
+    
 }

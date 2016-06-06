@@ -220,7 +220,7 @@ public class SideMenuBar extends MenuBar {
         if (i != null) {
             ob.setIcon(i);
         } else {
-            FontImage.setMaterialIcon(ob, FontImage.MATERIAL_MENU);
+            FontImage.setMaterialIcon(ob, FontImage.MATERIAL_MENU, 4.5f);
         }
         Image p = (Image) uim.getThemeImageConstant("sideMenuPressImage");
         if (p != null) {
@@ -1018,7 +1018,7 @@ public class SideMenuBar extends MenuBar {
         if (sh == null && shadowEnabled) {
             sh = Resources.getSystemResource().getImage("sidemenu-shadow.png");
         }
-        if (isRTLValue) {
+        if (isRTLValue && sh != null) {
             sh = sh.flipHorizontally(true);
         }
         final Image shadow = sh;

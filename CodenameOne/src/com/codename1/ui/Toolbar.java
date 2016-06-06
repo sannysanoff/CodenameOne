@@ -22,6 +22,7 @@
  */
 package com.codename1.ui;
 
+import com.codename1.ui.animations.BubbleTransition;
 import com.codename1.ui.animations.CommonTransitions;
 import com.codename1.ui.animations.Motion;
 import com.codename1.ui.animations.Transition;
@@ -37,6 +38,8 @@ import com.codename1.ui.list.DefaultListCellRenderer;
 import com.codename1.ui.plaf.LookAndFeel;
 import com.codename1.ui.plaf.UIManager;
 import com.codename1.ui.util.Resources;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Vector;
 
 /**
@@ -74,7 +77,7 @@ public class Toolbar extends Container {
 
     private ToolbarSideMenu sideMenu;
 
-    private Vector overflowCommands;
+    private Vector<Command> overflowCommands;
 
     private Button menuButton;
 
@@ -244,10 +247,19 @@ public class Toolbar extends Container {
     public void addCommandToOverflowMenu(Command cmd) {
         checkIfInitialized();
         if (overflowCommands == null) {
-            overflowCommands = new Vector();
+            overflowCommands = new Vector<Command>();
         }
         overflowCommands.add(cmd);
         sideMenu.installRightCommands();
+    }
+    
+    /**
+     * Returns the commands within the overflow menu which can be useful for things like unit testing. Notice
+     * that you should not mutate the commands or the iteratable set in any way!
+     * @return the commands in the overflow menu
+     */
+    public Iterable<Command> getOverflowCommands() {
+        return overflowCommands;
     }
 
     /**
@@ -432,7 +444,51 @@ public class Toolbar extends Container {
         cmd.putClientProperty("Left", Boolean.TRUE);
         sideMenu.addCommand(cmd, 0);
     }
+    
+    /**
+     * Returns the commands within the right bar section which can be useful for things like unit testing. Notice
+     * that you should not mutate the commands or the iteratable set in any way!
+     * @return the commands in the overflow menu
+     */
+    public Iterable<Command> getRightBarCommands() {
+        return getBarCommands(null);
+    }
 
+    /**
+     * Returns the commands within the left bar section which can be useful for things like unit testing. Notice
+     * that you should not mutate the commands or the iteratable set in any way!
+     * @return the commands in the overflow menu
+     */
+    public Iterable<Command> getLeftBarCommands() {
+        return getBarCommands(Boolean.TRUE);
+    }
+
+    private Iterable<Command> getBarCommands(Object leftValue) {
+        ArrayList<Command> cmds = new ArrayList<Command>();
+        findAllCommands(this, cmds);
+        int commandCount = cmds.size() - 1;
+        while(commandCount > 0) {
+            Command c = cmds.get(commandCount);
+            if(c.getClientProperty("Left") != leftValue) {
+                cmds.remove(commandCount);
+            }
+            commandCount--;
+        }
+        return cmds;
+    }
+
+    private void findAllCommands(Container cnt, ArrayList<Command> cmds) {
+        for(Component c : cnt) {
+            if(c instanceof Container) {
+                findAllCommands((Container)c, cmds);
+                continue;
+            }
+            if(c instanceof Button) {
+                cmds.add(((Button)c).getCommand());
+            }
+        }
+    }
+    
     /**
      * Returns the associated SideMenuBar object of this Toolbar.
      *
@@ -474,18 +530,37 @@ public class Toolbar extends Container {
         LookAndFeel lf = manager.getLookAndFeel();
         if (lf.getDefaultMenuTransitionIn() != null || lf.getDefaultMenuTransitionOut() != null) {
             transitionIn = lf.getDefaultMenuTransitionIn();
+            if(transitionIn instanceof BubbleTransition){
+                ((BubbleTransition)transitionIn).setComponentName("OverflowButton");
+            }
             transitionOut = lf.getDefaultMenuTransitionOut();
         } else {
-            transitionIn = CommonTransitions.createFade(300);
-            transitionOut = CommonTransitions.createFade(300);
+            transitionIn = CommonTransitions.createEmpty();
+            transitionOut = CommonTransitions.createEmpty();
         }
-        menu.setTransitionOutAnimator(transitionIn);
-        menu.setTransitionInAnimator(transitionOut);
+        menu.setTransitionInAnimator(transitionIn);
+        menu.setTransitionOutAnimator(transitionOut);
+        
         if(isRTL()){
             marginRight = marginLeft;
             marginLeft = 0;
         }
-        return menu.show(th, Math.max(0, height - th), marginLeft, marginRight, true);
+        int tint = parent.getTintColor();
+        parent.setTintColor(0x00FFFFFF);
+        parent.tint = false;
+        boolean showBelowTitle = manager.isThemeConstant("showMenuBelowTitleBool", true);
+        int topPadding = 0;
+        Component statusBar = ((BorderLayout) getLayout()).getNorth();
+        if (statusBar != null) {
+            topPadding = statusBar.getAbsoluteY() + statusBar.getHeight();
+        }
+        if(showBelowTitle){
+            topPadding = th;
+        }
+        
+        Command r = menu.show(topPadding, Math.max(topPadding, height - topPadding), marginLeft, marginRight, true);
+        parent.setTintColor(tint);
+        return r;
     }
 
     /**
@@ -683,6 +758,26 @@ public class Toolbar extends Container {
         sideMenu.addComponentToSideMenuImpl(menu, cmp);
     }
 
+    /**
+     * Returns the commands within the side menu which can be useful for things like unit testing. Notice
+     * that you should not mutate the commands or the iteratable set in any way!
+     * @return the commands in the overflow menu
+     */
+    public Iterable<Command> getSideMenuCommands() {
+        ArrayList<Command> cmds = new ArrayList<Command>();
+        if(permanentSideMenu) {
+            findAllCommands(permanentSideMenuContainer, cmds);
+            return cmds;
+        }
+        Form f = getComponentForm();
+        int commands = f.getCommandCount();
+        for(int iter = 0 ; iter < commands ; iter++) {
+            cmds.add(f.getCommand(iter));
+        }
+        return cmds;
+    }
+
+    
 
     class ToolbarSideMenu extends SideMenuBar {
 
@@ -756,8 +851,8 @@ public class Toolbar extends Container {
             super.installRightCommands();
             if (overflowCommands != null && overflowCommands.size() > 0) {
                 Image i = (Image) UIManager.getInstance().getThemeImageConstant("menuImage");
-                if (i == null) {
-                    i = FontImage.createMaterial(FontImage.MATERIAL_MORE_VERT, UIManager.getInstance().getComponentStyle("TitleCommand"));
+                if (i == null) { 
+                    i = FontImage.createMaterial(FontImage.MATERIAL_MORE_VERT, UIManager.getInstance().getComponentStyle("TitleCommand"), 4.5f);
                 }
                 menuButton = sideMenu.createTouchCommandButton(new Command("", i) {
 
@@ -767,6 +862,7 @@ public class Toolbar extends Container {
                 });
                 menuButton.putClientProperty("overflow", Boolean.TRUE);
                 menuButton.setUIID("TitleCommand");
+                menuButton.setName("OverflowButton");
                 Layout l = getTitleAreaContainer().getLayout();
                 if (l instanceof BorderLayout) {
                     BorderLayout bl = (BorderLayout) l;

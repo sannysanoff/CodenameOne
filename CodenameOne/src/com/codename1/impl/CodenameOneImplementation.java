@@ -27,7 +27,9 @@ import com.codename1.codescan.CodeScanner;
 import com.codename1.components.FileTree;
 import com.codename1.components.FileTreeModel;
 import com.codename1.contacts.Contact;
+import com.codename1.db.Cursor;
 import com.codename1.db.Database;
+import com.codename1.db.Row;
 import com.codename1.io.ConnectionRequest;
 import com.codename1.io.Cookie;
 import com.codename1.io.FileSystemStorage;
@@ -349,6 +351,17 @@ public abstract class CodenameOneImplementation {
      */
     public boolean isNativeEditorVisible(Component c) {
         return this.isNativeInputSupported() && this.isEditingText(c);
+    }
+    
+    /**
+     * Called when TextArea text is changed.  Can be used by the native 
+     * implementation to trigger an update to the native editor if in async edit
+     * mode.
+     * @param c The TextArea that is being edited.
+     * @param text 
+     */
+    public void updateNativeEditorText(Component c, String text) {
+        
     }
     
     /**
@@ -1263,6 +1276,16 @@ public abstract class CodenameOneImplementation {
     public abstract void setClip(Object graphics, int x, int y, int width, int height);
 
     /**
+     * Clips the Graphics context to the Shape.
+     * 
+     * @param graphics the graphics context
+     * @param shape The shape to clip.
+     */
+    public void setClip(Object graphics, Shape shape){
+        System.out.println("Shape clip is not supported");
+    }
+
+    /**
      * Changes the current clipping rectangle to subset the current clipping with
      * the given clipping.
      * 
@@ -1518,6 +1541,7 @@ public abstract class CodenameOneImplementation {
      * @param graphics
      * @see isTransformSupported()
      * @see isPerspectiveTransformSupported()
+     * @deprecated Use {@link #getTransform(java.lang.Object, com.codename1.ui.Transform) } instead.
      */
     public Transform getTransform(Object graphics){
         return Transform.makeIdentity();
@@ -1565,6 +1589,16 @@ public abstract class CodenameOneImplementation {
     public boolean isShapeSupported(Object graphics){
         return false;
     }
+    
+    /**
+     * Checks if clipping shapes is supported by the provided graphics context.
+     * @param graphics
+     * @return 
+     */
+    public boolean isShapeClipSupported(Object graphics){
+        return false;
+    }
+    
     
 
     // END METHODS FOR DEALING WITH 2-D Paths
@@ -4093,6 +4127,12 @@ public abstract class CodenameOneImplementation {
                 if(o instanceof Writer) {
                     ((Writer) o).close();
                 }
+                if(o instanceof Database) {
+                    ((Database)o).close();
+                }
+                if(o instanceof Cursor) {
+                    ((Cursor)o).close();
+                }
             }
         } catch (Throwable ex) {
             ex.printStackTrace();
@@ -5146,6 +5186,11 @@ public abstract class CodenameOneImplementation {
     public Object makeTransformTranslation(float translateX, float translateY, float translateZ) {
         throw new RuntimeException("Transforms not supported");
     }
+    
+    public void setTransformTranslation(Object nativeTransform, float translateX, float translateY, float translateZ) {
+        setTransformIdentity(nativeTransform);
+        transformTranslate(nativeTransform, translateX, translateY, translateZ);
+    }
 
     /**
      * Makes a new native scale transform.  Each implementation can decide the format
@@ -5160,6 +5205,11 @@ public abstract class CodenameOneImplementation {
      */
     public Object makeTransformScale(float scaleX, float scaleY, float scaleZ) {
         throw new RuntimeException("Transforms not supported");
+    }
+    
+    public void setTransformScale(Object nativeTransform, float scaleX, float scaleY, float scaleZ) {
+        setTransformIdentity(nativeTransform);
+        transformScale(nativeTransform, scaleX, scaleY, scaleZ);
     }
 
     /**
@@ -5176,6 +5226,11 @@ public abstract class CodenameOneImplementation {
      */
     public Object makeTransformRotation(float angle, float x, float y, float z) {
         throw new RuntimeException("Transforms not supported");
+    }
+    
+    public void setTransformRotation(Object nativeTransform, float angle, float x, float y, float z) {
+        setTransformIdentity(nativeTransform);
+        transformRotate(nativeTransform, angle, x, y, z);
     }
 
     /**
@@ -5194,6 +5249,11 @@ public abstract class CodenameOneImplementation {
         throw new RuntimeException("Transforms not supported");
     }
 
+    public void setTransformPerspective(Object nativeTransform, float fovy, float aspect, float zNear, float zFar) {
+        Object persp = makeTransformPerspective(fovy, aspect, zNear, zFar);
+        copyTransform(persp, nativeTransform);
+    }
+    
     /**
      * Makes a new orthographic projection transform.  Each implementation can decide the format
      * to use internally for transforms.  This should return a transform in that internal format.
@@ -5212,6 +5272,11 @@ public abstract class CodenameOneImplementation {
         throw new RuntimeException("Transforms not supported");
     }
 
+    public void setTransformOrtho(Object nativeTransform, float left, float right, float bottom, float top, float near, float far) {
+        Object ortho = makeTransformOrtho(left, right, bottom, top, near, far);
+        copyTransform(ortho, nativeTransform);
+    }
+    
     /**
      * Makes a transform to simulate a camera's perspective at a given location. Each implementation can decide the format
      * to use internally for transforms.  This should return a transform in that internal format.
@@ -5233,6 +5298,11 @@ public abstract class CodenameOneImplementation {
         throw new RuntimeException("Transforms not supported");
     }
 
+    public void setTransformCamera(Object nativeTransform, float eyeX, float eyeY, float eyeZ, float centerX, float centerY, float centerZ, float upX, float upY, float upZ) {
+        Object cam = makeTransformCamera(eyeX, eyeY, eyeZ,  centerX, centerY, centerZ, upX, upY, upZ);
+        copyTransform(cam, nativeTransform);
+    }
+    
     /**
      * Rotates the provided  transform.
      * @param nativeTransform The transform to rotate. Each implementation can decide the format
@@ -5246,7 +5316,8 @@ public abstract class CodenameOneImplementation {
      * @see #isTransformSupported()
      */
     public void transformRotate(Object nativeTransform, float angle, float x, float y, float z) {
-       throw new RuntimeException("Transforms not supported");
+       Object rot = makeTransformRotation(angle, x, y, z);
+       concatenateTransform(nativeTransform, rot);
     }
 
     
@@ -5263,7 +5334,8 @@ public abstract class CodenameOneImplementation {
      * @see #isTransformSupported()
      */
     public void transformTranslate(Object nativeTransform, float x, float y, float z) {
-        throw new RuntimeException("Transforms not supported");
+        Object tr = makeTransformTranslation(x, y, z);
+        concatenateTransform(nativeTransform, tr);
     }
 
     /**
@@ -5278,7 +5350,8 @@ public abstract class CodenameOneImplementation {
      * @see #isTransformSupported()
      */
     public void transformScale(Object nativeTransform, float x, float y, float z) {
-        throw new RuntimeException("Transforms not supported");
+        Object scale = makeTransformScale(x, y, z);
+        concatenateTransform(nativeTransform, scale);
     }
 
     /**
@@ -5296,6 +5369,10 @@ public abstract class CodenameOneImplementation {
        throw new RuntimeException("Transforms not supported");
     }
     
+    public void setTransformInverse(Object nativeTransform) throws Transform.NotInvertibleException {
+       copyTransform(makeTransformInverse(nativeTransform), nativeTransform);
+    }
+    
     /**
      * Makes a new identity native transform. Each implementation can decide the format
      * to use internally for transforms.  This should return a transform in that internal format.
@@ -5308,6 +5385,14 @@ public abstract class CodenameOneImplementation {
         throw new RuntimeException("Transforms not supported");
     }
 
+    /**
+     * Sets the given native transform to the identiy transform
+     * @param transform 
+     */
+    public void setTransformIdentity(Object transform) {
+        copyTransform(makeTransformIdentity(), transform);
+    }
+    
     /**
      * Copies the setting of one transform into another.  Each implementation can decide the format
      * to use internally for transforms.  This should return a transform in that internal format.
@@ -5325,7 +5410,7 @@ public abstract class CodenameOneImplementation {
      * Concatenates two transforms and sets the first transform to be the result of the concatenation.
      * <p>This can only be used if {@link #isTransformSupported()} returns true.</p>
      * @param t1 The left native transform.  The result will also be stored in this transform.
-     * @param t2 The right native transform.  The result will also be stored in this transform.
+     * @param t2 The right native transform.
      * @see #isTransformSupported()
      */
     public void concatenateTransform(Object t1, Object t2) {
@@ -5346,6 +5431,95 @@ public abstract class CodenameOneImplementation {
     public void transformPoint(Object nativeTransform, float[] in, float[] out) {
         throw new RuntimeException("Transforms not supported");
     }
+    
+    /**
+     * Transforms a set of points using the provided transform.
+     * @param nativeTransform The transform to use for transforming the points
+     * @param pointSize The size of the points (either 2 or 3)
+     * @param in Input array of points.
+     * @param srcPos The start position of the input array
+     * @param out The output array of points
+     * @param destPos The start position of the output array.
+     * @param numPoints The number of points to transform.
+     */
+    public void transformPoints(Object nativeTransform, int pointSize, float[] in, int srcPos, float[] out, int destPos, int numPoints) {
+        float[] bufIn = new float[pointSize];
+        float[] bufOut = new float[pointSize];
+        int len = numPoints * pointSize;
+        for (int i=0; i<len; i+= pointSize) {
+            System.arraycopy(in, srcPos + i, bufIn, 0, pointSize);
+            transformPoint(nativeTransform, bufIn, bufOut);
+            System.arraycopy(bufOut, 0, out, destPos + i, pointSize);
+        }
+    }
+    
+    /**
+     * Translates a set of points.
+     * @param pointSize The size of each point (2 or 3)
+     * @param tX Size of translation along x-axis
+     * @param tY Size of translation along y-axis
+     * @param tZ Size of translation along z-axis (only used if pointSize == 3)
+     * @param in Input array of points.
+     * @param srcPos Start position in input array
+     * @param out Output array of points
+     * @param destPos Start position in output array
+     * @param numPoints Number of points to translate.
+     */
+    public void translatePoints(int pointSize, float tX, float tY, float tZ, float[] in, int srcPos, float[] out, int destPos, int numPoints) {
+        int len = numPoints * pointSize;
+        for (int i=0; i<len; i+=pointSize) {
+            int d0 = destPos + i;
+            int s0 = srcPos + i;
+            out[d0++] = in[s0++] + tX;
+            out[d0++] = in[s0++] + tY;
+            if (pointSize > 2) {
+                out[d0] = in[s0] + tZ;
+            }
+        }
+    }
+    
+    /**
+     * Scales a set of points.
+     * @param pointSize The size of each point (2 or 3)
+     * @param sX Scale factor along x-axis
+     * @param sY Scale factor along y-axis
+     * @param sZ Scale factor along z-axis (only used if pointSize == 3)
+     * @param in Input array of points.
+     * @param srcPos Start position in input array
+     * @param out Output array of points
+     * @param destPos Start position in output array
+     * @param numPoints Number of points to translate.
+     */
+    public void scalePoints(int pointSize, float sX, float sY, float sZ, float[] in, int srcPos, float[] out, int destPos, int numPoints) {
+        int len = numPoints * pointSize;
+        for (int i=0; i<len; i+=pointSize) {
+            int d0 = destPos + i;
+            int s0 = srcPos + i;
+            out[d0++] = in[s0++] * sX;
+            out[d0++] = in[s0++] * sY;
+            if (pointSize > 2) {
+                out[d0] = in[s0] * sZ;
+            }
+        }
+    }
+    
+
+    /**
+     * Clears the addressbook cache.  This is only necessary on iOS since its AddressBookRef is transactional.
+     */
+    public void refreshContacts() {
+        
+    }
+
+    /**
+     * Sets the given transform to the current transform in the given graphics object.
+     * @param nativeGraphics
+     * @param t 
+     */
+    public void getTransform(Object nativeGraphics, Transform t) {
+        t.setIdentity();
+    }
+
 
     // END TRANSFORMATION METHODS--------------------------------------------------------------------    
     
@@ -6527,12 +6701,12 @@ public abstract class CodenameOneImplementation {
                         iconStringHGap = (iconHeight - fontHeight) / 2;
                         drawImage(nativeGraphics, icon, x, y);
                         drawLabelStringValign(nativeGraphics, nativeFont, text, x + iconWidth + gap, y, textSpaceW, isTickerRunning,
-                                tickerShiftText, textDecoration, rtl, endsWith3Points, iconWidth, iconStringHGap, iconHeight, fontHeight, valign);
+                                tickerShiftText, textDecoration, rtl, endsWith3Points, stringWidth, iconStringHGap, iconHeight, fontHeight, valign);
                     } else {
                         iconStringHGap = (fontHeight - iconHeight) / 2;
                         drawImage(nativeGraphics, icon, x, y + iconStringHGap);
                         drawLabelString(nativeGraphics, nativeFont, text, x + iconWidth + gap, y, textSpaceW, isTickerRunning,
-                                tickerShiftText, textDecoration, rtl, endsWith3Points, iconWidth, fontHeight);
+                                tickerShiftText, textDecoration, rtl, endsWith3Points, stringWidth, fontHeight);
                     }
                     break;
                 case Label.BOTTOM:
@@ -6541,13 +6715,13 @@ public abstract class CodenameOneImplementation {
                         iconStringWGap = (iconWidth - strWidth) / 2;
                         drawImage(nativeGraphics, icon, x, y);
                         drawLabelString(nativeGraphics, nativeFont, text, x + iconStringWGap, y + iconHeight + gap, textSpaceW,
-                                isTickerRunning, tickerShiftText, textDecoration, rtl, endsWith3Points, iconWidth, fontHeight);
+                                isTickerRunning, tickerShiftText, textDecoration, rtl, endsWith3Points, stringWidth, fontHeight);
                     } else {
                         iconStringWGap = (Math.min(strWidth, textSpaceW) - iconWidth) / 2;
                         drawImage(nativeGraphics, icon, x + iconStringWGap, y);
 
                         drawLabelString(nativeGraphics, nativeFont, text, x, y + iconHeight + gap, textSpaceW, isTickerRunning,
-                                tickerShiftText, textDecoration, rtl, endsWith3Points, iconWidth, fontHeight);
+                                tickerShiftText, textDecoration, rtl, endsWith3Points, stringWidth, fontHeight);
                     }
                     break;
                 case Label.TOP:
@@ -6555,12 +6729,12 @@ public abstract class CodenameOneImplementation {
                     if (iconWidth > strWidth) { 
                         iconStringWGap = (iconWidth - strWidth) / 2;
                         drawLabelString(nativeGraphics, nativeFont, text, x + iconStringWGap, y, textSpaceW, isTickerRunning,
-                                tickerShiftText, textDecoration, rtl, endsWith3Points, iconWidth, fontHeight);
+                                tickerShiftText, textDecoration, rtl, endsWith3Points, stringWidth, fontHeight);
                         drawImage(nativeGraphics, icon, x, y + fontHeight + gap);
                     } else {
                         iconStringWGap = (Math.min(strWidth, textSpaceW) - iconWidth) / 2;
                         drawLabelString(nativeGraphics, nativeFont, text, x, y, textSpaceW, isTickerRunning, tickerShiftText,
-                                textDecoration, rtl, endsWith3Points, iconWidth, fontHeight);
+                                textDecoration, rtl, endsWith3Points, stringWidth, fontHeight);
                         drawImage(nativeGraphics, icon, x + iconStringWGap, y + fontHeight + gap);
                     }
                     break;

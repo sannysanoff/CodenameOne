@@ -85,7 +85,7 @@ public class AndroidSimpleView extends View implements CodenameOneSurface {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        cn1View.buffy = new AndroidGraphics(androidImplementation, canvas);
+        cn1View.buffy = new AndroidGraphics(androidImplementation, canvas, true);
 
     }
 

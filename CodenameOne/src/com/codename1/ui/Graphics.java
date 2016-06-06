@@ -39,6 +39,8 @@ import com.codename1.ui.geom.Shape;
 public final class Graphics {
     private int xTranslate;
     private int yTranslate;
+    private Transform translation;
+    private GeneralPath tmpClipShape; /// A buffer shape to use when we need to transform a shape
     private int color;
     private Font current = Font.getDefaultFont();
 
@@ -56,6 +58,22 @@ public final class Graphics {
     Graphics(Object nativeGraphics) {
         setGraphics(nativeGraphics);
         impl = Display.impl;
+    }
+    
+    private Transform translation() {
+        if (translation == null) {
+            translation = Transform.makeTranslation(xTranslate, yTranslate);
+        } else {
+            translation.setTranslation(xTranslate, yTranslate);
+        }
+        return translation;
+    }
+    
+    private GeneralPath tmpClipShape() {
+        if (tmpClipShape == null) {
+            tmpClipShape = new GeneralPath();
+        }
+        return tmpClipShape;
     }
 
     /**
@@ -236,6 +254,29 @@ public final class Graphics {
      */
     public void setClip(int x, int y, int width, int height) {
         impl.setClip(nativeGraphics, xTranslate + x, yTranslate + y, width, height);
+    }
+
+    
+    
+    /**
+     * Clips the Graphics context to the Shape.
+     * <p>This is not supported on all platforms and contexts currently.  
+     * Use {@link #isShapeClipSupported} to check if the current 
+     * context supports clipping shapes.</p>
+     * 
+     * <script src="https://gist.github.com/codenameone/65f531adae2e8c22afc8.js"></script>
+     * <img src="https://www.codenameone.com/img/blog/shaped-clipping.png" alt="Shaped clipping in action" />
+     * 
+     * @param shape The shape to clip.
+     * @see #isShapeClipSupported
+     */
+    public void setClip(Shape shape) {
+        if (xTranslate != 0 || yTranslate != 0) {
+            GeneralPath p = tmpClipShape();
+            p.setShape(shape, translation());
+            shape = p;
+        }
+        impl.setClip(nativeGraphics, shape);
     }
     
     /**
@@ -558,6 +599,11 @@ public final class Graphics {
      * <p>This is not supported on
      * all platforms and contexts currently.  Use {@link #isShapeSupported} to check if the current 
      * context supports drawing shapes.</p>
+     * 
+     * <script src="https://gist.github.com/codenameone/3f2f8cdaabb7780eae6f.js"></script>
+     * <img src="https://www.codenameone.com/img/developer-guide/graphics-shape-fill.png" alt="Fill a shape general path" />
+     * 
+     * 
      * @param shape The shape to be drawn.
      * @param stroke the stroke to use
      * 
@@ -567,9 +613,8 @@ public final class Graphics {
     public void drawShape(Shape shape, Stroke stroke){
         if ( isShapeSupported()){
             if ( xTranslate != 0 || yTranslate != 0 ){
-                GeneralPath p = new GeneralPath();
-                Transform t = Transform.makeTranslation(xTranslate, yTranslate, 0);
-                p.append(shape.getPathIterator(t), true);
+                GeneralPath p = tmpClipShape();
+                p.setShape(shape, translation());
                 shape = p;
 //                impl.translate(nativeGraphics, xTranslate, yTranslate);
                 impl.drawShape(nativeGraphics, shape, stroke);
@@ -586,6 +631,11 @@ public final class Graphics {
      *  <p>This is not supported on
      * all platforms and contexts currently.  Use {@link #isShapeSupported} to check if the current 
      * context supports drawing shapes.</p>
+     * 
+     * <script src="https://gist.github.com/codenameone/3f2f8cdaabb7780eae6f.js"></script>
+     * <img src="https://www.codenameone.com/img/developer-guide/graphics-shape-fill.png" alt="Fill a shape general path" />
+     * 
+     * 
      * @param shape The shape to be filled.
      * 
      * @see #isShapeSupported
@@ -594,9 +644,8 @@ public final class Graphics {
         
         if ( isShapeSupported() ){
             if ( xTranslate != 0 || yTranslate != 0 ){
-                GeneralPath p = new GeneralPath();
-                Transform t = Transform.makeTranslation(xTranslate, yTranslate, 0);
-                p.append(shape.getPathIterator(t), true);
+                GeneralPath p = tmpClipShape();
+                p.setShape(shape, translation());
                 shape = p;
             }
         
@@ -636,9 +685,9 @@ public final class Graphics {
     }
     
     /**
-     * Checks to see if this graphics context supports drawing shapes (i.e. {@link #drawShape}
+     * <p>Checks to see if this graphics context supports drawing shapes (i.e. {@link #drawShape}
      * and {@link #fillShape} methods. If this returns {@literal false}, and you call {@link #drawShape} or {@link #fillShape}, then
-     * nothing will be drawn.
+     * nothing will be drawn.</p>
      * @return {@literal true} If {@link #drawShape} and {@link #fillShape} are supported.  
      * @see #drawShape
      * @see #fillShape
@@ -647,6 +696,14 @@ public final class Graphics {
         return impl.isShapeSupported(nativeGraphics);
     }
     
+    /**
+     * Checks to see if this graphics context supports clip Shape.
+     * If this returns {@literal false}, calling setClip(Shape) will have no effect on the Graphics clipping area
+     * @return {@literal true} If setClip(Shape) is supported.  
+     */
+    public boolean isShapeClipSupported(){
+        return impl.isShapeClipSupported(nativeGraphics);
+    }
     
     
     /**
@@ -679,13 +736,20 @@ public final class Graphics {
      * Gets the transformation matrix that is currently applied to this graphics context.
      * @return The current transformation matrix.
      * @see #setTransform
+     * @deprecated Use {@link #getTransform(com.codename1.ui.Transform) } instead.
      */
     public Transform getTransform(){
         return impl.getTransform(nativeGraphics);
         
     }
     
-    
+    /**
+     * Loads the provided transform with the current transform applied to this graphics context.
+     * @param t An "out" parameter to be filled with the current transform.
+     */
+    public void getTransform(Transform t) {
+        impl.getTransform(nativeGraphics, t);
+    }
     
     //--------------------------------------------------------------------------
     // END SHAPE DRAWING METHODS

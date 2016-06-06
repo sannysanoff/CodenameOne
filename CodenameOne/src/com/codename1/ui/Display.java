@@ -536,6 +536,8 @@ public final class Display {
 
     private boolean multiKeyMode;
     
+    private ActionListener virtualKeyboardListener;
+    
     /**
      * Private constructor to prevent instanciation
      */
@@ -1496,8 +1498,9 @@ public final class Display {
     }
 
     /**
-     * Encapsulates the editing code which is specific to the platform, some platforms
-     * would allow "in place editing" MIDP does not.
+     * Fires the native in place text editing logic, normally you wouldn't invoke this API directly and instead 
+     * use an API like {@link com.codename1.ui.TextArea#startEditingAsync()}, {@link com.codename1.ui.TextArea#startEditing()}
+     * or {@link com.codename1.ui.Form#setEditOnShow(com.codename1.ui.TextArea)}.
      *
      * @param cmp the {@link TextArea} component
      * @param maxSize the maximum size from the text area
@@ -1509,8 +1512,9 @@ public final class Display {
     }
 
     /**
-     * Encapsulates the editing code which is specific to the platform, some platforms
-     * would allow "in place editing" MIDP does not.
+     * Fires the native in place text editing logic, normally you wouldn't invoke this API directly and instead 
+     * use an API like {@link com.codename1.ui.TextArea#startEditingAsync()}, {@link com.codename1.ui.TextArea#startEditing()}
+     * or {@link com.codename1.ui.Form#setEditOnShow(com.codename1.ui.TextArea)}.
      *
      * @param cmp the {@link TextArea} component
      * @param maxSize the maximum size from the text area
@@ -2310,6 +2314,18 @@ public final class Display {
         return impl.convertToPixels(dipCount, horizontal);
     }
 
+
+    /**
+     * Converts the dips count to pixels, dips are roughly 1mm in length. This is a very rough estimate and not
+     * to be relied upon. This version of the method assumes square pixels which is pretty much the norm.
+     * 
+     * @param dipCount the dips that we will convert to pixels
+     * @return value in pixels
+     */
+    public int convertToPixels(float dipCount) {
+        return Math.round(impl.convertToPixels((int)(dipCount * 1000), true) / 1000.0f);
+    }
+
     /**
      * Returns the game action code matching the given key combination
      *
@@ -2441,7 +2457,29 @@ public final class Display {
         }
         return (VirtualKeyboardInterface)virtualKeyboards.get(selectedVirtualKeyboard);
     }
+    
+    /**
+     * Sets a listener for VirtualKeyboard hide/show events.
+     * The Listener will get an event once the keyboard is opened/closed with 
+     * a Boolean value that represents the state of the keyboard true for open 
+     * and false for closed getSource() on the ActionEvent will return the 
+     * Boolean value.
+     * 
+     * @param l the listener 
+     */
+    public void setVirtualKeyboardListener(ActionListener l){
+        virtualKeyboardListener = l;
+    }
 
+    /**
+     * Gets the VirtualKeyboardListener Objects of exists.
+     * 
+     * @return a Listener Object or null if not exists
+     */ 
+    public ActionListener getVirtualKeyboardListener() {
+        return virtualKeyboardListener;
+    }
+    
     /**
      * Returns the type of the input device one of:
      * KEYBOARD_TYPE_UNKNOWN, KEYBOARD_TYPE_NUMERIC, KEYBOARD_TYPE_QWERTY,
@@ -2765,7 +2803,7 @@ public final class Display {
      * <li>User-Agent
      * <li>AppVersion
      * <li>Platform - Similar to microedition.platform
-     * <li>OS - returns what is the underlying platform e.g. - J2ME, RIM, SE...
+     * <li>OS - returns what is the underlying platform e.g. - iOS, Android, RIM, SE...
      * <li>OSVer - OS version when available as a user readable string (not necessarily a number e.g: 3.2.1).
      *
      * </ol>
@@ -2820,8 +2858,10 @@ public final class Display {
     }
     
     /**
-     * Returns true if executing this URL should work, returns false if it will not
-     * and null if this is unknown.
+     * <p>Returns true if executing this URL should work, returns false if it will not
+     * and null if this is unknown.</p>
+     * <script src="https://gist.github.com/codenameone/7aefb64909e75e10c396.js"></script>
+     * 
      * @param url the url that would be executed
      * @return true if executing this URL should work, returns false if it will not
      * and null if this is unknown
@@ -2831,7 +2871,8 @@ public final class Display {
     }
 
     /**
-     * Executes the given URL on the native platform
+     * <p>Executes the given URL on the native platform</p>
+     * <script src="https://gist.github.com/codenameone/7aefb64909e75e10c396.js"></script>
      *
      * @param url the url to execute
      */
@@ -3218,7 +3259,11 @@ hi.show();}</pre></noscript>
     }
 
     /**
-     * Send an email using the platform mail client
+     * <p>Send an email using the platform mail client.<br>
+     * The code below demonstrates sending a simple message with attachments using the devices
+     * native email client:
+     * </p>
+     * <script src="https://gist.github.com/codenameone/3db47a2ff8b35cae6410.js"></script>
      * @param recipients array of e-mail addresses
      * @param subject e-mail subject
      * @param msg the Message to send
@@ -3236,8 +3281,14 @@ hi.show();}</pre></noscript>
     }    
     
     /**
-     * Indicates the level of SMS support in the platform as one of: SMS_NOT_SUPPORTED (for desktop, tablet etc.), 
-     * SMS_SEAMLESS (no UI interaction), SMS_INTERACTIVE (with compose UI), SMS_BOTH.
+     * <p>Indicates the level of SMS support in the platform as one of: 
+     * {@link #SMS_NOT_SUPPORTED} (for desktop, tablet etc.), 
+     * {@link #SMS_SEAMLESS} (no UI interaction), {@link #SMS_INTERACTIVE} (with compose UI), 
+     * {@link #SMS_BOTH}.<br>
+     * The sample below demonstrates the use case for this property:
+     * </p>
+     * <script src="https://gist.github.com/codenameone/da23d33b1a9e105efffd.js"></script>
+     * 
      * @return one of the SMS_* values
      */
     public int getSMSSupport() {
@@ -3255,7 +3306,11 @@ hi.show();}</pre></noscript>
     }
     
     /**
-     * Sends a SMS message to the given phone number
+     * <p>Sends a SMS message to the given phone number, the code below demonstrates the logic
+     * of detecting platform behavior for sending SMS.</p>
+     * <script src="https://gist.github.com/codenameone/da23d33b1a9e105efffd.js"></script>
+     * 
+     * @see #getSMSSupport() 
      * @param phoneNumber to send the sms
      * @param message the content of the sms
      * @param interactive indicates the SMS should show a UI or should not show a UI if applicable see getSMSSupport
@@ -3363,10 +3418,14 @@ hi.show();}</pre></noscript>
     }
 
     /**
-     * Notice: this method might be very slow and should be invoked on a separate thread!
+     * <p>Notice: this method might be very slow and should be invoked on a separate thread!
      * It might have platform specific optimizations over getAllContacts followed by looping
      * over individual contacts but that isn't guaranteed. See isGetAllContactsFast for
-     * information.
+     * information.<br>
+     * The sample below demonstrates listing all the contacts within the device with their photos</p>
+     * 
+     * <script src="https://gist.github.com/codenameone/15f39e1eef77f6059aff.js"></script>
+     * <img src="https://www.codenameone.com/img/developer-guide/contacts-with-photos.png" alt="Contacts with the default photos on the simulator, on device these will use actual user photos when available" />
      * 
      * @param withNumbers if true returns only contacts that has a number
      * @param includesFullName if true try to fetch the full name of the Contact(not just display name)
@@ -3399,8 +3458,12 @@ hi.show();}</pre></noscript>
     }
 
     /**
-     * This method returns a Contact by the contact id and fills it's data
-     * according to the given flags
+     * <p>This method returns a Contact by the contact id and fills it's data
+     * according to the given flags.<br>
+     * The sample below demonstrates listing all the contacts within the device with their photos</p>
+     * 
+     * <script src="https://gist.github.com/codenameone/15f39e1eef77f6059aff.js"></script>
+     * <img src="https://www.codenameone.com/img/developer-guide/contacts-with-photos.png" alt="Contacts with the default photos on the simulator, on device these will use actual user photos when available" />
      * 
      * @param id of the Contact
      * @param includesFullName if true try to fetch the full name of the Contact(not just display name)
@@ -3419,7 +3482,9 @@ hi.show();}</pre></noscript>
     }
     
     /**
-     * Some platforms allow the user to block contacts access on a per application basis (specifically iOS).
+     * Some platforms allow the user to block contacts access on a per application basis this method
+     * returns true if the user denied permission to access contacts. This can allow you to customize the error
+     * message presented to the user.
      * 
      * @return true if contacts access is allowed or globally available, false otherwise
      */
@@ -3518,7 +3583,13 @@ hi.show();}</pre></noscript>
     
     
      /**
-     * Returns the localization manager instance for this platform
+     * <p>The localization manager allows adapting values for display in different locales thru parsing and formatting
+     * capabilities (similar to JavaSE's DateFormat/NumberFormat). It also includes language/locale/currency
+     * related API's similar to Locale/currency API's from JavaSE.<br>
+     * The sample code below just lists the various capabilities of the API:</p>
+     * 
+     * <script src="https://gist.github.com/codenameone/6d93edd5e6b69e7c088a.js"></script>
+     * <img src="https://www.codenameone.com/img/developer-guide/l10n-manager.png" alt="Localization formatting/parsing and information" />
      * 
      * @return an instance of the localization manager
      */
@@ -3849,8 +3920,11 @@ hi.show();}</pre></noscript>
     }
     
     /**
-     * Schedules a local notification to occur.
-     *
+     * <p>Schedules a local notification that will occur after the given time elapsed.<br>
+     * The sample below combines this with the geofence API to show a local notification
+     * when entering a radius with the app in the background:</p>
+     * <script src="https://gist.github.com/codenameone/3de90e0ff4886ec145e8.js"></script>
+     * 
      * @param n The notification to schedule.
      * @param firstTime time in milliseconds when to schedule the notification
      * @param repeat repeat one of the following: REPEAT_NONE, REPEAT_FIFTEEN_MINUTES, 
@@ -3919,5 +3993,12 @@ hi.show();}</pre></noscript>
      */ 
     public boolean isGaussianBlurSupported() {
         return impl.isGaussianBlurSupported();
+    }
+
+    /**
+     * Refreshes the native list of contacts on devices that require this see {@link com.codename1.contacts.ContactsManager#refresh()}
+     */
+    public void refreshContacts() {
+        impl.refreshContacts();
     }
 }

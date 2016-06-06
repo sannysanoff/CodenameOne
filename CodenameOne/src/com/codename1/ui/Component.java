@@ -443,11 +443,17 @@ public class Component implements Animation, StyleListener {
             if (unSelectedStyle.getBgPainter() == null) {
                 unSelectedStyle.setBgPainter(new BGPainter());
             }
+            if(cellRenderer) {
+                unSelectedStyle.markAsRendererStyle();
+            }
         }
         if(disabledStyle != null) {
             disabledStyle.addStyleListener(this);
             if (disabledStyle.getBgPainter() == null) {
                 disabledStyle.setBgPainter(new BGPainter());
+            }
+            if(cellRenderer) {
+                disabledStyle.markAsRendererStyle();
             }
         }
     }
@@ -2653,10 +2659,18 @@ public class Component implements Animation, StyleListener {
             }
         }
         if (draggedMotionY != null) {
-            if (draggedMotionY.getValue() < 0) {
+            int dmv = draggedMotionY.getValue();
+            if (dmv < 0) {
                 setScrollY(0);
-            } else if (draggedMotionY.getValue() > getScrollDimension().getHeight() - getHeight()) {
-                setScrollY(getScrollDimension().getHeight() - getHeight());
+            } else {
+                int hh = getScrollDimension().getHeight() - getHeight();
+                if (dmv > hh) {
+                    if(hh < 0) {
+                        setScrollY(0);
+                    } else {
+                        setScrollY(hh);
+                    }
+                }
             }
         }
         draggedMotionX = null;
@@ -2859,8 +2873,11 @@ public class Component implements Animation, StyleListener {
     }
 
     /**
-     * This method adds a refresh task to the Component, the task will be 
-     * executed if the user has pulled the scroll beyond a certain height.
+     * <p>This method adds a refresh task to the Component, the task will be 
+     * executed if the user has pulled the scroll beyond a certain height.</p>
+     * 
+     * <script src="https://gist.github.com/codenameone/da87714157f97c739b2a.js"></script>
+     * <img src="https://www.codenameone.com/img/developer-guide/pull-to-refresh.png" alt="Simple pull to refresh demo" />
      * 
      * @param task the refresh task to execute.
      */ 
@@ -3604,6 +3621,9 @@ public class Component implements Animation, StyleListener {
             if (selectedStyle.getBgPainter() == null) {
                 selectedStyle.setBgPainter(new BGPainter());
             }
+            if(cellRenderer) {
+                selectedStyle.markAsRendererStyle();
+            }
         }
         return selectedStyle;
     }
@@ -4164,6 +4184,11 @@ public class Component implements Animation, StyleListener {
      */
     public void setCellRenderer(boolean cellRenderer) {
         this.cellRenderer = cellRenderer;
+        if(cellRenderer) {
+            getUnselectedStyle().markAsRendererStyle();
+            getSelectedStyle().markAsRendererStyle();
+            getDisabledStyle().markAsRendererStyle();
+        }
     }
 
     /**

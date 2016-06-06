@@ -415,6 +415,7 @@ void Java_com_codename1_impl_ios_IOSImplementation_editStringAtImpl
             [utv setBackgroundColor:[UIColor clearColor]];
             [utv.layer setBorderColor:[[UIColor clearColor] CGColor]];
             [utv.layer setBorderWidth:0];
+            [utv setTextColor:UIColorFromRGB(color, 255)];
             editingComponent = utv;
             if(scale != 1) {
                 float s = ((BRIDGE_CAST UIFont*)font).pointSize / scale;
@@ -812,34 +813,6 @@ void Java_com_codename1_impl_ios_IOSImplementation_nativeFillArcMutableImpl
     }
 }
 
-void Java_com_codename1_impl_ios_IOSImplementation_nativeDrawArcGlobalImpl
-(int color, int alpha, int x, int y, int width, int height, int startAngle, int angle) {
-    UIGraphicsBeginImageContextWithOptions(CGSizeMake(width, height), NO, 1.0);
-    Java_com_codename1_impl_ios_IOSImplementation_nativeDrawArcMutableImpl(color, alpha, 0, 0, width, height, startAngle, angle);
-    UIImage* img = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    
-    GLUIImage* glu = [[GLUIImage alloc] initWithImage:img];
-    Java_com_codename1_impl_ios_IOSImplementation_nativeDrawImageGlobalImpl((BRIDGE_CAST void*)glu, 255, x, y, width, height);
-#ifndef CN1_USE_ARC
-    [glu release];
-#endif
-}
-
-void Java_com_codename1_impl_ios_IOSImplementation_nativeFillArcGlobalImpl
-(int color, int alpha, int x, int y, int width, int height, int startAngle, int angle) {
-    UIGraphicsBeginImageContextWithOptions(CGSizeMake(width, height), NO, 1.0);
-    Java_com_codename1_impl_ios_IOSImplementation_nativeFillArcMutableImpl(color, alpha, 0, 0, width, height, startAngle, angle);
-    UIImage* img = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    
-    GLUIImage* glu = [[GLUIImage alloc] initWithImage:img];
-    Java_com_codename1_impl_ios_IOSImplementation_nativeDrawImageGlobalImpl((BRIDGE_CAST void*)glu, 255, x, y, width, height);
-#ifndef CN1_USE_ARC
-    [glu release];
-#endif
-}
-
 // START ES2 ADDITION: Drawing Shapes ------------------------------------------------------------------------------
 
 void Java_com_codename1_impl_ios_IOSImplementation_fillConvexPolygonImpl(JAVA_OBJECT points, int color, int alpha)
@@ -1181,6 +1154,18 @@ void Java_com_codename1_impl_ios_IOSImplementation_setNativeClippingMutableImpl
     //NSLog(@"Java_com_codename1_impl_ios_IOSImplementation_setNativeClippingMutableImpl finished");
 }
 
+void Java_com_codename1_impl_ios_IOSImplementation_setNativeClippingShapeMutableImpl
+(int numCommands, JAVA_OBJECT commands, int numPoints, JAVA_OBJECT points)
+{
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    //NSLog(@"Native mutable clipping applied %i on context %i x: %i y: %i width: %i height: %i", clipApplied, (int)context, x, y, width, height);
+    //if(clipApplied) {
+    CGContextRestoreGState(context);
+    //}
+    CGContextSaveGState(context);
+    CGContextClip(Java_com_codename1_impl_ios_IOSImplementation_drawPath(CN1_THREAD_GET_STATE_PASS_ARG numCommands, commands, numPoints, points));
+}
+
 void Java_com_codename1_impl_ios_IOSImplementation_setNativeClippingGlobalImpl
 (int x, int y, int width, int height, int clipApplied) {
     //    NSLog(@"Native global clipping applied: %i x: %i y: %i width: %i height: %i", clipApplied, x, y, width, height);
@@ -1520,7 +1505,13 @@ static CodenameOne_GLViewController *sharedSingleton;
     return sharedSingleton->drawTextureSupported;
 }
 
++(BOOL)isCurrentMutableTransformSet {
+    return currentMutableTransformSet;
+}
 
++(CGAffineTransform) currentMutableTransform {
+    return currentMutableTransform;
+}
 
 #ifdef INCLUDE_MOPUB
 @synthesize adView;
@@ -2343,11 +2334,11 @@ BOOL prefersStatusBarHidden = NO;
 #endif
             if(comp != NULL) {
 #ifndef NEW_CODENAME_ONE_VM
-                float newEditCompoentX = (com_codename1_ui_Component_getAbsoluteX__(comp) + editComponentPadLeft) / scaleValue;
-                float newEditCompoentY = (com_codename1_ui_Component_getAbsoluteY__(comp) + editComponentPadTop) / scaleValue;
+                float newEditCompoentX = (com_codename1_ui_Component_getAbsoluteX__(comp) + com_codename1_ui_Component_getScrollX__(comp) + editComponentPadLeft) / scaleValue;
+                float newEditCompoentY = (com_codename1_ui_Component_getAbsoluteY__(comp) + com_codename1_ui_Component_getScrollY__(comp) + editComponentPadTop) / scaleValue;
 #else
-                float newEditCompoentX = (com_codename1_ui_Component_getAbsoluteX___R_int(CN1_THREAD_GET_STATE_PASS_ARG (JAVA_OBJECT)comp) + editComponentPadLeft) / scaleValue;
-                float newEditCompoentY = (com_codename1_ui_Component_getAbsoluteY___R_int(CN1_THREAD_GET_STATE_PASS_ARG (JAVA_OBJECT)comp) + editComponentPadTop) / scaleValue;
+                float newEditCompoentX = (com_codename1_ui_Component_getAbsoluteX___R_int(CN1_THREAD_GET_STATE_PASS_ARG (JAVA_OBJECT)comp) + com_codename1_ui_Component_getScrollX___R_int(CN1_THREAD_GET_STATE_PASS_ARG (JAVA_OBJECT)comp) + editComponentPadLeft) / scaleValue;
+                float newEditCompoentY = (com_codename1_ui_Component_getAbsoluteY___R_int(CN1_THREAD_GET_STATE_PASS_ARG (JAVA_OBJECT)comp) + com_codename1_ui_Component_getScrollY___R_int(CN1_THREAD_GET_STATE_PASS_ARG (JAVA_OBJECT)comp) + editComponentPadTop) / scaleValue;
 #endif
                 if(newEditCompoentX != editCompoentX || newEditCompoentY != editCompoentY) {
                     for (UIWindow *window in [[UIApplication sharedApplication] windows])
@@ -2774,8 +2765,8 @@ static BOOL skipNextTouch = NO;
         yArray[0] = (int)point.y * scaleValue;
     }
     if(!isVKBAlwaysOpen()) {
-        CGPoint scaledPoint = CGPointMake(point.x * scaleValue, point.y * scaleValue);
-        [self foldKeyboard:scaledPoint];
+        //CGPoint scaledPoint = CGPointMake(point.x * scaleValue, point.y * scaleValue);
+        [self foldKeyboard:point];
     }
     pointerReleasedC(xArray, yArray, [touches count]);
     POOL_END();
@@ -3254,6 +3245,16 @@ extern void com_codename1_social_FacebookImpl_inviteDidFailWithError___int_java_
 }
 #endif
 #endif
+
+- (void)documentInteractionControllerDidEndPreview:(UIDocumentInteractionController *)controller
+{
+}
+
+- (UIViewController *) documentInteractionControllerViewControllerForPreview: (UIDocumentInteractionController *) controller
+{
+    return self;
+}
+
 @end
 
 

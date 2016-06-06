@@ -61,10 +61,14 @@ import com.codename1.ui.Font;
 import com.codename1.ui.Form;
 import com.codename1.ui.TextArea;
 import com.codename1.ui.TextField;
+import com.codename1.ui.events.ActionEvent;
+import com.codename1.ui.events.ActionListener;
 import com.codename1.ui.geom.Dimension;
 import com.codename1.ui.plaf.Style;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -509,7 +513,34 @@ public class InPlaceEditView extends FrameLayout {
             closedTime = System.currentTimeMillis();
         }
         showVKB = show;
+        
+        final boolean showKeyboard = showVKB;
+        final ActionListener listener = Display.getInstance().getVirtualKeyboardListener();
+        if(listener != null){
+            new Thread(new Runnable() {
 
+                @Override
+                public void run() {
+                    
+                    //this is ugly but there is no real API to know if the 
+                    //keyboard is opened or closed
+                    try {
+                        Thread.sleep(600);
+                    } catch (InterruptedException ex) {
+                    }
+                    
+                    Display.getInstance().callSerially(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            ActionEvent evt = new ActionEvent(showKeyboard);
+                            listener.actionPerformed(evt);
+                        }
+                    });
+                }
+            }).start();
+        }
+        
         Log.d(TAG, "InputMethodManager returned " + Boolean.toString(result).toUpperCase());
     }
 
@@ -725,6 +756,10 @@ public class InPlaceEditView extends FrameLayout {
         mEditText.setSingleLine(textArea.isSingleLineTextArea());
         mEditText.setAdapter((ArrayAdapter<String>) null);
         mEditText.setText(initialText);
+        if(!textArea.isSingleLineTextArea() && textArea.textArea.isGrowByContent() && textArea.textArea.getGrowLimit() > -1){
+            mEditText.setMaxLines(textArea.textArea.getGrowLimit());
+        }
+        
         if(textArea.nativeHintBool && textArea.getHint() != null) {
             mEditText.setHint(textArea.getHint());
         }
@@ -1144,8 +1179,8 @@ public class InPlaceEditView extends FrameLayout {
         }
 
         impl.setAsyncEditMode(asyncEdit);
-
-        textArea.setPreferredSize(prefSize);
+       
+        //textArea.setPreferredSize(prefSize);
         if (!impl.isAsyncEditMode() && textArea instanceof TextField) {
             ((TextField) textArea).setEditable(false);
         }
@@ -1402,8 +1437,7 @@ public class InPlaceEditView extends FrameLayout {
         @Override
         public boolean onKeyPreIme(int keyCode, KeyEvent event) {
             if (keyCode == KeyEvent.KEYCODE_BACK) {
-
-                endEditing(InPlaceEditView.REASON_SYSTEM_KEY, false);
+                endEditing(InPlaceEditView.REASON_SYSTEM_KEY, false, true);
                 return true;
             }
             return super.onKeyPreIme(keyCode, event);
@@ -1417,7 +1451,7 @@ public class InPlaceEditView extends FrameLayout {
             // again
             if (keyCode == KeyEvent.KEYCODE_BACK
                     || keyCode == KeyEvent.KEYCODE_MENU) {
-                endEditing(InPlaceEditView.REASON_SYSTEM_KEY, false);
+                endEditing(InPlaceEditView.REASON_SYSTEM_KEY, false, true);
             }
 
             return super.onKeyDown(keyCode, event);

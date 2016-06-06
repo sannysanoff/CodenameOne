@@ -112,6 +112,9 @@ extern void Java_com_codename1_impl_ios_IOSImplementation_flushBufferImpl
 extern void Java_com_codename1_impl_ios_IOSImplementation_setNativeClippingMutableImpl
 (int x, int y, int width, int height, int clipApplied);
 
+extern void Java_com_codename1_impl_ios_IOSImplementation_setNativeClippingShapeMutableImpl
+(int numCommands, JAVA_OBJECT commands, int numPoints, JAVA_OBJECT points);
+
 extern void Java_com_codename1_impl_ios_IOSImplementation_setNativeClippingGlobalImpl
 (int x, int y, int width, int height, int clipApplied);
 
@@ -176,12 +179,6 @@ extern void Java_com_codename1_impl_ios_IOSImplementation_nativeFillArcMutableIm
 (int color, int alpha, int x, int y, int width, int height, int startAngle, int angle);
 
 extern void Java_com_codename1_impl_ios_IOSImplementation_nativeDrawArcMutableImpl
-(int color, int alpha, int x, int y, int width, int height, int startAngle, int angle);
-
-extern void Java_com_codename1_impl_ios_IOSImplementation_nativeFillArcGlobalImpl
-(int color, int alpha, int x, int y, int width, int height, int startAngle, int angle);
-
-extern void Java_com_codename1_impl_ios_IOSImplementation_nativeDrawArcGlobalImpl
 (int color, int alpha, int x, int y, int width, int height, int startAngle, int angle);
 
 extern void Java_com_codename1_impl_ios_IOSImplementation_nativeDrawImageMutableImpl
@@ -388,8 +385,8 @@ void com_codename1_impl_ios_IOSNative_resizeNativeTextView___int_int_int_int_int
 
             editCompoentX = (x + padLeft) / scale;
             editCompoentY = (y + padTop) / scale;
-            editComponentPadTop = padTop / scale;
-            editComponentPadLeft = padLeft / scale;
+            editComponentPadTop = padTop;
+            editComponentPadLeft = padLeft;
             if (scale > 1) {
                 editCompoentY -= 1.5;
             } else {
@@ -398,7 +395,15 @@ void com_codename1_impl_ios_IOSNative_resizeNativeTextView___int_int_int_int_int
             editCompoentW = (w - padLeft - padRight) / scale;
             editCompoentH = (h - padTop - padBottom) / scale;
             CGRect rect = CGRectMake(editCompoentX, editCompoentY, editCompoentW, editCompoentH);
-            editingComponent.frame = rect;
+            //NSLog(@"Changing bounds %f,%f,%f,%f to %f,%f,%f,%f", existingBounds.origin.x, existingBounds.origin.y, existingBounds.size.width, existingBounds.size.height, rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
+            if (fabs(existingBounds.size.width - rect.size.width) > 1 || fabs(existingBounds.size.height - rect.size.height) > 1 ||
+                fabs(existingBounds.origin.x - rect.origin.x) > 1 || fabs(existingBounds.origin.y - 1.5 - rect.origin.y) > 1
+                ) {
+                //NSLog(@"Changing bounds %f,%f,%f,%f to %f,%f,%f,%f", existingBounds.origin.x, existingBounds.origin.y, existingBounds.size.width, existingBounds.size.height, rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
+                editingComponent.frame = rect;
+            }
+            
+            
         }
         POOL_END();
     });
@@ -546,6 +551,13 @@ void com_codename1_impl_ios_IOSNative_setNativeClippingMutable___int_int_int_int
     //XMLVM_END_WRAPPER
 }
 
+void com_codename1_impl_ios_IOSNative_setNativeClippingMutable___int_byte_1ARRAY_int_float_1ARRAY(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject, JAVA_INT numCommands, JAVA_OBJECT commands, JAVA_INT numPoints, JAVA_OBJECT points)
+{
+    POOL_BEGIN();
+    Java_com_codename1_impl_ios_IOSImplementation_setNativeClippingShapeMutableImpl(numCommands, commands, numPoints, points);
+    POOL_END();
+}
+
 void com_codename1_impl_ios_IOSNative_setNativeClippingGlobal___int_int_int_int_boolean(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject, JAVA_INT n1, JAVA_INT n2, JAVA_INT n3, JAVA_INT n4, JAVA_BOOLEAN n5)
 {
     //XMLVM_BEGIN_WRAPPER[com_codename1_impl_ios_IOSNative_setNativeClippingGlobal___int_int_int_int_boolean]
@@ -681,23 +693,7 @@ void com_codename1_impl_ios_IOSNative_nativeDrawArcMutable___int_int_int_int_int
     //XMLVM_END_WRAPPER
 }
 
-void com_codename1_impl_ios_IOSNative_nativeFillArcGlobal___int_int_int_int_int_int_int_int(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject, JAVA_INT n1, JAVA_INT n2, JAVA_INT n3, JAVA_INT n4, JAVA_INT n5, JAVA_INT n6, JAVA_INT n7, JAVA_INT n8)
-{
-    //XMLVM_BEGIN_WRAPPER[com_codename1_impl_ios_IOSNative_nativeFillArcGlobal___int_int_int_int_int_int_int_int]
-    POOL_BEGIN();
-    Java_com_codename1_impl_ios_IOSImplementation_nativeFillArcGlobalImpl(n1, n2, n3, n4, n5, n6, n7, n8);
-    POOL_END();
-    //XMLVM_END_WRAPPER
-}
 
-void com_codename1_impl_ios_IOSNative_nativeDrawArcGlobal___int_int_int_int_int_int_int_int(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject, JAVA_INT n1, JAVA_INT n2, JAVA_INT n3, JAVA_INT n4, JAVA_INT n5, JAVA_INT n6, JAVA_INT n7, JAVA_INT n8)
-{
-    //XMLVM_BEGIN_WRAPPER[com_codename1_impl_ios_IOSNative_nativeDrawArcGlobal___int_int_int_int_int_int_int_int]
-    POOL_BEGIN();
-    Java_com_codename1_impl_ios_IOSImplementation_nativeDrawArcGlobalImpl(n1, n2, n3, n4, n5, n6, n7, n8);
-    POOL_END();
-    //XMLVM_END_WRAPPER
-}
 
 
 extern CGContextRef Java_com_codename1_impl_ios_IOSImplementation_drawPath(CN1_THREAD_STATE_MULTI_ARG JAVA_INT commandsLen, JAVA_OBJECT commandsArr, JAVA_INT pointsLen, JAVA_OBJECT pointsArr);
@@ -720,12 +716,16 @@ void com_codename1_impl_ios_IOSNative_nativeFillShapeMutable___int_int_int_byte_
     POOL_END();
     
 }
-//native void nativeDrawShapeMutable(int color, int alpha, int commandsLen, byte[] commandsArr, int pointsLen, float[] pointsArr, float lineWidth, int capStyle, int joinStyle, float miterLimit);
+
 void com_codename1_impl_ios_IOSNative_nativeDrawShapeMutable___int_int_int_byte_1ARRAY_int_float_1ARRAY_float_int_int_float(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject, JAVA_INT color, JAVA_INT alpha, JAVA_INT commandsLen, JAVA_OBJECT commandsArr, JAVA_INT pointsLen, JAVA_OBJECT pointsArr, JAVA_FLOAT lineWidth, JAVA_INT capStyle, JAVA_INT joinStyle, JAVA_FLOAT mitreLimit) {
     POOL_BEGIN();
-    
+    if ([CodenameOne_GLViewController isCurrentMutableTransformSet]) {
+        CGContextSaveGState(UIGraphicsGetCurrentContext());
+        CGContextConcatCTM(UIGraphicsGetCurrentContext(), [CodenameOne_GLViewController currentMutableTransform]);
+    }
     CGContextRef context = drawPath(CN1_THREAD_STATE_PASS_ARG commandsLen, commandsArr, pointsLen, pointsArr);
     CGContextSaveGState(context);
+
     [UIColorFromRGB(color, alpha) set];
     CGContextSetLineWidth(context, lineWidth);
     CGLineCap cap = kCGLineCapButt;
@@ -768,6 +768,9 @@ void com_codename1_impl_ios_IOSNative_nativeDrawShapeMutable___int_int_int_byte_
     
     CGContextStrokePath(context);
     CGContextRestoreGState(context);
+    if ([CodenameOne_GLViewController isCurrentMutableTransformSet]) {
+        CGContextRestoreGState(context);
+    }
     POOL_END();
 }
 
@@ -1612,6 +1615,7 @@ void com_codename1_impl_ios_IOSNative_execute___java_lang_String(CN1_THREAD_STAT
         if([ns hasPrefix:@"file:"]) {
             ns = [ns substringFromIndex:5];
             UIDocumentInteractionController* preview = [UIDocumentInteractionController interactionControllerWithURL:[NSURL fileURLWithPath:ns]];
+            preview.delegate = [CodenameOne_GLViewController instance];
             [preview presentPreviewAnimated:YES];
         } else {
             [[UIApplication sharedApplication] openURL:[NSURL URLWithString:ns]];
@@ -1887,7 +1891,7 @@ void com_codename1_impl_ios_IOSNative_cleanupAudio___long(CN1_THREAD_STATE_MULTI
         POOL_BEGIN();
         AudioPlayer* pl = (BRIDGE_CAST AudioPlayer*)((void *)peer);
         if([pl isPlaying]) {
-            return;
+            [pl stop];
         }
 #ifndef CN1_USE_ARC
         [pl release];
@@ -2048,7 +2052,8 @@ UIWebView* com_codename1_impl_ios_IOSNative_createBrowserComponent = nil;
 JAVA_LONG com_codename1_impl_ios_IOSNative_createBrowserComponent___java_lang_Object(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject, JAVA_OBJECT obj) {
     dispatch_sync(dispatch_get_main_queue(), ^{
         com_codename1_impl_ios_IOSNative_createBrowserComponent = [[UIWebView alloc] initWithFrame:CGRectMake(3000, 0, 200, 200)];
-        com_codename1_impl_ios_IOSNative_createBrowserComponent.backgroundColor = [UIColor whiteColor];
+        com_codename1_impl_ios_IOSNative_createBrowserComponent.backgroundColor = [UIColor clearColor];
+        com_codename1_impl_ios_IOSNative_createBrowserComponent.opaque = NO;
         com_codename1_impl_ios_IOSNative_createBrowserComponent.autoresizesSubviews = YES;
         UIWebViewEventDelegate *del = [[UIWebViewEventDelegate alloc] initWithCallback:obj];
         com_codename1_impl_ios_IOSNative_createBrowserComponent.delegate = del;
@@ -3017,6 +3022,10 @@ ABAddressBookRef getAddressBook() {
         }
     }
     return globalAddressBook;
+}
+
+JAVA_VOID com_codename1_impl_ios_IOSNative_refreshContacts__(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject) {
+    globalAddressBook = nil;
 }
 
 JAVA_BOOLEAN com_codename1_impl_ios_IOSNative_isContactsPermissionGranted__(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject) {
@@ -5264,6 +5273,24 @@ void com_codename1_impl_ios_IOSNative_setNativeEditingComponentVisible___boolean
     });
 }
 
+void com_codename1_impl_ios_IOSNative_updateNativeEditorText___java_lang_String(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject, JAVA_OBJECT text) {
+    if (editingComponent == nil) {
+        return;
+    }
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        POOL_BEGIN();
+        if(editingComponent != nil) {
+            NSString* nsText = toNSString(CN1_THREAD_GET_STATE_PASS_ARG text);
+            NSString* currText = ((UITextView*)editingComponent).text;
+            if (![nsText isEqualToString:currText]) {
+                ((UITextView*)editingComponent).text = nsText;
+            }
+        }
+        POOL_END();
+    });
+    
+}
+
 JAVA_LONG com_codename1_impl_ios_IOSNative_connectSocket___java_lang_String_int(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instanceObject, JAVA_OBJECT host, JAVA_INT port) {
     POOL_BEGIN();
     SocketImpl* impl = [[SocketImpl alloc] init];
@@ -5725,6 +5752,87 @@ void com_codename1_impl_ios_Matrix_MatrixUtil_multiplyMM___float_1ARRAY_int_floa
 #endif
 }
 
+
+//public static native void transformPoints(float[] data, int pointSize, float[] in, int srcPos, float[] out, int destPos, int numPoints);
+JAVA_VOID com_codename1_impl_ios_Matrix_MatrixUtil_transformPoints___float_1ARRAY_int_float_1ARRAY_int_float_1ARRAY_int_int(CN1_THREAD_STATE_MULTI_ARG
+JAVA_OBJECT m, JAVA_INT pointSize, JAVA_OBJECT in, JAVA_INT srcPos, JAVA_OBJECT out, JAVA_INT destPos, JAVA_INT numPoints
+) {
+#ifndef NEW_CODENAME_ONE_VM
+    JAVA_ARRAY_FLOAT* mData = (JAVA_ARRAY_FLOAT*) ((org_xmlvm_runtime_XMLVMArray*)m)->fields.org_xmlvm_runtime_XMLVMArray.array_;
+    JAVA_ARRAY_FLOAT* inData = (JAVA_ARRAY_FLOAT*) ((org_xmlvm_runtime_XMLVMArray*)in)->fields.org_xmlvm_runtime_XMLVMArray.array_;
+    JAVA_ARRAY_FLOAT* outData = (JAVA_ARRAY_FLOAT*) ((org_xmlvm_runtime_XMLVMArray*)out)->fields.org_xmlvm_runtime_XMLVMArray.array_;
+    
+#else
+    JAVA_ARRAY_FLOAT* mData = (JAVA_ARRAY_FLOAT*) ((JAVA_ARRAY)m)->data;
+    JAVA_ARRAY_FLOAT* inData = (JAVA_ARRAY_FLOAT*) ((JAVA_ARRAY)in)->data;
+    JAVA_ARRAY_FLOAT* outData = (JAVA_ARRAY_FLOAT*) ((JAVA_ARRAY)out)->data;
+#endif
+    GLKMatrix4 mMat = GLKMatrix4MakeWithArray(mData);
+    JAVA_INT len = numPoints * pointSize;
+    for (JAVA_INT i=0; i<len; i+=pointSize) {
+        JAVA_INT s0 = srcPos + i;
+        GLKVector3 inputVector = GLKVector3Make(inData[s0], inData[s0+1], 0);
+        if (pointSize==3) {
+            inputVector.v[2]= inData[s0+2];
+        }
+        GLKVector3 outputVector = GLKMatrix4MultiplyVector3(mMat, inputVector);
+        
+        int d0 = destPos + i;
+        outData[d0++] = outputVector.v[0];
+        outData[d0++] = outputVector.v[1];
+        if (pointSize==3) {
+            outData[d0] = outputVector.v[2];
+        }     
+    }
+    
+}
+
+
+JAVA_VOID com_codename1_impl_ios_IOSNative_translatePoints___int_float_float_float_float_1ARRAY_int_float_1ARRAY_int_int(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instance,
+    JAVA_INT pointSize, JAVA_FLOAT tX, JAVA_FLOAT tY, JAVA_FLOAT tZ, JAVA_OBJECT in, JAVA_INT srcPos, JAVA_OBJECT out, JAVA_INT destPos, JAVA_INT numPoints
+) {
+#ifndef NEW_CODENAME_ONE_VM
+    JAVA_ARRAY_FLOAT* inData = (JAVA_ARRAY_FLOAT*) ((org_xmlvm_runtime_XMLVMArray*)in)->fields.org_xmlvm_runtime_XMLVMArray.array_;
+    JAVA_ARRAY_FLOAT* outData = (JAVA_ARRAY_FLOAT*) ((org_xmlvm_runtime_XMLVMArray*)out)->fields.org_xmlvm_runtime_XMLVMArray.array_;
+    
+#else
+    JAVA_ARRAY_FLOAT* inData = (JAVA_ARRAY_FLOAT*) ((JAVA_ARRAY)in)->data;
+    JAVA_ARRAY_FLOAT* outData = (JAVA_ARRAY_FLOAT*) ((JAVA_ARRAY)out)->data;
+#endif
+    JAVA_INT len = numPoints * pointSize;
+    for (JAVA_INT i=0; i<len; i+= pointSize) {
+        JAVA_INT s0 = srcPos + i;
+        JAVA_INT d0 = destPos + i;
+        outData[d0++] = inData[s0++] + tX;
+        outData[d0++] = inData[s0++] + tY;
+        if (pointSize == 3) {
+            outData[d0] = inData[s0] + tZ;
+        }
+    }
+}
+
+JAVA_VOID com_codename1_impl_ios_IOSNative_scalePoints___int_float_float_float_float_1ARRAY_int_float_1ARRAY_int_int(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT instance,
+    JAVA_INT pointSize, JAVA_FLOAT sX, JAVA_FLOAT sY, JAVA_FLOAT sZ, JAVA_OBJECT in, JAVA_INT srcPos, JAVA_OBJECT out, JAVA_INT destPos, JAVA_INT numPoints
+) {
+#ifndef NEW_CODENAME_ONE_VM
+    JAVA_ARRAY_FLOAT* inData = (JAVA_ARRAY_FLOAT*) ((org_xmlvm_runtime_XMLVMArray*)in)->fields.org_xmlvm_runtime_XMLVMArray.array_;
+    JAVA_ARRAY_FLOAT* outData = (JAVA_ARRAY_FLOAT*) ((org_xmlvm_runtime_XMLVMArray*)out)->fields.org_xmlvm_runtime_XMLVMArray.array_;
+    
+#else
+    JAVA_ARRAY_FLOAT* inData = (JAVA_ARRAY_FLOAT*) ((JAVA_ARRAY)in)->data;
+    JAVA_ARRAY_FLOAT* outData = (JAVA_ARRAY_FLOAT*) ((JAVA_ARRAY)out)->data;
+#endif
+    JAVA_INT len = numPoints * pointSize;
+    for (JAVA_INT i=0; i<len; i+= pointSize) {
+        JAVA_INT s0 = srcPos + i;
+        JAVA_INT d0 = destPos + i;
+        outData[d0++] = inData[s0++] * sX;
+        outData[d0++] = inData[s0++] * sY;
+        if (pointSize == 3) {
+            outData[d0] = inData[s0] * sZ;
+        }
+    }
+}
 
 JAVA_BOOLEAN com_codename1_impl_ios_Matrix_MatrixUtil_invertM___float_1ARRAY_int_float_1ARRAY_int(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT mInv, JAVA_INT mInvOffset, JAVA_OBJECT m, JAVA_INT mOffset)
 {
@@ -7364,12 +7472,12 @@ JAVA_VOID com_codename1_impl_ios_IOSImplementation_drawLabelComponent___java_lan
                     iconStringHGap = (iconHeight - fontHeight) / 2;
                     com_codename1_impl_ios_IOSImplementation_drawImage___java_lang_Object_java_lang_Object_int_int(threadStateData, __cn1ThisObject,nativeGraphics, icon, x, y);
                     drawLabelStringValign(threadStateData, __cn1ThisObject, nativeGraphics, nativeFont, text, x + iconWidth + gap, y, textSpaceW, isTickerRunning,
-                                          tickerShiftText, textDecoration, rtl, endsWith3Points, iconWidth, iconStringHGap, iconHeight, fontHeight, valign);
+                                          tickerShiftText, textDecoration, rtl, endsWith3Points, strWidth, iconStringHGap, iconHeight, fontHeight, valign);
                 } else {
                     iconStringHGap = (fontHeight - iconHeight) / 2;
                     com_codename1_impl_ios_IOSImplementation_drawImage___java_lang_Object_java_lang_Object_int_int(threadStateData, __cn1ThisObject, nativeGraphics, icon, x, y + iconStringHGap);
-                    drawLabelString(threadStateData, __cn1ThisObject, nativeGraphics, nativeFont, text, x + iconWidth + gap, y, textSpaceW, isTickerRunning,
-                                    tickerShiftText, textDecoration, rtl, endsWith3Points, iconWidth, fontHeight);
+                    drawLabelString(threadStateData, __cn1ThisObject, nativeGraphics, nativeFont, text, x + iconWidth + gap, y, textSpaceW,
+                                    isTickerRunning, tickerShiftText, textDecoration, rtl, endsWith3Points, strWidth, fontHeight);
                 }
                 break;
             case 2: /* Label.BOTTOM: */
@@ -7378,13 +7486,13 @@ JAVA_VOID com_codename1_impl_ios_IOSImplementation_drawLabelComponent___java_lan
                     iconStringWGap = (iconWidth - strWidth) / 2;
                     com_codename1_impl_ios_IOSImplementation_drawImage___java_lang_Object_java_lang_Object_int_int(threadStateData, __cn1ThisObject, nativeGraphics, icon, x, y);
                     drawLabelString(threadStateData, __cn1ThisObject, nativeGraphics, nativeFont, text, x + iconStringWGap, y + iconHeight + gap, textSpaceW,
-                                    isTickerRunning, tickerShiftText, textDecoration, rtl, endsWith3Points, iconWidth, fontHeight);
+                                    isTickerRunning, tickerShiftText, textDecoration, rtl, endsWith3Points, strWidth, fontHeight);
                 } else {
                     iconStringWGap = (MIN(strWidth, textSpaceW) - iconWidth) / 2;
                     com_codename1_impl_ios_IOSImplementation_drawImage___java_lang_Object_java_lang_Object_int_int(threadStateData, __cn1ThisObject,nativeGraphics, icon, x + iconStringWGap, y);
                     
                     drawLabelString(threadStateData, __cn1ThisObject, nativeGraphics, nativeFont, text, x, y + iconHeight + gap, textSpaceW, isTickerRunning,
-                                    tickerShiftText, textDecoration, rtl, endsWith3Points, iconWidth, fontHeight);
+                                    tickerShiftText, textDecoration, rtl, endsWith3Points, strWidth, fontHeight);
                 }
                 break;
             case 0: /* Label.TOP: */
@@ -7392,12 +7500,12 @@ JAVA_VOID com_codename1_impl_ios_IOSImplementation_drawLabelComponent___java_lan
                 if (iconWidth > strWidth) {
                     iconStringWGap = (iconWidth - strWidth) / 2;
                     drawLabelString(threadStateData, __cn1ThisObject, nativeGraphics, nativeFont, text, x + iconStringWGap, y, textSpaceW, isTickerRunning,
-                                    tickerShiftText, textDecoration, rtl, endsWith3Points, iconWidth, fontHeight);
+                                    tickerShiftText, textDecoration, rtl, endsWith3Points, strWidth, fontHeight);
                     com_codename1_impl_ios_IOSImplementation_drawImage___java_lang_Object_java_lang_Object_int_int(threadStateData, __cn1ThisObject,nativeGraphics, icon, x, y + fontHeight + gap);
                 } else {
                     iconStringWGap = (MIN(strWidth, textSpaceW) - iconWidth) / 2;
                     drawLabelString(threadStateData, __cn1ThisObject, nativeGraphics, nativeFont, text, x, y, textSpaceW, isTickerRunning, tickerShiftText,
-                                    textDecoration, rtl, endsWith3Points, iconWidth, fontHeight);
+                                    textDecoration, rtl, endsWith3Points, strWidth, fontHeight);
                     com_codename1_impl_ios_IOSImplementation_drawImage___java_lang_Object_java_lang_Object_int_int(threadStateData, __cn1ThisObject,nativeGraphics, icon, x + iconStringWGap, y + fontHeight + gap);
                 }
                 break;

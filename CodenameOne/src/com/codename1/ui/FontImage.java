@@ -4564,6 +4564,24 @@ public class FontImage extends Image {
     }
 
     /**
+     * <p>Applies a material design icon (one of the MATERIAL_* icon constants) to the given label using the 
+     * styling of the label</p>
+     * <script src="https://gist.github.com/codenameone/8cf6f70188959524474b.js"></script>
+     * 
+     * @param l a label or subclass (e.g. Button etc.)
+     * @param icon one of the MATERIAL_* icons
+     * @param size in millimeters for the icon
+     */
+    public static void setMaterialIcon(Label l, char icon, float size) {
+        if(Font.isTrueTypeFileSupported()) {
+            Style s = new Style(l.getUnselectedStyle());
+            int sizePixels = Display.getInstance().convertToPixels(size);
+            s.setFont(getMaterialDesignFont().derive(sizePixels, Font.STYLE_PLAIN));
+            l.setIcon(FontImage.create("" + icon, s));
+        }
+    }
+
+    /**
      * <p>Applies a material design icon (one of the MATERIAL_* icons above) to the given component using the 
      * styling of the label</p>
      * <script src="https://gist.github.com/codenameone/8cf6f70188959524474b.js"></script>
@@ -4722,6 +4740,21 @@ public class FontImage extends Image {
     }
     
     /**
+     * <p>Creates a material design icon font for the given style but size it in millimeters based
+     * on the size argument and not the font</p>
+     * <script src="https://gist.github.com/codenameone/34fd9e519ec3d305a015.js"></script>
+     * 
+     * @param icon the icon, one of the MATERIAL_* constants
+     * @param s the style to use, notice the font in the style only matters in terms of size and nothing else
+     * @param size the size in millimeters
+     * @return a new icon
+     */
+    public static FontImage createMaterial(char icon, Style s, float size) {
+        Font f = getMaterialDesignFont().derive(Display.getInstance().convertToPixels(size), Font.STYLE_PLAIN);
+        return create("" + icon, s, f);
+    }
+    
+    /**
      * <p>Creates a material design icon font for the given style</p>
      * <script src="https://gist.github.com/codenameone/34fd9e519ec3d305a015.js"></script>
      * 
@@ -4780,7 +4813,7 @@ public class FontImage extends Image {
         int oldAlpha = g.getAlpha();
         Font oldFont = g.getFont();
 
-        if (opacity > 0 ) {
+        if (opacity > 0 && opacity < 255) {
             g.setAlpha(opacity);
         }
         

@@ -22,6 +22,7 @@
  */
 package com.codename1.impl.android;
 
+import android.Manifest;
 import com.codename1.location.AndroidLocationManager;
 import android.app.*;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -120,8 +121,10 @@ import com.codename1.ui.*;
 import com.codename1.ui.Dialog;
 import com.codename1.ui.Display;
 import com.codename1.ui.animations.Animation;
+import com.codename1.ui.animations.CommonTransitions;
 import com.codename1.ui.events.ActionListener;
 import com.codename1.ui.geom.Rectangle;
+import com.codename1.ui.geom.Shape;
 import com.codename1.ui.layouts.BorderLayout;
 import com.codename1.ui.plaf.Style;
 import com.codename1.ui.util.EventDispatcher;
@@ -207,6 +210,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     private Media background;
     private boolean asyncEditMode = false;
     private boolean compatPaintMode;
+    private MediaRecorder recorder = null;
 
     @Override
     public void setPlatformHint(String key, String value) {
@@ -698,6 +702,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         Intent startMain = new Intent(Intent.ACTION_MAIN);
         startMain.addCategory(Intent.CATEGORY_HOME);
         startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startMain.putExtra("WaitForResult", Boolean.FALSE);
         activity.startActivity(startMain);
         return true;
     }
@@ -1262,7 +1267,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
 
     @Override
     public Object getNativeGraphics(Object image) {
-        return new AndroidGraphics(this, new Canvas((Bitmap) image));
+        return new AndroidGraphics(this, new Canvas((Bitmap) image), true);
     }
 
     @Override
@@ -1694,6 +1699,18 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     public void setClip(Object graphics, int x, int y, int width, int height) {
         ((AndroidGraphics) graphics).setClip(x, y, width, height);
     }
+    
+    @Override
+    public boolean isShapeClipSupported(Object graphics){
+        return true;
+    }
+    
+    @Override
+    public void setClip(Object graphics, Shape shape) {
+        //Path p = cn1ShapeToAndroidPath(shape);
+        ((AndroidGraphics) graphics).setClip(shape);
+    }
+    
 
     @Override
     public void clipRect(Object graphics, int x, int y, int width, int height) {
@@ -1975,6 +1992,9 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
      */
     public String getProperty(String key, String defaultValue) {
         if(key.equalsIgnoreCase("cn1_push_prefix")) {
+            if(!checkForPermission(Manifest.permission.READ_PHONE_STATE, "This is required to get notifications")){
+                return "";
+            }
             boolean has = hasAndroidMarket();
             if(has) {
                 return "gcm";
@@ -1990,6 +2010,9 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         
         if ("cellId".equals(key)) {
             try {
+                if(!checkForPermission(Manifest.permission.READ_PHONE_STATE, "This is required to get the cellId")){
+                    return defaultValue;
+                }
                 String serviceName = Context.TELEPHONY_SERVICE;
                 TelephonyManager telephonyManager = (TelephonyManager) activity.getSystemService(serviceName);
                 int cellId = ((GsmCellLocation) telephonyManager.getCellLocation()).getCid();
@@ -2044,10 +2067,16 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         }
         try {
             if ("IMEI".equals(key) || "UDID".equals(key)) {
+                if(!checkForPermission(Manifest.permission.READ_PHONE_STATE, "This is required to get the device ID")){
+                    return "";
+                }
                 TelephonyManager tm = (TelephonyManager) activity.getSystemService(Context.TELEPHONY_SERVICE);
                 return tm.getDeviceId();
             }
             if ("MSISDN".equals(key)) {
+                if(!checkForPermission(Manifest.permission.READ_PHONE_STATE, "This is required to get the device ID")){
+                    return "";
+                }
                 TelephonyManager tm = (TelephonyManager) activity.getSystemService(Context.TELEPHONY_SERVICE);
                 return tm.getLine1Number();
             }
@@ -2165,6 +2194,9 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
             if (url.startsWith("intent")) {
                 intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
             } else {
+                if(!checkForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, "This is required to open the file")){
+                    return;
+                }
                 url = fixAttachmentPath(url);
                 intent = new Intent();
                 intent.setAction(Intent.ACTION_VIEW);
@@ -2245,6 +2277,10 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     @Override
     public Media createBackgroundMedia(String uri) throws IOException {
 
+        if(!checkForPermission(Manifest.permission.READ_PHONE_STATE, "This is required to play media")){
+            return null;
+        }
+        
         Intent serviceIntent = new Intent(activity, AudioService.class);
         serviceIntent.putExtra("mediaLink", uri);
         
@@ -2292,6 +2328,12 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     @Override
     public Media createMedia(final String uri, boolean isVideo, final Runnable onCompletion) throws IOException {
 
+        if(!checkForPermission(Manifest.permission.READ_PHONE_STATE, "This is required to play media")){
+            return null;
+        }
+        if(!checkForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, "This is required to play media")){
+            return null;
+        }
         if (uri.startsWith("file://")) {
             return createMedia(uri.substring(7), isVideo, onCompletion);
         }
@@ -2355,6 +2397,12 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     @Override
     public Media createMedia(InputStream stream, String mimeType, final Runnable onCompletion) throws IOException {
 
+        if(!checkForPermission(Manifest.permission.READ_PHONE_STATE, "This is required to play media")){
+            return null;
+        }
+        if(!checkForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, "This is required to play media")){
+            return null;
+        }
         boolean isVideo = mimeType.contains("video");
 
         if (!isVideo && stream instanceof FileInputStream) {
@@ -2432,6 +2480,9 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     @Override
     public Media createMediaRecorder(final String path, final String mimeType) throws IOException {
 
+        if(!checkForPermission(Manifest.permission.READ_PHONE_STATE, "This is required to access the mic")){
+            return null;
+        }
         final AndroidRecorder[] record = new AndroidRecorder[1];
         final IOException[] error = new IOException[1];
 
@@ -4085,6 +4136,11 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
      * @inheritDoc
      */
     public String[] listFilesystemRoots() {
+        
+        if(!checkForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, "This is required to browse the file system")){
+            return new String[]{};
+        }
+        
         String [] storageDirs = getStorageDirectories();
         if(storageDirs != null){
             String [] roots = new String[storageDirs.length + 1];
@@ -4246,14 +4302,60 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
      * @inheritDoc
      */
     public OutputStream openFileOutputStream(String file) throws IOException {
-        return createFileOuputStream(file);
+        OutputStream os = null;
+        try{
+            os = createFileOuputStream(file);        
+        }catch(FileNotFoundException fne){
+            //It is impossible to know if a path is considered an external 
+            //storage on the various android's versions.
+            //So we try to open the path and if failed due to permission we will 
+            //ask for the permission from the user
+            if(fne.getMessage().contains("Permission denied")){
+                
+                if(!checkForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, "This is required to access the file")){
+                    //The user refused to give access.
+                    return null;
+                }else{
+                    //The user gave permission try again to access the path
+                    return createFileOuputStream(file);
+                }
+                
+            }else{
+                throw fne;
+            }
+        }
+        
+        return os;        
     }
 
     /**
      * @inheritDoc
      */
     public InputStream openFileInputStream(String file) throws IOException {
-        return createFileInputStream(file);
+        InputStream is = null;
+        try{
+            is = createFileInputStream(file);        
+        }catch(FileNotFoundException fne){
+            //It is impossible to know if a path is considered an external 
+            //storage on the various android's versions.
+            //So we try to open the path and if failed due to permission we will 
+            //ask for the permission from the user
+            if(fne.getMessage().contains("Permission denied")){
+                
+                if(!checkForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, "This is required to access the file")){
+                    //The user refused to give access.
+                    return null;
+                }else{
+                    //The user gave permission try again to access the path
+                    return openFileInputStream(file);
+                }
+                
+            }else{
+                throw fne;
+            }
+        }
+        
+        return is;
     }
 
     @Override
@@ -4351,6 +4453,10 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
      * @return LocationControl Object
      */
     public LocationManager getLocationManager() {
+        if(!checkForPermission(Manifest.permission.ACCESS_FINE_LOCATION, "This is required to get the location")){
+            return null;
+        }
+        
         boolean includesPlayServices = Display.getInstance().getProperty("IncludeGPlayServices", "false").equals("true");
         if (includesPlayServices && hasAndroidMarket()) {
             try {
@@ -4503,8 +4609,12 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
      * @inheritDoc
      */
     public void sendSMS(final String phoneNumber, final String message, boolean i) throws IOException {
-//        PendingIntent deliveredPI = PendingIntent.getBroadcast(activity, 0,
-//                new Intent("SMS_DELIVERED"), 0);
+        if(!checkForPermission(Manifest.permission.SEND_SMS, "This is required to send a SMS")){
+            return;
+        }
+        if(!checkForPermission(Manifest.permission.READ_PHONE_STATE, "This is required to send a SMS")){
+            return;
+        }
         if(i) {            
             Intent smsIntent = null;
             if(android.os.Build.VERSION.SDK_INT < 19){
@@ -4538,69 +4648,90 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         return true;
     }
 
-    @Override
     public Object notifyStatusBar(String tickerText, String contentTitle,
             String contentBody, boolean vibrate, boolean flashLights, Hashtable args) {
         int id = activity.getResources().getIdentifier("icon", "drawable", activity.getApplicationInfo().packageName);
 
         NotificationManager notificationManager = (NotificationManager) activity.getSystemService(Activity.NOTIFICATION_SERVICE);
-        Notification notification = new Notification(id, tickerText, System.currentTimeMillis());
-
-        notification.defaults |= Notification.DEFAULT_SOUND;
-        if (flashLights) {
-            notification.defaults |= Notification.DEFAULT_LIGHTS;
-            notification.flags |= Notification.FLAG_SHOW_LIGHTS;
-        }
-        if (vibrate) {
-            notification.defaults |= Notification.DEFAULT_VIBRATE;
-        }
-        
-        int notifyId = 10001;
-        if(args != null) {
-            Boolean b = (Boolean)args.get("persist");
-            if(b != null && b.booleanValue()) {
-                notification.flags |= Notification.FLAG_ONGOING_EVENT;
-                notification.flags |= Notification.FLAG_NO_CLEAR;
-            } else {
-                notification.flags |= Notification.FLAG_AUTO_CANCEL;
-            }
-            
-            Integer notId = (Integer)args.get("id");
-            if(notId != null) {
-                notifyId = notId.intValue();
-            }
-        } else {
-            notification.flags |= Notification.FLAG_AUTO_CANCEL;
-        }
         
         Intent notificationIntent = new Intent();
         notificationIntent.setComponent(activity.getComponentName());
         PendingIntent contentIntent = PendingIntent.getActivity(activity, 0, notificationIntent, 0);
 
-        //notification.setLatestEventInfo(activity, contentTitle, contentBody, contentIntent);
+        
+        Notification.Builder builder = new Notification.Builder(activity)
+                .setContentIntent(contentIntent)
+                .setSmallIcon(id)
+                .setContentTitle(contentTitle)
+                .setTicker(tickerText);
+        if(flashLights){
+            builder.setLights(0, 1000, 1000);
+        }
+        if(vibrate){
+            builder.setVibrate(new long[]{0, 100, 1000});
+        }
+        if(args != null) {
+            Boolean b = (Boolean)args.get("persist");
+            if(b != null && b.booleanValue()) {
+                builder.setAutoCancel(false);
+                builder.setOngoing(true);
+            } else {
+                builder.setAutoCancel(false);
+            }
+        } else {
+            builder.setAutoCancel(true);
+        }
+        Notification notification = builder.build();
+        int notifyId = 10001;
         notificationManager.notify(notifyId, notification);
         return new Integer(notifyId);
     }
 
+    public boolean isContactsPermissionGranted() {
+        if (android.os.Build.VERSION.SDK_INT < 23) {
+            return true;
+        }
+
+        if (android.support.v4.content.ContextCompat.checkSelfPermission(activity,
+                Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
+            return false;
+        }
+        return true;
+    }
+
+    
     @Override
     public String[] getAllContacts(boolean withNumbers) {
+        if(!checkForPermission(Manifest.permission.READ_CONTACTS, "This is required to get the contacts")){
+            return new String[]{};
+        }
         return AndroidContactsManager.getInstance().getContacts(activity, withNumbers);
     }
 
     @Override
     public Contact getContactById(String id) {
+        if(!checkForPermission(Manifest.permission.READ_CONTACTS, "This is required to get the contacts")){
+            return null;
+        }
         return AndroidContactsManager.getInstance().getContact(activity, id);
     }
 
     @Override 
     public Contact getContactById(String id, boolean includesFullName, boolean includesPicture, 
             boolean includesNumbers, boolean includesEmail, boolean includeAddress){
+        if(!checkForPermission(Manifest.permission.READ_CONTACTS, "This is required to get the contacts")){
+            return null;
+        }
         return AndroidContactsManager.getInstance().getContact(activity, id, includesFullName, includesPicture, 
             includesNumbers, includesEmail, includeAddress);
     }
     
     @Override
     public Contact[] getAllContacts(boolean withNumbers, boolean includesFullName, boolean includesPicture, boolean includesNumbers, boolean includesEmail, boolean includeAddress) {
+        if(!checkForPermission(Manifest.permission.READ_CONTACTS, "This is required to get the contacts")){
+            return new Contact[]{};
+        }
         return AndroidContactsManager.getInstance().getAllContacts(activity, withNumbers, includesFullName, includesPicture, includesNumbers, includesEmail, includeAddress);
     }
 
@@ -4610,10 +4741,16 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     }
     
     public String createContact(String firstName, String surname, String officePhone, String homePhone, String cellPhone, String email) {
+        if(!checkForPermission(Manifest.permission.WRITE_CONTACTS, "This is required to create a contact")){
+            return null;
+        }
          return AndroidContactsManager.getInstance().createContact(activity, firstName, surname, officePhone, homePhone, cellPhone, email);
     }
 
     public boolean deleteContact(String id) {
+        if(!checkForPermission(Manifest.permission.WRITE_CONTACTS, "This is required to delete a contact")){
+            return false;
+        }
         return AndroidContactsManager.getInstance().deleteContact(activity, id);
     }
     
@@ -4624,6 +4761,9 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
 
     @Override
     public void share(String text, String image, String mimeType, Rectangle sourceRect){   
+        if(!checkForPermission(Manifest.permission.READ_PHONE_STATE, "This is required to perform share")){
+            return;
+        }
         Intent shareIntent = new Intent(android.content.Intent.ACTION_SEND);
         if(image == null){
             shareIntent.setType("text/plain");
@@ -5006,6 +5146,9 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
 
     @Override
     public void capturePhoto(ActionListener response) {
+        if(!checkForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, "This is required to take a picture")){
+            return;
+        }
         callback = new EventDispatcher();
         callback.addListener(response);
         Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
@@ -5026,6 +5169,9 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
 
     @Override
     public void captureVideo(ActionListener response) {
+        if(!checkForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, "This is required to take a video")){
+            return;
+        }
         callback = new EventDispatcher();
         callback.addListener(response);
         Intent intent = new Intent(android.provider.MediaStore.ACTION_VIDEO_CAPTURE);
@@ -5041,12 +5187,109 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         this.activity.startActivityForResult(intent, CAPTURE_VIDEO);
     }
 
-    @Override
-    public void captureAudio(ActionListener response) {
-        callback = new EventDispatcher();
-        callback.addListener(response);
-        Intent intent = new Intent(android.provider.MediaStore.Audio.Media.RECORD_SOUND_ACTION);
-        this.activity.startActivityForResult(intent, CAPTURE_AUDIO);
+    public void captureAudio(final ActionListener response) {
+
+        if(!checkForPermission(Manifest.permission.RECORD_AUDIO, "This is required to record the audio")){
+            return;
+        }
+        
+        try {
+            final Form current = Display.getInstance().getCurrent();
+
+            final File temp = File.createTempFile("mtmp", "dat");
+            temp.deleteOnExit();
+
+            if (recorder != null) {
+                recorder.release();
+            }
+            recorder = new MediaRecorder();
+            recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
+            recorder.setOutputFile(temp.getAbsolutePath());
+
+            final Form recording = new Form("Recording");
+            recording.setTransitionInAnimator(CommonTransitions.createEmpty());
+            recording.setTransitionOutAnimator(CommonTransitions.createEmpty());
+            recording.setLayout(new BorderLayout());
+
+            recorder.prepare();
+            recorder.start();
+
+            final Label time = new Label("00:00");
+            time.getAllStyles().setAlignment(Component.CENTER);
+            Font f = Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_LARGE);
+            f = f.derive(getDisplayHeight() / 10, Font.STYLE_PLAIN);
+            time.getAllStyles().setFont(f);
+            recording.addComponent(BorderLayout.CENTER, time);
+
+            recording.registerAnimated(new Animation() {
+
+                long current = System.currentTimeMillis();
+                long zero = current;
+                int sec = 0;
+
+                public boolean animate() {
+                    long now = System.currentTimeMillis();
+                    if (now - current > 1000) {
+                        current = now;
+                        sec++;
+                        return true;
+                    }
+                    return false;
+                }
+
+                public void paint(Graphics g) {
+                    int seconds = sec % 60;
+                    int minutes = sec / 60;
+
+                    String secStr = seconds < 10 ? "0" + seconds : "" + seconds;
+                    String minStr = minutes < 10 ? "0" + minutes : "" + minutes;
+
+                    String txt = minStr + ":" + secStr;
+                    time.setText(txt);
+                }
+            });
+
+            Container south = new Container(new com.codename1.ui.layouts.GridLayout(1, 2));
+            Command cancel = new Command("Cancel") {
+
+                @Override
+                public void actionPerformed(ActionEvent evt) {
+                    if (recorder != null) {
+                        recorder.stop();
+                        recorder.release();
+                        recorder = null;
+                    }
+                    current.showBack();
+                    response.actionPerformed(null);
+                }
+
+            };
+            recording.setBackCommand(cancel);
+            south.add(new com.codename1.ui.Button(cancel));
+            south.add(new com.codename1.ui.Button(new Command("Save") {
+
+                @Override
+                public void actionPerformed(ActionEvent evt) {
+                    if (recorder != null) {
+                        recorder.stop();
+                        recorder.release();
+                        recorder = null;
+                    }
+                    current.showBack();
+                    response.actionPerformed(new ActionEvent(temp.getAbsolutePath()));
+                }
+
+            }));
+            recording.addComponent(BorderLayout.SOUTH, south);
+            recording.show();
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            throw new RuntimeException("failed to start audio recording");
+        }
+
     }
 
     /**
@@ -5055,6 +5298,9 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
      * @param response callback for the resulting image
      */
     public void openImageGallery(ActionListener response) {
+        if(!checkForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, "This is required to browse the photos")){
+            return;
+        }
         callback = new EventDispatcher();
         callback.addListener(response);
         Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI);
@@ -5062,6 +5308,9 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     }
     
     public void openGallery(final ActionListener response, int type){
+        if(!checkForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, "This is required to browse the photos")){
+            return;
+        }
         callback = new EventDispatcher();
         callback.addListener(response);
         Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI);
@@ -6457,6 +6706,13 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     public Object makeTransformTranslation(float translateX, float translateY, float translateZ) {
         return CN1Matrix4f.makeTranslation(translateX, translateY, translateZ);
     }
+    
+    @Override
+    public void setTransformTranslation(Object nativeTransform, float translateX, float translateY, float translateZ) {
+        CN1Matrix4f m = (CN1Matrix4f)nativeTransform;
+        m.reset();
+        m.translate(translateX, translateY, translateZ);
+    }
 
     @Override
     public Object makeTransformScale(float scaleX, float scaleY, float scaleZ) {
@@ -6464,26 +6720,59 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         t.scale(scaleX, scaleY, scaleZ);
         return t;
     }
+    
+    @Override
+    public void setTransformScale(Object nativeTransform, float scaleX, float scaleY, float scaleZ) {
+        CN1Matrix4f t = (CN1Matrix4f)nativeTransform;
+        t.reset();
+        t.scale(scaleX, scaleY, scaleZ);
+    }
 
     @Override
     public Object makeTransformRotation(float angle, float x, float y, float z) {
         return CN1Matrix4f.makeRotation(angle, x, y, z);
+    }
+    
+    @Override
+    public void setTransformRotation(Object nativeTransform, float angle, float x, float y, float z) {
+        CN1Matrix4f m = (CN1Matrix4f)nativeTransform;
+        m.reset();
+        m.rotate(angle, x, y, z);
     }
 
     @Override
     public Object makeTransformPerspective(float fovy, float aspect, float zNear, float zFar) {
         return CN1Matrix4f.makePerspective(fovy, aspect, zNear, zFar);
     }
+    
+    @Override
+    public void setTransformPerspective(Object nativeGraphics, float fovy, float aspect, float zNear, float zFar) {
+        CN1Matrix4f m = (CN1Matrix4f)nativeGraphics;
+        m.setPerspective(fovy, aspect, zNear, zFar);
+    }
 
     @Override
     public Object makeTransformOrtho(float left, float right, float bottom, float top, float near, float far) {
         return CN1Matrix4f.makeOrtho(left, right, bottom, top, near, far);
+    }
+    
+    @Override
+    public void setTransformOrtho(Object nativeGraphics, float left, float right, float bottom, float top, float near, float far) {
+        CN1Matrix4f m = (CN1Matrix4f)nativeGraphics;
+        m.setOrtho(left, right, bottom, top, near, far);
     }
 
     @Override
     public Object makeTransformCamera(float eyeX, float eyeY, float eyeZ, float centerX, float centerY, float centerZ, float upX, float upY, float upZ) {
        return CN1Matrix4f.makeCamera(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
     }
+    
+    @Override
+    public void setTransformCamera(Object nativeGraphics, float eyeX, float eyeY, float eyeZ, float centerX, float centerY, float centerZ, float upX, float upY, float upZ) {
+        CN1Matrix4f m = (CN1Matrix4f)nativeGraphics;
+        m.setCamera(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
+    }
+
 
     @Override
     public void transformRotate(Object nativeTransform, float angle, float x, float y, float z) {
@@ -6518,7 +6807,22 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         //}
         //return null;
     }
+    
+    @Override
+    public void setTransformInverse(Object nativeTransform) throws com.codename1.ui.Transform.NotInvertibleException {
+        
+        CN1Matrix4f m = (CN1Matrix4f)nativeTransform;
+        if (!m.invert()) {
+            throw new com.codename1.ui.Transform.NotInvertibleException();
+        }
+    }
 
+    @Override
+    public void setTransformIdentity(Object transform) {
+        CN1Matrix4f m = (CN1Matrix4f)transform;
+        m.setIdentity();
+    }
+    
     @Override
     public Object makeTransformIdentity() {
         return CN1Matrix4f.makeIdentity();
@@ -6547,7 +6851,19 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     @Override
     public void setTransform(Object graphics, Transform transform) {
         AndroidGraphics ag = (AndroidGraphics) graphics;
-        ag.setTransform(transform);
+        Transform existing = ag.getTransform();
+        if (existing == null) {
+            existing = transform == null ? Transform.makeIdentity() : transform.copy();
+            ag.setTransform(existing);
+        } else {
+            if (transform == null) {
+                existing.setIdentity();
+            } else {
+                existing.setTransform(transform);
+            }
+            ag.setTransform(existing); // sets dirty flag for transform
+        }
+        
     }
 
     @Override
@@ -6556,12 +6872,28 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         if (t == null) {
             return Transform.makeIdentity();
         }
-        return t;
+        Transform t2 = Transform.makeIdentity();
+        t2.setTransform(t);
+        return t2;
     }
+
+    @Override
+    public void getTransform(Object graphics, Transform transform) {
+        com.codename1.ui.Transform t = ((AndroidGraphics) graphics).getTransform();
+        if (t == null) {
+            transform.setIdentity();
+        } else {
+            transform.setTransform(t);
+        }
+    }
+    
+    
     // END TRANSFORM STUFF
 
-    private Path cn1ShapeToAndroidPath(com.codename1.ui.geom.Shape shape) {
-        Path p = new Path();
+
+    static Path cn1ShapeToAndroidPath(com.codename1.ui.geom.Shape shape, Path p) {
+        //Path p = new Path();
+        p.rewind();
         com.codename1.ui.geom.PathIterator it = shape.getPathIterator();
         //p.setWindingRule(it.getWindingRule() == com.codename1.ui.geom.PathIterator.WIND_EVEN_ODD ? GeneralPath.WIND_EVEN_ODD : GeneralPath.WIND_NON_ZERO);
         float[] buf = new float[6];
@@ -6589,6 +6921,10 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         }
 
         return p;
+    }
+
+    static Path cn1ShapeToAndroidPath(com.codename1.ui.geom.Shape shape) {
+        return cn1ShapeToAndroidPath(shape, new Path());
     }
 
     public void scheduleLocalNotification(LocalNotification notif, long firstTime, int repeat) {
@@ -6681,5 +7017,61 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         return android.os.Build.VERSION.SDK_INT >= 11;
     }
     
+    public static boolean checkForPermission(String permission, String description){
+        return checkForPermission(permission, description, false);
+    }
+    
+    public static boolean checkForPermission(String permission, String description, boolean forceAsk){
+               
+        //before sdk 23 no need to ask for permission
+        if(android.os.Build.VERSION.SDK_INT < 23){
+            return true;
+        }
+
+        String prompt = Display.getInstance().getProperty(permission, description);
+        
+        if (android.support.v4.content.ContextCompat.checkSelfPermission(activity,
+                permission)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Should we show an explanation?
+            if (!forceAsk && android.support.v4.app.ActivityCompat.shouldShowRequestPermissionRationale(activity,
+                    permission)) {
+
+                // Show an expanation to the user *asynchronously* -- don't block
+                if(Dialog.show("Requires permission", prompt, "Ask again", "Don't Ask")){
+                    return checkForPermission(permission, description, true);
+                }else {
+                    return false;
+                }
+            } else {
+
+                // No explanation needed, we can request the permission.
+                ((CodenameOneActivity)activity).setRequestForPermission(true);
+                android.support.v4.app.ActivityCompat.requestPermissions(activity,
+                        new String[]{permission},
+                        1);
+                //wait for a response
+                Display.getInstance().invokeAndBlock(new Runnable() {
+                    @Override
+                    public void run() {
+                        while(((CodenameOneActivity)activity).isRequestForPermission()) {
+                            try {
+                                Thread.sleep(50);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                });
+                //check again if the permission is given after the dialog was displayed
+                return android.support.v4.content.ContextCompat.checkSelfPermission(activity,
+                        permission) == PackageManager.PERMISSION_GRANTED;
+
+            }
+        }
+        return true;
+    }
+ 
     
 }

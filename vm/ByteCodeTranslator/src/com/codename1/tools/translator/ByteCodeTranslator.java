@@ -165,6 +165,10 @@ public class ByteCodeTranslator {
         final String addFrameworks = args[8];
         final StringBuilder appFonts = new StringBuilder("\n");
         // we accept 3 arguments output type, input directory & output directory
+        if (System.getProperty("saveUnitTests", "false").equals("true")) {
+            System.out.println("Generating Unit Tests");
+            ByteCodeClass.setSaveUnitTests(true);
+        }
         if(args[0].equalsIgnoreCase("csharp")) {
             output = OutputType.OUTPUT_TYPE_CSHARP;
         }
