@@ -17,7 +17,7 @@
 
 int currentGcMarkValue = 1;
 extern JAVA_BOOLEAN lowMemoryMode;
-#define DEBUG_GC_OBJECTS_IN_HEAP
+// #define DEBUG_GC_OBJECTS_IN_HEAP
 
 struct clazz class_array1__JAVA_BOOLEAN = {
     DEBUG_GC_INIT 0, 999999, 0, 0, 0, 0, 0, 0, 0, 0, cn1_array_1_id_JAVA_BOOLEAN, "boolean[]", JAVA_TRUE, 1, &class__java_lang_Boolean, JAVA_TRUE, &class__java_lang_Object, EMPTY_INTERFACES, 0, 0, 0
