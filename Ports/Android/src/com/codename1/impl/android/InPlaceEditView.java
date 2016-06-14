@@ -777,6 +777,7 @@ public class InPlaceEditView extends FrameLayout {
         mEditText.setTypeface(p.getTypeface());
         mEditText.setTextScaleX(p.getTextScaleX());
         mEditText.setTextSize(TypedValue.COMPLEX_UNIT_PX, p.getTextSize());
+        mEditText.setIncludeFontPadding(false); // This should avoid text popping when textarea is focused
 
         int fgColor = textArea.fgColor;
         mEditText.setTextColor(Color.rgb(fgColor >> 16, (fgColor & 0x00ff00) >> 8, (fgColor & 0x0000ff)));
