@@ -177,6 +177,8 @@ public class Log {
      * Sends the current log to the cloud regardless of the reporting level
      */
     public static void sendLog() {
+        //
+        /*
         if(Display.getInstance().getProperty("cloudServerURL", null) != null) {
             sendLogLegacy();
             return;
@@ -210,6 +212,7 @@ public class Log {
         } catch (Throwable ex) {
             ex.printStackTrace();
         }
+        */
     }
 
     /**

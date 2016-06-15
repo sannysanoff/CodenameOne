@@ -20,6 +20,7 @@
  * Please contact Codename One through http://www.codenameone.com/ if you 
  * need additional information or have any questions.
  */
+#import "Localytics.h"
 #import "CodenameOne_GLAppDelegate.h"
 #include "xmlvm.h"
 #import "EAGLView.h"
@@ -63,7 +64,7 @@ NSDictionary *transientLaunchOptions;
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     //beforeDidFinishLaunchingWithOptionsMarkerEntry
-
+    NSLog(@"didFinishLaunchingWithOptions");
     // Override point for customization after application launch.
     self.window.rootViewController = self.viewController;
     NSURL *url = (NSURL *)[launchOptions valueForKey:UIApplicationLaunchOptionsURLKey];
@@ -134,11 +135,13 @@ NSDictionary *transientLaunchOptions;
 }
 
 - (void)applicationDidReceiveMemoryWarning:(UIApplication *)application {
+    NSLog(@"didReceiveMemoryWarning");
     com_codename1_impl_ios_IOSImplementation_applicationDidReceiveMemoryWarning__(CN1_THREAD_GET_STATE_PASS_SINGLE_ARG);
 }
 
 // implemented this way so this will compile on older versions of xcode
 - (void)application:(UIApplication *)application didRegisterUserNotificationSettings:(id)notificationSettings {
+    NSLog(@"didRegisterUserNotificationSettings");
     if (pendingRemoteNotificationRegistrations > 0) {
         pendingRemoteNotificationRegistrations--;
         Class uiApp = NSClassFromString(@"UIApplication");
@@ -155,6 +158,8 @@ NSDictionary *transientLaunchOptions;
 
 // required for URL opening
 - (BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    NSLog(@"willFinishLaunchingWithOptions");
+//    sleep(10);
     isAppSuspended = NO;
     if(launchOptions != nil) {
         NSURL *url = (NSURL *)[launchOptions valueForKey:UIApplicationLaunchOptionsURLKey];
@@ -224,6 +229,9 @@ NSDictionary *transientLaunchOptions;
 
 - (void)applicationDidEnterBackground:(UIApplication *)application
 {
+    [Localytics dismissCurrentInAppMessage];
+    [Localytics closeSession];
+    [Localytics upload];
     if(editingComponent != nil) {
         [editingComponent resignFirstResponder];
         [editingComponent removeFromSuperview];
@@ -247,6 +255,9 @@ NSDictionary *transientLaunchOptions;
 
 - (void)applicationWillEnterForeground:(UIApplication *)application
 {
+    NSLog(@"applicationWillEnterForeground");
+    [Localytics openSession];
+    [Localytics upload];
     /*
      Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
      */
@@ -255,6 +266,11 @@ NSDictionary *transientLaunchOptions;
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
+    NSLog(@"applicationDidBecomeActive");
+    [Localytics openSession];
+    NSLog(@"applicationDidBecomeActive");
+    [Localytics upload];
+    NSLog(@"applicationDidBecomeActive");
 #ifdef INCLUDE_CN1_PUSH
      [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
 #endif
@@ -271,10 +287,15 @@ NSDictionary *transientLaunchOptions;
     com_codename1_impl_ios_IOSImplementation_applicationWillTerminate__(CN1_THREAD_GET_STATE_PASS_SINGLE_ARG);
 }
 
+extern void gotClientTokenForPush(NSData *token);
+
+
 #ifdef INCLUDE_CN1_PUSH
 - (void)application:(UIApplication*)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData*)deviceToken {
-    NSString * tokenAsString = [[[deviceToken description] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"<>"]] 
+    gotClientTokenForPush(deviceToken);
+    NSString * tokenAsString = [[[deviceToken description] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"<>"]]
                 stringByReplacingOccurrencesOfString:@" " withString:@""];
+    NSLog(@"didRegisterForRemoteNotificationsWithDeviceToken: %@", tokenAsString);
     JAVA_OBJECT str = fromNSString(CN1_THREAD_GET_STATE_PASS_ARG tokenAsString);
     com_codename1_impl_ios_IOSImplementation_pushRegistered___java_lang_String(CN1_THREAD_GET_STATE_PASS_ARG str);
 }
@@ -283,6 +304,16 @@ NSDictionary *transientLaunchOptions;
 	NSLog(@"Failed to get token, error: %@", error);
     JAVA_OBJECT str = fromNSString(CN1_THREAD_GET_STATE_PASS_ARG [error localizedDescription]);
     com_codename1_impl_ios_IOSImplementation_pushRegistrationError___java_lang_String(CN1_THREAD_GET_STATE_PASS_ARG str);
+}
+
+extern void localyticsDidReceiveRNFCN(
+                                      NSDictionary *userInfo,
+                                      void (^completionHandler)(UIBackgroundFetchResult));
+
+-(void)application:(UIApplication *)application
+                                      didReceiveRemoteNotification:(NSDictionary *)userInfo
+                                      fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
+    localyticsDidReceiveRNFCN(userInfo, completionHandler);
 }
 
 - (void)application:(UIApplication*)application didReceiveRemoteNotification:(NSDictionary*)userInfo {
@@ -308,7 +339,8 @@ extern void isLightBar();
 }
 
 - (void)application:(UIApplication*)application didReceiveLocalNotification:(UILocalNotification*)notification {
-    NSLog(@"Received local notification while running: %@", notification);
+    //NSLog(@"Received local notification while running: %@", notificatfion);
+    [Localytics handlePushNotificationOpened:notification.userInfo];
     if( [notification.userInfo valueForKey:@"__ios_id__"] != NULL)
     {
         NSString* alertValue = [notification.userInfo valueForKey:@"__ios_id__"];

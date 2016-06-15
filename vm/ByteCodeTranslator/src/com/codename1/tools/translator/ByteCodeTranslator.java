@@ -527,6 +527,10 @@ public class ByteCodeTranslator {
                     "EXTRA", extraInfoPlist,
                     "${APP_FONTS}", appFonts.toString());
             replaceInFile(projectPbx, "#extra_cpp_defines#", extraCPPDefines);
+            String teamCode = System.getProperty("DevelopmentTeam");
+            if (teamCode != null && teamCode.length() > 0) {
+                replaceInFile(projectPbx, "Q922EJB8TE", teamCode);
+            }
             PreservingFileOutputStream.finishWithNewFile(projectPbx);
             PreservingFileOutputStream.finishWithNewFile(templateInfoPlist);
             PreservingFileOutputStream.finishWithNewFile(projectWorkspaceData);
