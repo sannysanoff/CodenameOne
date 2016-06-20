@@ -157,7 +157,7 @@ AudioPlayer* currentlyPlaying = nil;
 
     AVAudioSession *audioSession = [AVAudioSession sharedInstance];
     NSError *setCategoryError = nil;
-    BOOL success = [audioSession setCategory:AVAudioSessionCategoryPlayback error:&setCategoryError];
+    BOOL success = [audioSession setCategory:AVAudioSessionCategoryAmbient error:&setCategoryError];
     if (!success) {
         NSLog(@"ERROR");
     }
