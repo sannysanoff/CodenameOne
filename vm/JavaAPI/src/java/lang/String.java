@@ -198,6 +198,9 @@ public final class String implements java.lang.CharSequence, Comparable<String> 
         System.arraycopy(str.value, str.offset, n, count, str.count);
         return new String(n); 
     }
+    public boolean contains(java.lang.CharSequence instr){
+	return indexOf(instr.toString()) >= 0;
+    }
 
     /**
      * Tests if this string ends with the specified suffix.
