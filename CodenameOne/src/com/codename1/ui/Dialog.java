@@ -589,7 +589,7 @@ public class Dialog extends Form {
     /**
      * {@inheritDoc}
      */
-    void sizeChangedInternal(int w, int h) {
+    protected void sizeChangedInternal(int w, int h) {
         if(disposeOnRotation) {
             disposedDueToRotation = true;
             dispose();

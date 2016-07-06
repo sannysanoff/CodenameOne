@@ -510,7 +510,7 @@ public class Form extends Container {
      * @param w the new width of the Form
      * @param h the new height of the Form
      */
-    void sizeChangedInternal(int w, int h) {
+    protected void sizeChangedInternal(int w, int h) {
         int oldWidth = getWidth();
         int oldHeight = getHeight();        
         sizeChanged(w, h);
