@@ -6951,6 +6951,17 @@ JAVA_VOID com_codename1_impl_ios_IOSNative_cancelLocalNotification___java_lang_S
     });
 }
 
+// 
+JAVA_VOID com_codename1_impl_ios_IOSNative_copyStringToClipboard___java_lang_String(CN1_THREAD_STATE_MULTI_ARG JAVA_OBJECT me, JAVA_OBJECT text) {
+    if (text == JAVA_NULL) {
+        return;
+    }
+    NSString *nsId = toNSString(CN1_THREAD_STATE_PASS_ARG text);
+    UIPasteboard *pb = [UIPasteboard generalPasteboard];
+    [pb setString:nsId];
+
+}
+
 // BEGIN IOSImplementation native code, this is used to optimize various "heavy" IOSImplementation methods
 
 #define DRAW_BGIMAGE_AT_GIVEN_POSITION_WITH_FILL_RECT(xpositionToDraw, ypositionToDraw)                 JAVA_BYTE bgTransparency = com_codename1_ui_plaf_Style_getBgTransparency___R_byte(threadStateData, s); \

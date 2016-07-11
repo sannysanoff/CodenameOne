@@ -4673,7 +4673,7 @@ public class IOSImplementation extends CodenameOneImplementation {
 
     @Override
     public void copyToClipboard(Object obj) {
-        super.copyToClipboard(obj);
+        nativeInstance.copyStringToClipboard((String)obj);
     }
 
     /*class RunnableCleanup implements Runnable {
