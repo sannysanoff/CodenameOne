@@ -584,6 +584,6 @@ public final class IOSNative {
 
     native void updateNativeEditorText(String text);
 
-   
+    native void copyStringToClipboard(String text);
 
 }
