@@ -257,7 +257,7 @@ extern BOOL isRetinaBug();
         if(isVKBAlwaysOpen()) {
             com_codename1_impl_ios_IOSImplementation_foldKeyboard__(CN1_THREAD_GET_STATE_PASS_SINGLE_ARG);
         } else {
-            // [editingComponent resignFirstResponder];
+            [editingComponent resignFirstResponder];
             [editingComponent removeFromSuperview];
 #ifndef CN1_USE_ARC
             [editingComponent release];
