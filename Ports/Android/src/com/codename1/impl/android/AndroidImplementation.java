@@ -7009,6 +7009,8 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         theIntrinsic.setInput(tmpIn);
         theIntrinsic.forEach(tmpOut);
         tmpOut.copyTo(outputBitmap);
+
+        rs.destroy();
         
         return new NativeImage(outputBitmap);
     }
