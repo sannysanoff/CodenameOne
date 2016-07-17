@@ -3514,10 +3514,12 @@ void com_codename1_impl_ios_IOSNative_sendSMS___java_lang_String_java_lang_Strin
             
             // Recipient.
 
-            NSArray *recipientsArray = [recipient componentsSeparatedByString: @";"];
-            // NSArray *recipientsArray = [NSArray arrayWithObject:recipient];
-            
-            [picker setRecipients:recipientsArray];
+            if ([recipient length] != 0) {
+                NSArray *recipientsArray = [recipient componentsSeparatedByString: @";"];
+                [picker setRecipients:recipientsArray];
+            } else{
+                [picker setRecipients:nil];
+            }
             
             // Body.
             
