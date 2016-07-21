@@ -57,6 +57,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Central class for the API that manages rendering/events and is used to place top
@@ -1964,7 +1965,7 @@ public final class Display {
      * Invoked on the EDT to propagate the event
      */
     private int handleEvent(int offset) {
-        Form f = getCurrentUpcomingForm(true);
+        final Form f = getCurrentUpcomingForm(true);
 
         // might happen when returning from a deinitialized version of Codename One
         if(f == null) {
@@ -2131,7 +2132,16 @@ public final class Display {
             offset++;
             int h = inputEventStackTmp[offset];
             offset++;
-            f.sizeChangedInternal(w, h);
+            scheduleGlobalSizeChange(new GlobalResizerTask(w, h) {
+                @Override
+                public void run() {
+                    sizeChangedInDisplay();
+                }
+
+                private void sizeChangedInDisplay() {
+                    f.sizeChangedInternal(nw, nh);
+                }
+            });
             break;
         case HIDE_NOTIFY:
             f.hideNotify();
@@ -2142,6 +2152,58 @@ public final class Display {
         }
         return offset;
     }
+
+
+    public static class GlobalResizerTask extends TimerTask {
+        int nw;
+        int nh;
+
+        public GlobalResizerTask(int nw, int nh) {
+            this.nw = nw;
+            this.nh = nh;
+        }
+
+        @Override
+        public void run() {
+
+        }
+    }
+    /**
+     * coalescing resize events.
+     */
+    public static Timer scheduledSizeChanged = null;
+    public static GlobalResizerTask lastResizerTask = null;
+
+    public static void scheduleGlobalSizeChange(final GlobalResizerTask tt) {
+        if (tt.nw == 0 || tt.nh == 0) {
+            if (lastResizerTask != null) {
+                tt.nw = lastResizerTask.nw;
+                tt.nh = lastResizerTask.nh;
+            }
+        } else {
+            if (lastResizerTask != null && tt.nw == lastResizerTask.nw && tt.nh == lastResizerTask.nh) {
+                return;
+            }
+        }
+        if (Display.scheduledSizeChanged != null) {
+            Display.scheduledSizeChanged.cancel();
+        }
+        Display.scheduledSizeChanged = new Timer();
+        lastResizerTask = tt;
+        Display.scheduledSizeChanged.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                Display.getInstance().callSerially(new Runnable() {
+                    @Override
+                    public void run() {
+                        tt.run();
+                        getInstance().getCurrent().repaint();
+                    }
+                });
+            }
+        }, 500);
+    }
+
 
     /**
      * This method should be invoked by components that broadcast events on the pointerReleased callback.
