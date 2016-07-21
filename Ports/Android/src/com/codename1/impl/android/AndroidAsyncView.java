@@ -54,7 +54,6 @@ import com.codename1.ui.Transform;
 import com.codename1.ui.plaf.Style;
 import com.codename1.ui.plaf.StyleAccessor;
 
-import java.util.TimerTask;
 import java.util.WeakHashMap;
 
 public class AndroidAsyncView extends View implements CodenameOneSurface {
@@ -246,10 +245,10 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
         if (!Display.isInitialized()) {
             return;
         }
-        sheculeGlobalSizeChange(w, h);
+        scheculeGlobalSizeChange(w, h);
     }
 
-    void sheculeGlobalSizeChange(final int nw, final int nh) {
+    void scheculeGlobalSizeChange(final int nw, final int nh) {
         Display.scheduleGlobalSizeChange(new Display.GlobalResizerTask(nw, nh) {
             @Override
             public void run() {
@@ -259,7 +258,7 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
             private void scheduledSizeChanger() {
                 cn1View.handleSizeChange(nw, nh);
             }
-        });
+        }, "AndroidAsyncView.onSizeChanged");
     }
 
     @Override

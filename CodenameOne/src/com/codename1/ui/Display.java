@@ -2141,7 +2141,7 @@ public final class Display {
                 private void sizeChangedInDisplay() {
                     f.sizeChangedInternal(nw, nh);
                 }
-            });
+            },"Display.handleEvent:SIZE_CHANGED");
             break;
         case HIDE_NOTIFY:
             f.hideNotify();
@@ -2174,7 +2174,8 @@ public final class Display {
     public static Timer scheduledSizeChanged = null;
     public static GlobalResizerTask lastResizerTask = null;
 
-    public static void scheduleGlobalSizeChange(final GlobalResizerTask tt) {
+    public static void scheduleGlobalSizeChange(final GlobalResizerTask tt, String origin) {
+        System.out.println("scheduleGlobalSizeChange: "+origin+" nw="+tt.nw+" nh"+tt.nh);
         if (tt.nw == 0 || tt.nh == 0) {
             if (lastResizerTask != null) {
                 tt.nw = lastResizerTask.nw;
