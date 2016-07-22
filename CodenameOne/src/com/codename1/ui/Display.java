@@ -2170,7 +2170,7 @@ public final class Display {
 
     static int schedSeq = 700;
 
-    public static int scheduleGlobalSizeChange(final GlobalResizerTask tt, String origin) {
+    public static void scheduleGlobalSizeChange(final GlobalResizerTask tt, String origin) {
         final int sc = schedSeq++;
         tt.theSeq = sc;
         Log.p("SIZING("+sc+"): scheduleGlobalSizeChange: "+origin+" nh="+tt.nh+" (handlingAlready="+handlingGlobalSizeChange+")");
