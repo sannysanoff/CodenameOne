@@ -156,9 +156,10 @@ public class CodenameOneView {
                 this.initBitmaps(w, h);
             }
         }
-        if (this.width == w && this.height == h) {
-            return;
-        }
+//        if (this.width == w && this.height == h) {
+//            com.codename1.io.Log.p("SIZING: CodenameoneView: already: h="+h);
+//            return;
+//        }
 
         Display.scheduleGlobalSizeChange(new Display.GlobalResizerTask(w, h) {
             @Override
@@ -169,7 +170,7 @@ public class CodenameOneView {
             private void sizeChangedInCN1View() {
                 CodenameOneView.this.width = w;
                 CodenameOneView.this.height = h;
-                Log.d("Codename One", "sizechanged: " + width + " " + height + " " + this);
+                com.codename1.io.Log.p("SIZING("+theSeq+"): CodenameoneView: run in delayed handleSizeChange: h="+h);
                 if (CodenameOneView.this.implementation.getCurrentForm() == null) {
                     /**
                      * make sure a form has been set before we can send events to the

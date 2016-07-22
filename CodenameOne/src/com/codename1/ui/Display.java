@@ -2149,6 +2149,7 @@ public final class Display {
     public static class GlobalResizerTask extends TimerTask {
         int nw;
         int nh;
+        public int theSeq;
 
         public GlobalResizerTask(int nw, int nh) {
             this.nw = nw;
@@ -2167,8 +2168,12 @@ public final class Display {
     public static GlobalResizerTask lastResizerTask = null;
     public static int handlingGlobalSizeChange = 0;
 
-    public static void scheduleGlobalSizeChange(final GlobalResizerTask tt, String origin) {
-        Log.p("SIZING: scheduleGlobalSizeChange: "+origin+" nw="+tt.nw+" nh"+tt.nh+" (handlingAlready="+handlingGlobalSizeChange+")");
+    static int schedSeq = 700;
+
+    public static int scheduleGlobalSizeChange(final GlobalResizerTask tt, String origin) {
+        final int sc = schedSeq++;
+        tt.theSeq = sc;
+        Log.p("SIZING("+sc+"): scheduleGlobalSizeChange: "+origin+" nh="+tt.nh+" (handlingAlready="+handlingGlobalSizeChange+")");
         if (tt.nw == 0 || tt.nh == 0) {
             if (lastResizerTask != null) {
                 tt.nw = lastResizerTask.nw;

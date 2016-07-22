@@ -243,7 +243,7 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
     @Override
     protected void onSizeChanged(final int w, final int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        Log.p("SIZING: AndroidAsyncView: onSizeChanged: nh=");
+        Log.p("SIZING: AndroidAsyncView: onSizeChanged: nh="+h);
         if (!Display.isInitialized()) {
             return;
         }
