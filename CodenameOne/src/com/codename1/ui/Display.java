@@ -1873,7 +1873,7 @@ public final class Display {
      * @param w the width of the drawing surface
      * @param h the height of the drawing surface
      */
-    public void sizeChanged(int w, int h){
+    public void sizeChanged(final int w, final int h){
         Form current = impl.getCurrentForm();
         if(current == null) {
             return;
@@ -1882,7 +1882,8 @@ public final class Display {
             return;
         }
 
-        addSizeChangeEvent(SIZE_CHANGED, w, h);
+        addSizeChangeEvent(SIZE_CHANGED, w, h);;
+
     }
 
     private void addNotifyEvent(int type) {
@@ -2132,16 +2133,7 @@ public final class Display {
             offset++;
             int h = inputEventStackTmp[offset];
             offset++;
-            scheduleGlobalSizeChange(new GlobalResizerTask(w, h) {
-                @Override
-                public void run() {
-                    sizeChangedInDisplay();
-                }
-
-                private void sizeChangedInDisplay() {
-                    f.sizeChangedInternal(nw, nh);
-                }
-            },"Display.handleEvent:SIZE_CHANGED");
+            f.sizeChangedInternal(w, h);
             break;
         case HIDE_NOTIFY:
             f.hideNotify();
@@ -2173,9 +2165,10 @@ public final class Display {
      */
     public static Timer scheduledSizeChanged = null;
     public static GlobalResizerTask lastResizerTask = null;
+    public static int handlingGlobalSizeChange = 0;
 
     public static void scheduleGlobalSizeChange(final GlobalResizerTask tt, String origin) {
-        System.out.println("scheduleGlobalSizeChange: "+origin+" nw="+tt.nw+" nh"+tt.nh);
+        Log.p("SIZING: scheduleGlobalSizeChange: "+origin+" nw="+tt.nw+" nh"+tt.nh+" (handlingAlready="+handlingGlobalSizeChange+")");
         if (tt.nw == 0 || tt.nh == 0) {
             if (lastResizerTask != null) {
                 tt.nw = lastResizerTask.nw;
@@ -2183,26 +2176,43 @@ public final class Display {
             }
         } else {
             if (lastResizerTask != null && tt.nw == lastResizerTask.nw && tt.nh == lastResizerTask.nh) {
-                return;
+                if (handlingGlobalSizeChange == 0) {
+                    Log.p("SIZING: ignoring it");
+                    return;
+                } else {
+                    Log.p("SIZING: calling it immediately");
+                    tt.run();
+                    return;
+                }
             }
         }
         if (Display.scheduledSizeChanged != null) {
             Display.scheduledSizeChanged.cancel();
         }
-        Display.scheduledSizeChanged = new Timer();
-        lastResizerTask = tt;
-        Display.scheduledSizeChanged.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                Display.getInstance().callSerially(new Runnable() {
-                    @Override
-                    public void run() {
-                        tt.run();
-                        getInstance().getCurrent().repaint();
-                    }
-                });
-            }
-        }, 500);
+        if (lastResizerTask == null || lastResizerTask.nh == 0) {
+            lastResizerTask = tt;
+            handlingGlobalSizeChange ++;
+            Log.p("SIZING: running first time immediately");
+            tt.run();   // first time
+            handlingGlobalSizeChange --;
+        } else {
+            Display.scheduledSizeChanged = new Timer();
+            lastResizerTask = tt;
+            Display.scheduledSizeChanged.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    Display.getInstance().callSerially(new Runnable() {
+                        @Override
+                        public void run() {
+                            handlingGlobalSizeChange ++;
+                            tt.run();
+                            getInstance().getCurrent().repaint();
+                            handlingGlobalSizeChange --;
+                        }
+                    });
+                }
+            }, 500);
+        }
     }
 
 

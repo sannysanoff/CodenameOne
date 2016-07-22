@@ -23,6 +23,7 @@
  */
 package com.codename1.ui;
 
+import com.codename1.io.Log;
 import com.codename1.ui.animations.Animation;
 import com.codename1.ui.geom.Rectangle;
 import com.codename1.ui.geom.Dimension;
@@ -3307,6 +3308,11 @@ public class Form extends Container {
             return null;
         }
         return super.setPropertyValue(name, value);
+    }
+
+    public void setHeight(int height) {
+        Log.p("SIZING: Form.setHeight:"+height);
+        super.setHeight(height);
     }
 
     /**

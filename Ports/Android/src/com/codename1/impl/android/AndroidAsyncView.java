@@ -39,6 +39,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
+
+import com.codename1.io.Log;
 import com.codename1.ui.Component;
 import com.codename1.ui.Display;
 import com.codename1.ui.Font;
@@ -241,24 +243,11 @@ public class AndroidAsyncView extends View implements CodenameOneSurface {
     @Override
     protected void onSizeChanged(final int w, final int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-
+        Log.p("SIZING: AndroidAsyncView: onSizeChanged: nh=");
         if (!Display.isInitialized()) {
             return;
         }
-        scheculeGlobalSizeChange(w, h);
-    }
-
-    void scheculeGlobalSizeChange(final int nw, final int nh) {
-        Display.scheduleGlobalSizeChange(new Display.GlobalResizerTask(nw, nh) {
-            @Override
-            public void run() {
-                scheduledSizeChanger();
-            }
-
-            private void scheduledSizeChanger() {
-                cn1View.handleSizeChange(nw, nh);
-            }
-        }, "AndroidAsyncView.onSizeChanged");
+        cn1View.handleSizeChange(w, h);
     }
 
     @Override

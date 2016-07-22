@@ -147,8 +147,9 @@ public class CodenameOneView {
         //flushGraphics();
     }
 
-    public void handleSizeChange(int w, int h) {
+    public void handleSizeChange(final int w, final int h) {
 
+        com.codename1.io.Log.p("SIZING: CodenameoneView: handleSizeChange: h="+h);
         if(!drawing) {
             if ((this.width != w && (this.width < w || this.height < h))
                     || (bitmap.getHeight() < h)) {
@@ -158,37 +159,48 @@ public class CodenameOneView {
         if (this.width == w && this.height == h) {
             return;
         }
-        this.width = w;
-        this.height = h;
-        Log.d("Codename One", "sizechanged: " + width + " " + height + " " + this);
-        if (this.implementation.getCurrentForm() == null) {
-            /**
-             * make sure a form has been set before we can send events to the
-             * EDT. if we send events before the form has been set we might
-             * deadlock!
-             */
-            return;
-        }
 
-        if (InPlaceEditView.isEditing()) {
-            final Form f = this.implementation.getCurrentForm();
-            ActionListener sizeChanged = new ActionListener() {
+        Display.scheduleGlobalSizeChange(new Display.GlobalResizerTask(w, h) {
+            @Override
+            public void run() {
+                sizeChangedInCN1View();
+            }
 
-                @Override
-                public void actionPerformed(ActionEvent evt) {
-                    CodenameOneView.this.implementation.activity.runOnUiThread(new Runnable() {
+            private void sizeChangedInCN1View() {
+                CodenameOneView.this.width = w;
+                CodenameOneView.this.height = h;
+                Log.d("Codename One", "sizechanged: " + width + " " + height + " " + this);
+                if (CodenameOneView.this.implementation.getCurrentForm() == null) {
+                    /**
+                     * make sure a form has been set before we can send events to the
+                     * EDT. if we send events before the form has been set we might
+                     * deadlock!
+                     */
+                    return;
+                }
+
+                if (InPlaceEditView.isEditing()) {
+                    final Form f = CodenameOneView.this.implementation.getCurrentForm();
+                    ActionListener sizeChanged = new ActionListener() {
 
                         @Override
-                        public void run() {
-                            InPlaceEditView.reLayoutEdit();
+                        public void actionPerformed(ActionEvent evt) {
+                            CodenameOneView.this.implementation.activity.runOnUiThread(new Runnable() {
+
+                                @Override
+                                public void run() {
+                                    InPlaceEditView.reLayoutEdit();
+                                }
+                            });
+                            f.removeSizeChangedListener(this);
                         }
-                    });
-                    f.removeSizeChangedListener(this);
+                    };
+                    f.addSizeChangedListener(sizeChanged);
                 }
-            };
-            f.addSizeChangedListener(sizeChanged);
-        }
-        Display.getInstance().sizeChanged(w, h);
+                Display.getInstance().sizeChanged(w, h);
+            }
+        },"Display.sizeChanged");
+
     }
 
     //@Override
