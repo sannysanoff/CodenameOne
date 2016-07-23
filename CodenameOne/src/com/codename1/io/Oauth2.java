@@ -206,6 +206,7 @@ public class Oauth2 {
         final Form old = Display.getInstance().getCurrent();
         //InfiniteProgress inf = new InfiniteProgress();
         //final Dialog progress = inf.showInifiniteBlocking();
+        Log.p("oauth2.showAuthentication: creating form");
         Form authenticationForm = new Form("Login");
         authenticationForm.setScrollable(false);
         if (old != null) {
@@ -228,6 +229,7 @@ public class Oauth2 {
         }
         authenticationForm.setLayout(new BorderLayout());
         authenticationForm.addComponent(BorderLayout.CENTER, createLoginComponent(al, authenticationForm, old, null, authCancelled));
+        Log.p("oauth2.showAuthentication: show form");
         authenticationForm.show();
     }
 
@@ -274,6 +276,8 @@ public class Oauth2 {
         return web[0];
     }
 
+    boolean codeHandled = false;
+
     private void handleURL(String url, WebBrowser web, final ActionListener al, final Form frm, final Form backToForm, final Dialog progress) {
         if ((url.startsWith(redirectURI))) {
             if (progress != null) {
@@ -291,10 +295,16 @@ public class Oauth2 {
             }
 
             if (url.indexOf("code=") > -1) {
+                Log.p("Oauth2.handleURL, found code= in url: "+url+" alreadyHandled="+codeHandled);
+                if (codeHandled) {
+                    return;
+                }
+                codeHandled = true;
                 Hashtable params = getParamsFromURL(url);
                 ConnectionRequest req = new ConnectionRequest() {
 
                     protected void readResponse(InputStream input) throws IOException {
+                        Log.p("HTTP/Success for ConnectionRequest: "+debugShow.toString());
                         byte[] tok = Util.readInputStream(input);
                         String t = new String(tok);
                         
@@ -354,7 +364,8 @@ public class Oauth2 {
                 req.addArgument("client_id", clientId);
                 req.addArgument("redirect_uri", redirectURI);
                 req.addArgument("client_secret", clientSecret);
-                req.addArgument("code", (String) params.get("code"));
+                final String code = (String) params.get("code");
+                req.addArgument("code", code);
                 req.addArgument("grant_type", "authorization_code");
 
                 NetworkManager.getInstance().addToQueue(req);
@@ -415,7 +426,11 @@ public class Oauth2 {
         for (int i = 0; i < plen; i++) {
             if (params[i].indexOf("=") > 0) {
                 String[] keyVal = Util.split(params[i], "=");
-                retVal.put(keyVal[0], keyVal[1]);
+                String val = keyVal[1];
+                int hash = val.indexOf('#');
+                if (hash >= 0)
+                    val = val.substring(0, hash);
+                retVal.put(keyVal[0], val);
             }
         }
         return retVal;

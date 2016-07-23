@@ -22,10 +22,7 @@
  */
 package com.codename1.social;
 
-import com.codename1.io.AccessToken;
-import com.codename1.io.Oauth2;
-import com.codename1.io.Preferences;
-import com.codename1.io.Util;
+import com.codename1.io.*;
 import com.codename1.ui.Display;
 import com.codename1.ui.events.ActionEvent;
 import com.codename1.ui.events.ActionListener;
@@ -60,6 +57,7 @@ public abstract class Login {
      * Oauth2 web login will be used.
      */
     public void doLogin(){
+        Log.p("social.Login.doLogin");
         if (isNativeLoginSupported()) {
             nativelogin();
         } else {

@@ -926,6 +926,7 @@ public class IOSImplementation extends CodenameOneImplementation {
     }
 
     static void sizeChangedImpl(int w, int h) {
+        Log.p("SIZING: ios: sizeChangedImpl h="+h);
         instance.sizeChanged(w, h);
     }
 

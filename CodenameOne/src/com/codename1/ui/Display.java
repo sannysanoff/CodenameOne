@@ -1876,9 +1876,11 @@ public final class Display {
     public void sizeChanged(final int w, final int h){
         Form current = impl.getCurrentForm();
         if(current == null) {
+            Log.p("Display.sizeChanged: currentForm == null, returning");
             return;
         }
         if(w == current.getWidth() && h == current.getHeight()) {
+            Log.p("Display.sizeChanged: currentForm size is "+current.getHeight()+", nothing to do.");
             return;
         }
 

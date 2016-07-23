@@ -130,6 +130,7 @@ public class ConnectionRequest implements IOProgressListener {
     }
 
     private EventDispatcher actionListeners;
+    protected StringBuilder debugShow = new StringBuilder();
 
     /**
      * @return the defaultFollowRedirects
@@ -256,6 +257,7 @@ public class ConnectionRequest implements IOProgressListener {
      * @param value the header value
      */
     public void addRequestHeader(String key, String value) {
+        debugShow.append(" "+key+":"+value);
         if(userHeaders == null) {
             userHeaders = new Hashtable();
         }
@@ -420,6 +422,7 @@ public class ConnectionRequest implements IOProgressListener {
             }
             
             if(responseCode - 200 < 0 || responseCode - 200 > 100) {
+                Log.p("HTTP/Error code " + responseCode + "for ConnectionRequest: "+this.debugShow.toString());
                 readErrorCodeHeaders(connection);
                 // redirect to new location
                 if(followRedirects && (responseCode == 301 || responseCode == 302
@@ -1050,6 +1053,7 @@ public class ConnectionRequest implements IOProgressListener {
      * @throws IllegalStateException if invoked after an addArgument call
      */
     public void setPost(boolean post) {
+        debugShow.append(" post="+post);
         if(this.post != post && requestArguments != null && requestArguments.size() > 0) {
             throw new IllegalStateException("Request method (post/get) can't be modified once arguments have been assigned to the request");
         }
@@ -1127,6 +1131,7 @@ public class ConnectionRequest implements IOProgressListener {
      * @param value the value for the argument
      */
     public void addArgument(String key, String value) {
+        debugShow.append(" "+key+"="+value);
         if(post) {
             addArg(Util.encodeBody(key), Util.encodeBody(value));
         } else {
@@ -1394,6 +1399,7 @@ public class ConnectionRequest implements IOProgressListener {
         }
         url = url.intern();
         this.url = url;
+        debugShow.append("url="+url);
     }
 
     /**
