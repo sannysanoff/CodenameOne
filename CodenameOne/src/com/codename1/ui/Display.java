@@ -2218,7 +2218,7 @@ public final class Display {
                         }
                     });
                 }
-            }, 500);
+            }, 0);
         }
     }
 
