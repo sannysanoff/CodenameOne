@@ -106,7 +106,12 @@ public class InPlaceEditView extends FrameLayout {
     private AndroidImplementation impl;
     private static long closedTime;
     private static boolean showVKB = false;
+    public static ShowVKBRequestListener showVKBRequestListener = null;
     private static boolean isClosing = false;
+
+    public interface ShowVKBRequestListener {
+        public void requestedShowKeyboard(boolean show);
+    }
 
     // Flag to indicate that the text editor is currently hidden - but an async edit
     // is still in progress.  This flag is only relevant in async edit mode.
@@ -491,7 +496,7 @@ public class InPlaceEditView extends FrameLayout {
      * @param show Show the keyboard if true, hide it otherwise
      */
     private void showVirtualKeyboard(boolean show) {
-        Log.i(TAG, "showVirtualKeyboard show=" + show);
+        Log.i(TAG, "SIZING: InPlaceEditView.showVirtualKeyboard show=" + show);
 
         boolean result = false;
         if (show) {
@@ -515,7 +520,7 @@ public class InPlaceEditView extends FrameLayout {
             closedTime = System.currentTimeMillis();
         }
         showVKB = show;
-        
+
         final boolean showKeyboard = showVKB;
         final ActionListener listener = Display.getInstance().getVirtualKeyboardListener();
         if(listener != null){
