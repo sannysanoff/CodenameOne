@@ -512,6 +512,7 @@ public class Form extends Container {
      * @param h the new height of the Form
      */
     protected void sizeChangedInternal(int w, int h) {
+        Log.p("SIZING: Form.sizeChangedInternal: h="+h);
         int oldWidth = getWidth();
         int oldHeight = getHeight();        
         sizeChanged(w, h);
