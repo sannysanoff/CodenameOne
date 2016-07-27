@@ -496,7 +496,11 @@ public class InPlaceEditView extends FrameLayout {
      * @param show Show the keyboard if true, hide it otherwise
      */
     private void showVirtualKeyboard(boolean show) {
-        Log.i(TAG, "SIZING: InPlaceEditView.showVirtualKeyboard show=" + show);
+        if (show) {
+            Log.i(TAG, "SIZING: InPlaceEditView.showVirtualKeyboard show=" + show);
+        } else {
+            Log.i(TAG, "SIZING: InPlaceEditView.showVirtualKeyboard show=" + show);
+        }
 
         boolean result = false;
         if (show) {
@@ -520,6 +524,9 @@ public class InPlaceEditView extends FrameLayout {
             closedTime = System.currentTimeMillis();
         }
         showVKB = show;
+
+        if (showVKBRequestListener != null)
+            showVKBRequestListener.requestedShowKeyboard(showVKB);
 
         final boolean showKeyboard = showVKB;
         final ActionListener listener = Display.getInstance().getVirtualKeyboardListener();
