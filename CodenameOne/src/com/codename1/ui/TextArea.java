@@ -32,6 +32,8 @@ import com.codename1.ui.plaf.LookAndFeel;
 import com.codename1.ui.plaf.Style;
 import com.codename1.ui.plaf.UIManager;
 import com.codename1.ui.util.EventDispatcher;
+import com.codename1.ui.util.UITimer;
+
 import java.util.ArrayList;
 
 /**
@@ -1162,8 +1164,22 @@ public class TextArea extends Component {
         if (!Display.getInstance().getImplementation().isAsyncEditMode()) {
             setText(text);
         }
+        Form componentForm = getComponentForm();
         if(getParent() != null) {
-            getParent().revalidate();
+            getParent().invalidate();
+            if (componentForm != null) {        // revalidate is delayed because it causes layout in small size (keyboard is still shown at this time)
+                new UITimer(new Runnable() {
+                    @Override
+                    public void run() {
+                        Container parent = getParent();
+                        if (parent != null) {
+                            if (parent.shouldCalcPreferredSize) {
+                                parent.revalidate();
+                            }
+                        }
+                    }
+                }).schedule(1000, false, componentForm);
+            }
         }
     }
     

@@ -54,6 +54,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import com.codename1.ui.Component;
 import com.codename1.ui.Display;
@@ -65,6 +66,8 @@ import com.codename1.ui.events.ActionEvent;
 import com.codename1.ui.events.ActionListener;
 import com.codename1.ui.geom.Dimension;
 import com.codename1.ui.plaf.Style;
+
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -722,6 +725,16 @@ public class InPlaceEditView extends FrameLayout {
         mEditText = new EditView(activity, textArea.textArea, this, id);
         mEditText.addTextChangedListener(mEditText.mTextWatcher);
         mEditText.setBackgroundDrawable(null);
+        mEditText.setCursorVisible(true);
+
+        try {
+            // https://github.com/android/platform_frameworks_base/blob/kitkat-release/core/java/android/widget/TextView.java#L562-564
+            Field f = TextView.class.getDeclaredField("mCursorDrawableRes");
+            f.setAccessible(true);
+            f.set(mEditText, 0);
+        } catch (Exception ignored) {
+            Log.d("mCursorDrawableRes", "setting via reflection", ignored);
+        }
         
         mEditText.setFocusableInTouchMode(true);
         mEditLayoutParams = new FrameLayout.LayoutParams(0, 0);
@@ -894,6 +907,10 @@ public class InPlaceEditView extends FrameLayout {
         Component editingComponent = mEditText.mTextArea;
         mEditText.removeTextChangedListener(mEditText.mTextWatcher);
         mEditText = null;
+
+        AndroidImplementation.activity.getWindow().setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);     // this is to prevent automatic popup of keyboard on resume.
+
         
         if (impl.isAsyncEditMode()) {
             Runnable onComplete = (Runnable)editingComponent.getClientProperty("android.onAsyncEditingComplete");
