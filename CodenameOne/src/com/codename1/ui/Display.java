@@ -1874,6 +1874,7 @@ public final class Display {
      * @param h the height of the drawing surface
      */
     public void sizeChanged(final int w, final int h){
+        Log.p("SIZING: display size changed: h="+h);
         Form current = impl.getCurrentForm();
         if(current == null) {
             Log.p("Display.sizeChanged: currentForm == null, returning");

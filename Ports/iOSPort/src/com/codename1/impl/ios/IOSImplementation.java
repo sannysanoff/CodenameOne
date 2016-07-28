@@ -206,7 +206,7 @@ public class IOSImplementation extends CodenameOneImplementation {
     }
 
     public int getDisplayHeight() {
-        return nativeInstance.getDisplayHeight();
+        return nativeInstance.getDisplayHeight() - keyboardHeight;
     }
 
     public int getActualDisplayHeight() {
@@ -459,29 +459,40 @@ public class IOSImplementation extends CodenameOneImplementation {
 
         }
     }
-    
+
+    static int heightBeforeKeyboardShown;
+    static int keyboardHeight;
     /**
      * Callback for native.  Called when keyboard is shown.  Used for async editing 
      * with formBottomPaddingEditingMode.
      */
     static void keyboardWillBeShown(){
+
+        heightBeforeKeyboardShown = Display.getInstance().getDisplayHeight();
+        keyboardHeight = nativeInstance.getVKBHeight();
+        Log.p("SIZING: will show kb: set keyboardHeight="+keyboardHeight);
         if(nativeInstance.isAsyncEditMode()) {
             // revalidate the parent since the size of form is now larger due to the vkb
             final Form current = Display.getInstance().getCurrent();
             //final Component currentEditingFinal = instance.currentEditing;
             if(current.isFormBottomPaddingEditingMode()) {
                 Display.getInstance().callSerially(new Runnable() {
+
+
                     public void run() {
-                        if (current != null) {
-                            getRootPane(current).getUnselectedStyle().setPaddingUnit(new byte[] {Style.UNIT_TYPE_PIXELS, Style.UNIT_TYPE_PIXELS, Style.UNIT_TYPE_PIXELS, Style.UNIT_TYPE_PIXELS});
-                            getRootPane(current).getUnselectedStyle().setPadding(Component.BOTTOM, nativeInstance.getVKBHeight());
-                            current.revalidate();
-                            Display.getInstance().callSerially(new Runnable() {
-                                public void run() {
-                                    updateNativeTextEditorFrame();
-                                }
-                            });
+//                        getRootPane(current).getUnselectedStyle().setPaddingUnit(new byte[] {Style.UNIT_TYPE_PIXELS, Style.UNIT_TYPE_PIXELS, Style.UNIT_TYPE_PIXELS, Style.UNIT_TYPE_PIXELS});
+//                        getRootPane(current).getUnselectedStyle().setPadding(Component.BOTTOM, nativeInstance.getVKBHeight());
+//                        current.revalidate();
+                        ActionListener l = Display.getInstance().getVirtualKeyboardListener();
+                        if (l != null) {
+                            l.actionPerformed(new ActionEvent(true));
                         }
+                        Display.getInstance().sizeChanged(Display.getInstance().getDisplayWidth(), heightBeforeKeyboardShown - nativeInstance.getVKBHeight());
+                        Display.getInstance().callSerially(new Runnable() {
+                            public void run() {
+                                updateNativeTextEditorFrame();
+                            }
+                        });
                     }
                 });
             } else {
@@ -509,16 +520,6 @@ public class IOSImplementation extends CodenameOneImplementation {
             }
         }
         
-        if (Display.getInstance().getVirtualKeyboardListener() != null) {
-            Display.getInstance().callSerially(new Runnable() {
-                public void run() {
-                    ActionListener l = Display.getInstance().getVirtualKeyboardListener();
-                    if (l != null) {
-                        l.actionPerformed(new ActionEvent(true));
-                    }
-                }
-            });
-        }
     }
     
     /**
@@ -530,23 +531,21 @@ public class IOSImplementation extends CodenameOneImplementation {
 
             @Override
             public void run() {
+                keyboardHeight = 0;
+                Log.p("SIZING: will hide kb: set keyboardHeight="+keyboardHeight);
                 Form current = Display.getInstance().getCurrent();
                 if (current != null) {
-                    current.revalidate();
-                }
-            }
-            
-        });
-        if (Display.getInstance().getVirtualKeyboardListener() != null) {
-            Display.getInstance().callSerially(new Runnable() {
-                public void run() {
+                    //current.revalidate();
                     ActionListener l = Display.getInstance().getVirtualKeyboardListener();
                     if (l != null) {
                         l.actionPerformed(new ActionEvent(false));
                     }
+                    Display.getInstance().sizeChanged(Display.getInstance().getDisplayWidth(), heightBeforeKeyboardShown);
+
                 }
-            });
-        }
+            }
+            
+        });
     }
     
     public void setCurrentForm(Form f) {
