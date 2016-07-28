@@ -571,7 +571,7 @@ public class IOSImplementation extends CodenameOneImplementation {
             Display.getInstance().setProperty("ios.VKBAlwaysOpen", defaultAsyncEditingSetting);
             
         }
-        boolean asyncEdit = "true".equals(defaultAsyncEditingSetting) ? true : false;
+        @SuppressWarnings("RedundantConditionalExpression") boolean asyncEdit = "true".equals(defaultAsyncEditingSetting) ? true : false;
         //Log.p("Application default for async editing is "+asyncEdit);
         
         try {
@@ -785,22 +785,25 @@ public class IOSImplementation extends CodenameOneImplementation {
                         while(instance.currentEditing == cmp) {
                             try {
                                 EDITING_LOCK.wait(20);
-                            } catch (InterruptedException ex) {
+                            } catch (InterruptedException ignored) {
                             }
                         }
                     }
                 }
             });
             
-            if(cmp instanceof TextArea && !((TextArea)cmp).isSingleLineTextArea()) {
-                cmp.getComponentForm().revalidate();
+            if(!currentEditing.isSingleLineTextArea()) {
+                final Form form = cmp.getComponentForm(); // could happily disappear while in invokeAndBlock above
+                if (form != null) {
+                    cmp.getComponentForm().revalidate();
+                }
             }
             if(editNext) {
                 editNext = false;
                 TextEditUtil.editNextTextArea();
             }
         } finally {
-            
+
         }
     }
     
