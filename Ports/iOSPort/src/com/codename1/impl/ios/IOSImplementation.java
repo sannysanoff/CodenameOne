@@ -462,27 +462,27 @@ public class IOSImplementation extends CodenameOneImplementation {
 
     static int heightBeforeKeyboardShown;
     static int keyboardHeight;
+    static int keyboardShown = 0;
     /**
      * Callback for native.  Called when keyboard is shown.  Used for async editing 
      * with formBottomPaddingEditingMode.
      */
     static void keyboardWillBeShown(){
-
-        heightBeforeKeyboardShown = Display.getInstance().getDisplayHeight();
-        keyboardHeight = nativeInstance.getVKBHeight();
-        Log.p("SIZING: will show kb: set keyboardHeight="+keyboardHeight);
-        if(nativeInstance.isAsyncEditMode()) {
-            // revalidate the parent since the size of form is now larger due to the vkb
-            final Form current = Display.getInstance().getCurrent();
-            //final Component currentEditingFinal = instance.currentEditing;
-            if(current.isFormBottomPaddingEditingMode()) {
-                Display.getInstance().callSerially(new Runnable() {
-
-
-                    public void run() {
-//                        getRootPane(current).getUnselectedStyle().setPaddingUnit(new byte[] {Style.UNIT_TYPE_PIXELS, Style.UNIT_TYPE_PIXELS, Style.UNIT_TYPE_PIXELS, Style.UNIT_TYPE_PIXELS});
-//                        getRootPane(current).getUnselectedStyle().setPadding(Component.BOTTOM, nativeInstance.getVKBHeight());
-//                        current.revalidate();
+        Log.p("SIZING: keyboardWillBeShown called. ks="+keyboardShown);
+        if (keyboardShown++ > 0) return;
+        Display.getInstance().callSerially(new Runnable() {
+            public void run() {
+                heightBeforeKeyboardShown = Display.getInstance().getDisplayHeight();
+                keyboardHeight = nativeInstance.getVKBHeight();
+                Log.p("SIZING(edt): will show kb(" + keyboardShown + "): set keyboardHeight=" + keyboardHeight);
+                if (nativeInstance.isAsyncEditMode()) {
+                    // revalidate the parent since the size of form is now larger due to the vkb
+                    final Form current = Display.getInstance().getCurrent();
+                    //final Component currentEditingFinal = instance.currentEditing;
+                    if (current.isFormBottomPaddingEditingMode()) {
+                        //                        getRootPane(current).getUnselectedStyle().setPaddingUnit(new byte[] {Style.UNIT_TYPE_PIXELS, Style.UNIT_TYPE_PIXELS, Style.UNIT_TYPE_PIXELS, Style.UNIT_TYPE_PIXELS});
+                        //                        getRootPane(current).getUnselectedStyle().setPadding(Component.BOTTOM, nativeInstance.getVKBHeight());
+                        //                        current.revalidate();
                         ActionListener l = Display.getInstance().getVirtualKeyboardListener();
                         if (l != null) {
                             l.actionPerformed(new ActionEvent(true));
@@ -493,11 +493,7 @@ public class IOSImplementation extends CodenameOneImplementation {
                                 updateNativeTextEditorFrame();
                             }
                         });
-                    }
-                });
-            } else {
-                Display.getInstance().callSerially(new Runnable() {
-                    public void run() {
+                    } else {
                         if (current != null) {
                             if (instance.currentEditing != null) {
                                 instance.doNotHideTextEditorSemaphore++;
@@ -513,13 +509,12 @@ public class IOSImplementation extends CodenameOneImplementation {
                                     }
                                 });
                             }
-                            
+
                         }
                     }
-                });
+                }
             }
-        }
-        
+        });
     }
     
     /**
@@ -527,12 +522,14 @@ public class IOSImplementation extends CodenameOneImplementation {
      * with formBottomPaddingEditingMode.
      */
     static void keyboardWillBeHidden(){
+        Log.p("SIZING: keyboardWillBeHidden called. ks="+keyboardShown);
+        if (--keyboardShown != 0) return;
         Display.getInstance().callSerially(new Runnable(){
 
             @Override
             public void run() {
                 keyboardHeight = 0;
-                Log.p("SIZING: will hide kb: set keyboardHeight="+keyboardHeight);
+                Log.p("SIZING(edt): will hide kb: set keyboardHeight="+keyboardHeight);
                 Form current = Display.getInstance().getCurrent();
                 if (current != null) {
                     //current.revalidate();
