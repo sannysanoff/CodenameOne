@@ -1987,6 +1987,8 @@ BOOL prefersStatusBarHidden = NO;
             keyboardSlideOffset = 0;
         }
         if(keyboardSlideOffset <  0) {
+            NSLog(@"SIZING: keyboardSlideOffset <  0");
+
             keyboardSlideOffset = keyboardSlideOffset < -editCompoentY ? -editCompoentY : keyboardSlideOffset;
             if (keyboardHeight + editCompoentH > displayHeight / scaleValue) {
                 // If the keyboard covers up part of the field, we'll update
@@ -1996,6 +1998,7 @@ BOOL prefersStatusBarHidden = NO;
             //https://github.com/codenameone/CodenameOne/issues/1074
 #ifdef __IPHONE_7_0
             if (isIOS7()) {
+                NSLog(@"SIZING: isIOS7()");
                 prefersStatusBarHidden = YES;
                 [self setNeedsStatusBarAppearanceUpdate];
             }
@@ -2006,7 +2009,9 @@ BOOL prefersStatusBarHidden = NO;
             [UIView setAnimationDuration:0.3];
             [self.view setFrame:viewFrame];
             [UIView commitAnimations];  
+            NSLog(@"SIZING: keyboardSlideOffset = %d kso=%d", keyboardSlideOffset, keyboardSlideOffset);
         } else {
+            NSLog(@"SIZING: keyboardSlideOffset >= 0");
             keyboardSlideOffset = 0;
         }
     }
