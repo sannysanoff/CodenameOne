@@ -344,6 +344,22 @@ public abstract class CodenameOneImplementation {
     }
     
     /**
+     * Returns true if we are currently editing a component
+     * @return whether a component is being edited
+     */
+    public boolean isEditingTextInside(Component c) {
+        if (editingText != null) {
+            Component scan = editingText;
+            while(scan != null) {
+                if (scan == c)
+                    return true;
+                scan = scan.getParent();
+            }
+        }
+        return false;
+    }
+
+    /**
      * Checks whether the native text editor is currently visible over top of the 
      * given component (usually a {@code TextArea}
      * @param c The textarea/component we are checking

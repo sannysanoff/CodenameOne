@@ -1826,7 +1826,7 @@ public class Component implements Animation, StyleListener {
     protected void setScrollY(int scrollY) {
         if(this.scrollY != scrollY) {
             CodenameOneImplementation ci = Display.impl;
-            if(ci.isAsyncEditMode() && ci.isEditingText()) {
+            if(ci.isAsyncEditMode() && ci.isEditingTextInside(this)) {
                 ci.hideTextEditor();
             }
         }

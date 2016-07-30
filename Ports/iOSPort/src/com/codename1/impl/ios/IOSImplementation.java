@@ -446,7 +446,7 @@ public class IOSImplementation extends CodenameOneImplementation {
                 // in theory.
                 h = maxH;
             }
-            
+            Log.p("SIZING: resizeNativeTextView: text.y="+y+" pt="+pt+" cmp.getAbsoluteY()="+cmp.getAbsoluteY() + " cmp.getScrollY()="+cmp.getScrollY());
             nativeInstance.resizeNativeTextView(x,
                     y,
                     w,
@@ -468,7 +468,7 @@ public class IOSImplementation extends CodenameOneImplementation {
      * with formBottomPaddingEditingMode.
      */
     static void keyboardWillBeShown(){
-        Log.p("SIZING: keyboardWillBeShown called. ks="+keyboardShown);
+        Log.p("SIZING:  ----------------------------------->>>>>>>>------- keyboardWillBeShown called. ks="+keyboardShown);
         if (keyboardShown++ > 0) return;
         Display.getInstance().callSerially(new Runnable() {
             public void run() {
@@ -487,12 +487,14 @@ public class IOSImplementation extends CodenameOneImplementation {
                         if (l != null) {
                             l.actionPerformed(new ActionEvent(true));
                         }
-                        Display.getInstance().sizeChanged(Display.getInstance().getDisplayWidth(), heightBeforeKeyboardShown - nativeInstance.getVKBHeight());
-                        Display.getInstance().callSerially(new Runnable() {
+                        Display.scheduleGlobalSizeChange(new Display.GlobalResizerTask(Display.getInstance().getDisplayWidth(), heightBeforeKeyboardShown - nativeInstance.getVKBHeight()) {
+                            @Override
                             public void run() {
-                                updateNativeTextEditorFrame();
+                                Display.getInstance().sizeChanged(this.nw, this.nh);
+                                Log.p("SIZING: callling updateNativeTextEditorFrame from keyboardWillBeShown");
+                                //updateNativeTextEditorFrame();
                             }
-                        });
+                        }, "from:keyboardWillBeShown");
                     } else {
                         if (current != null) {
                             if (instance.currentEditing != null) {
@@ -505,7 +507,8 @@ public class IOSImplementation extends CodenameOneImplementation {
                                 current.revalidate();
                                 Display.getInstance().callSerially(new Runnable() {
                                     public void run() {
-                                        updateNativeTextEditorFrame();
+                                        Log.p("SIZING: callling updateNativeTextEditorFrame from keyboardWillBeShown(option 2)");
+                                        //updateNativeTextEditorFrame();
                                     }
                                 });
                             }
@@ -522,7 +525,7 @@ public class IOSImplementation extends CodenameOneImplementation {
      * with formBottomPaddingEditingMode.
      */
     static void keyboardWillBeHidden(){
-        Log.p("SIZING: keyboardWillBeHidden called. ks="+keyboardShown);
+        Log.p("SIZING: ----------------------------------->>>>>>>>------- keyboardWillBeHidden called. ks="+keyboardShown);
         if (--keyboardShown != 0) return;
         Display.getInstance().callSerially(new Runnable(){
 
@@ -537,8 +540,13 @@ public class IOSImplementation extends CodenameOneImplementation {
                     if (l != null) {
                         l.actionPerformed(new ActionEvent(false));
                     }
-                    Display.getInstance().sizeChanged(Display.getInstance().getDisplayWidth(), heightBeforeKeyboardShown);
-
+                    Display.scheduleGlobalSizeChange(new Display.GlobalResizerTask(Display.getInstance().getDisplayWidth(), heightBeforeKeyboardShown) {
+                        @Override
+                        public void run() {
+                            Display.getInstance().sizeChanged(this.nw, this.nh);
+                        }
+                    }, "from:keyboardWillBeHidden");
+//                    Display.getInstance().sizeChanged(Display.getInstance().getDisplayWidth(), heightBeforeKeyboardShown);
                 }
             }
             
@@ -808,7 +816,9 @@ public class IOSImplementation extends CodenameOneImplementation {
     public static void resizeNativeTextComponentCallback() {
         Display.getInstance().callSerially(new Runnable() {
             public void run() {
-                updateNativeTextEditorFrame();
+//                Log.p("SIZING: calling updateNativeTextEditorFrame from resizeNativeTextComponentCallback");
+//                new Exception("SIZING: (debug stack trace) callling updateNativeTextEditorFrame from resizeNativeTextComponentCallback").printStackTrace();
+//                updateNativeTextEditorFrame();
             }
         });
     }

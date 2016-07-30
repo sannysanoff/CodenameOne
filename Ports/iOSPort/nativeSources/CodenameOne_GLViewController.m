@@ -219,6 +219,7 @@ void Java_com_codename1_impl_ios_IOSImplementation_editStringAtImpl
     currentlyEditingMaxLength = maxSize;
     dispatch_sync(dispatch_get_main_queue(), ^{
         if(editingComponent != nil) {
+            NSLog(@"FOCUS: editingComponent resignFirstResponder before editStringAtImpl");
             [editingComponent resignFirstResponder];
             [editingComponent removeFromSuperview];
 #ifndef CN1_USE_ARC
@@ -480,6 +481,7 @@ void Java_com_codename1_impl_ios_IOSImplementation_editStringAtImpl
         }
         editingComponent.opaque = NO;
         [[CodenameOne_GLViewController instance].view addSubview:editingComponent];
+        NSLog(@"FOCUS: editingComponent becomeFirstResponder editStringAt");
         [editingComponent becomeFirstResponder];
         [[CodenameOne_GLViewController instance].view resignFirstResponder];
         [editingComponent setNeedsDisplay];
@@ -2140,6 +2142,7 @@ BOOL prefersStatusBarHidden = NO;
             UITextField* v = (UITextField*)editingComponent;
             stringEdit(YES, -1, v.text);
         }
+        NSLog(@"FOCUS: editingComponent resignFirstResponder in willRotate");
         [editingComponent resignFirstResponder];
         [editingComponent removeFromSuperview];
 #ifndef CN1_USE_ARC
@@ -2370,6 +2373,7 @@ BOOL prefersStatusBarHidden = NO;
                     }
                     editCompoentX = newEditCompoentX;
                     editCompoentY = newEditCompoentY;
+                    NSLog(@"FOCUS: editingComponent drawFrame: set y=%d", (int)editCompoentY);
                     editingComponent.frame = CGRectMake(editCompoentX, editCompoentY, editCompoentW, editCompoentH);
                 }
             }
@@ -2693,6 +2697,7 @@ static BOOL skipNextTouch = NO;
                 UITextField* v = (UITextField*)editingComponent;
                 stringEdit(YES, -1, v.text);
             }
+            NSLog(@"FOCUS: editingComponent resignFirstResponder in folKeyboard");
             [editingComponent resignFirstResponder];
             [editingComponent removeFromSuperview];
 #ifndef CN1_USE_ARC

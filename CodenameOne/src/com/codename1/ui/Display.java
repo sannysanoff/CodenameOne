@@ -365,7 +365,7 @@ public final class Display {
 
     static int transitionDelay = -1;
 
-    static CodenameOneImplementation impl;
+    public static CodenameOneImplementation impl;
 
     private boolean codenameOneRunning = false;
 
@@ -1877,14 +1877,15 @@ public final class Display {
         Log.p("SIZING: display size changed: h="+h);
         Form current = impl.getCurrentForm();
         if(current == null) {
-            Log.p("Display.sizeChanged: currentForm == null, returning");
+            Log.p("SIZING: Display.sizeChanged: currentForm == null, returning");
             return;
         }
         if(w == current.getWidth() && h == current.getHeight()) {
-            Log.p("Display.sizeChanged: currentForm size is "+current.getHeight()+", nothing to do.");
+            Log.p("SIZING: Display.sizeChanged: currentForm size is "+current.getHeight()+", nothing to do.");
             return;
         }
 
+        Log.p("SIZING: addSizeChangeEvent.addSizeChangeEvent h="+h);
         addSizeChangeEvent(SIZE_CHANGED, w, h);;
 
     }
@@ -2136,6 +2137,7 @@ public final class Display {
             offset++;
             int h = inputEventStackTmp[offset];
             offset++;
+            Log.p("SIZING: Got SIZE_CHANGED event: h="+h);
             f.sizeChangedInternal(w, h);
             break;
         case HIDE_NOTIFY:
@@ -2149,9 +2151,9 @@ public final class Display {
     }
 
 
-    public static class GlobalResizerTask extends TimerTask {
-        int nw;
-        int nh;
+    public static abstract class GlobalResizerTask extends TimerTask {
+        public int nw;
+        public int nh;
         public int theSeq;
 
         public GlobalResizerTask(int nw, int nh) {
@@ -2160,9 +2162,7 @@ public final class Display {
         }
 
         @Override
-        public void run() {
-
-        }
+        public abstract void run();
     }
     /**
      * coalescing resize events.
