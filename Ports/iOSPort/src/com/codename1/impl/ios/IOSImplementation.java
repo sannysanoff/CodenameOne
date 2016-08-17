@@ -527,7 +527,7 @@ public class IOSImplementation extends CodenameOneImplementation {
     static void keyboardWillBeHidden(){
         Log.p("SIZING: ----------------------------------->>>>>>>>------- keyboardWillBeHidden called. ks="+keyboardShown);
         int i = --keyboardShown;
-        if (i < 0) {i = 0; return; }        // after facebook login, single keyboard hidden message comes when kb is not shown. Ignore.
+        if (i < 0) {keyboardShown = 0; return; }        // after facebook login, single keyboard hidden message comes when kb is not shown. Ignore.
         if (i != 0) return;
         Display.getInstance().callSerially(new Runnable(){
 
