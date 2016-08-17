@@ -323,4 +323,9 @@ public final class Integer{
     public static int signum(int i) {
         return (i >> 31) | (-i >>> 31); // Hacker's delight 2-7
     }
+
+    public static int compare(int x, int y) {
+        return (x < y) ? -1 : ((x == y) ? 0 : 1);
+    }
+
 }
