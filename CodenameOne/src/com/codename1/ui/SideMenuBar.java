@@ -36,8 +36,6 @@ import com.codename1.ui.layouts.Layout;
 import com.codename1.ui.plaf.Style;
 import com.codename1.ui.plaf.UIManager;
 import com.codename1.ui.util.Resources;
-import com.codename1.ui.util.UITimer;
-
 import java.util.Vector;
 
 /**
@@ -1195,16 +1193,9 @@ public class SideMenuBar extends MenuBar {
                             public boolean animate() {
                                 draggedX = motion.getValue();
                                 if (motion.isFinished()) {
-                                    draggedX = motion.getDestinationValue();
                                     dragActivated = false;
                                     Display.getInstance().getCurrent().setGlassPane(null);
                                     deregisterAnimated(this);
-                                    UITimer.timer(10, false, getComponentForm(), new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            repaint();
-                                        }
-                                    });
                                 }
                                 return true;
                             }
