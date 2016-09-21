@@ -46,7 +46,7 @@ extern int nextPowerOf2(int val);
 
 -(GLuint)getTexture:(int)texWidth texHeight:(int)texHeight {
     if(textureName == 0) {
-        NSLog(@"GLUIimage::getTexture");
+        // NSLog(@"GLUIimage::getTexture");
         textureWidth = texWidth;
         textureHeight = texHeight;
         //natural_t memoryBefore = [ExecutableOp get_free_memory];
