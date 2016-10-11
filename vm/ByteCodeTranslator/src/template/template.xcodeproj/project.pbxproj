@@ -176,6 +176,7 @@
 				TargetAttributes = {
 					0F634E7418E9ABBC002F3D1D = {
                                                 DevelopmentTeam = Q922EJB8TE;
+						ProvisioningStyle = Manual;
                                                 SystemCapabilities = {
                                                         com.apple.Push = {
                                                                 enabled = 1;
