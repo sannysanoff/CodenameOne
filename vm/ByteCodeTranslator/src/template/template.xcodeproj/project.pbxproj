@@ -276,7 +276,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = armv7;
+				ARCHS = "$(ARCHS_STANDARD)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = NO;
@@ -310,7 +310,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 				VALID_ARCHS = "armv7 arm64";
 				HEADER_SEARCH_PATHS = (
 					#header_search_path#
@@ -319,6 +319,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/template-src",
 				);
+				#extra_build_settings#
 			};
 			name = Debug;
 		};
@@ -326,7 +327,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = armv7;
+				ARCHS = "$(ARCHS_STANDARD)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = NO;
@@ -353,7 +354,7 @@
 				GCC_WARN_UNUSED_VARIABLE = NO;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 				VALIDATE_PRODUCT = YES;
 				VALID_ARCHS = "armv7 arm64";
 				HEADER_SEARCH_PATHS = (
@@ -367,6 +368,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/template-src",
 				);
+				#extra_build_settings#
 			};
 			name = Release;
 		};
@@ -383,6 +385,7 @@
 				WRAPPER_EXTENSION = app;
  				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_BITCODE = NO;
+				#extra_build_settings#
         OTHER_LDFLAGS = ( "-ObjC", "-lz",);
 			};
 			name = Debug;
@@ -401,6 +404,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				VALID_ARCHS = "armv7 arm64";
 				WRAPPER_EXTENSION = app;
+				#extra_build_settings#
         OTHER_LDFLAGS = ( "-ObjC", "-lz",);
 
 			};
@@ -426,13 +430,14 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUNDLE_LOADER)";
 				WRAPPER_EXTENSION = xctest;
+				#extra_build_settings#
 			};
 			name = Debug;
 		};
 		0F634EB718E9ABBC002F3D1D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = armv7;
+				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
 				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/template.app/template-src";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
@@ -445,6 +450,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUNDLE_LOADER)";
 				WRAPPER_EXTENSION = xctest;
+				#extra_build_settings#
 			};
 			name = Release;
 		};

@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 public class ByteCodeTranslator {
     private static String headerSearchPath = "";
     private static String extraCPPDefines = "";
+    private static String extraBuildSettings = "";
 
     public static enum OutputType {
         
@@ -252,14 +253,13 @@ public class ByteCodeTranslator {
             copy(ByteCodeTranslator.class.getResourceAsStream("/template/template.xcodeproj/project.pbxproj"), new FileOutputStream(projectPbx));
             replaceInFile(projectPbx, "#header_search_path#", headerSearchPath);
 
-            String[] sourceFiles = srcRoot.list(new FilenameFilter() {
-                @Override
-                public boolean accept(File pathname, String filename) {
-                    if (filename.endsWith(".ttf")) {
-                        appFonts.append("<string>"+filename+"</string>\n");
-                    }
-                    return filename.endsWith(".bundle") || filename.endsWith(".xcdatamodeld") || !pathname.isHidden() && !filename.startsWith(".") && !"Images.xcassets".equals(filename);
+            String[] sourceFiles = srcRoot.list((pathname, filename) -> {
+                if (filename.endsWith(".ttf")) {
+                    appFonts.append("<string>"+filename+"</string>\n");
                 }
+                return filename.endsWith(".bundle")
+                        || filename.endsWith(".xcdatamodeld")
+                        || !pathname.isHidden() && !filename.startsWith(".") && !"Images.xcassets".equals(filename);
             });
 
             StringBuilder fileOneEntry = new StringBuilder();
@@ -320,16 +320,13 @@ public class ByteCodeTranslator {
 
             // comparation is done so that long files are compiled first, to avoid case when
             // one long file takes 1 cpu while others are idle at the end.
-            arr.sort(new Comparator<String>() {
-                @Override
-                public int compare(String o1, String o2) {
-                    File f1 = new File(srcRoot, o1);
-                    File f2 = new File(srcRoot, o2);
-                    long l1 = f1.exists() ? f1.length() : 0;
-                    long l2 = f2.exists() ? f2.length() : 0;
-                    long rv = l2 - l1;
-                    return rv > 0  ? 1 : (rv < 0 ? -1 : 0);
-                }
+            arr.sort((o1, o2) -> {
+                File f1 = new File(srcRoot, o1);
+                File f2 = new File(srcRoot, o2);
+                long l1 = f1.exists() ? f1.length() : 0;
+                long l2 = f2.exists() ? f2.length() : 0;
+                long rv = l2 - l1;
+                return rv > 0  ? 1 : (rv < 0 ? -1 : 0);
             });
 
             String extraInfoPlist = "";
@@ -368,6 +365,10 @@ public class ByteCodeTranslator {
                     file = file.substring(0, file.length()-PreservingFileOutputStream.NEW_SUFFIX.length());
                 } else {
                     if (arr.contains(file + PreservingFileOutputStream.NEW_SUFFIX)) continue;   // remove duplicates
+                }
+                if (file.endsWith(".entitlements")) {
+                    System.out.println("Found entitlements: "+file);
+                    extraBuildSettings += "CODE_SIGN_ENTITLEMENTS = "+appName + "-src/"+file+";";
                 }
                 fileListEntry.append("		0");
                 currentValue++;
@@ -527,6 +528,7 @@ public class ByteCodeTranslator {
                     "EXTRA", extraInfoPlist,
                     "${APP_FONTS}", appFonts.toString());
             replaceInFile(projectPbx, "#extra_cpp_defines#", extraCPPDefines);
+            replaceInFile(projectPbx, "#extra_build_settings#", extraBuildSettings);
             String teamCode = System.getProperty("DevelopmentTeam");
             if (teamCode != null && teamCode.length() > 0) {
                 replaceInFile(projectPbx, "Q922EJB8TE", teamCode);
