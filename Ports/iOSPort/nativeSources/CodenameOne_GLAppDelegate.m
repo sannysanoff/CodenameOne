@@ -115,7 +115,12 @@ NSDictionary *transientLaunchOptions;
     if( [[userInfo valueForKey:@"aps"] valueForKey:@"alert"] != NULL)
     {
         NSString* alertValue = [[userInfo valueForKey:@"aps"] valueForKey:@"alert"];
-        com_codename1_impl_ios_IOSImplementation_pushReceived___java_lang_String_java_lang_String(CN1_THREAD_GET_STATE_PASS_ARG fromNSString(CN1_THREAD_GET_STATE_PASS_ARG alertValue), nil);
+        NSLog(@"AlertValue: %@", alertValue);
+        //com_codename1_impl_ios_IOSImplementation_pushReceived___java_lang_String_java_lang_String(CN1_THREAD_GET_STATE_PASS_ARG fromNSString(CN1_THREAD_GET_STATE_PASS_ARG alertValue), nil);
+    }
+    NSString *fanzhatPayload = [userInfo valueForKey:@"fanzhat_payload"];
+    if(fanzhatPayload != NULL) {
+        didReceivePayloadNotification(fanzhatPayload);
     }
     if( [userInfo valueForKey:@"meta"] != NULL)
     {
@@ -127,9 +132,11 @@ NSDictionary *transientLaunchOptions;
     //afterDidFinishLaunchingWithOptionsMarkerEntry
     
 #ifdef INCLUDE_FACEBOOK_CONNECT
+    NSLog(@"Exit from didFinishLaunchingWithOptions with facebook");
     return [[FBSDKApplicationDelegate sharedInstance] application:application
                                     didFinishLaunchingWithOptions:launchOptions];
 #else
+    NSLog(@"Exit from didFinishLaunchingWithOptions");
     return YES;
 #endif
 }
@@ -310,9 +317,16 @@ extern void localyticsDidReceiveRNFCN(
                                       NSDictionary *userInfo,
                                       void (^completionHandler)(UIBackgroundFetchResult));
 
+extern void didReceivePayloadNotification(NSString *str);
+
 -(void)application:(UIApplication *)application
                                       didReceiveRemoteNotification:(NSDictionary *)userInfo
                                       fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
+    
+    NSString *str = [userInfo objectForKey:@"fanzhat_payload"];
+    if (str) {
+        didReceivePayloadNotification(str);
+    }
     localyticsDidReceiveRNFCN(userInfo, completionHandler);
 }
 

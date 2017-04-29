@@ -60,6 +60,9 @@ public class StringUtil {
         if(idx == -1){
             return source;
         }
+        if (pattern.length() == 0) {
+            throw new RuntimeException("replaceAll: empty pattern");
+        }
         
         while (idx != -1) {
             sb.append(workingSource.substring(0, idx));
