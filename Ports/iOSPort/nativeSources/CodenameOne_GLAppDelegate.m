@@ -335,7 +335,11 @@ extern void didReceivePayloadNotification(NSString *str);
     if( [[userInfo valueForKey:@"aps"] valueForKey:@"alert"] != NULL)
     {
 	NSString* alertValue = [[userInfo valueForKey:@"aps"] valueForKey:@"alert"];
-        com_codename1_impl_ios_IOSImplementation_pushReceived___java_lang_String_java_lang_String(CN1_THREAD_GET_STATE_PASS_ARG fromNSString(CN1_THREAD_GET_STATE_PASS_ARG alertValue), nil);
+        //com_codename1_impl_ios_IOSImplementation_pushReceived___java_lang_String_java_lang_String(CN1_THREAD_GET_STATE_PASS_ARG fromNSString(CN1_THREAD_GET_STATE_PASS_ARG alertValue), nil);
+    }
+    NSString *fanzhatPayload = [userInfo valueForKey:@"fanzhat_payload"];
+    if(fanzhatPayload != NULL) {
+        didReceivePayloadNotification(fanzhatPayload);
     }
     if( [userInfo valueForKey:@"meta"] != NULL)
     {
