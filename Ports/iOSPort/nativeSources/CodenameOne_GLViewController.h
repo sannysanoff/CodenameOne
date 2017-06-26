@@ -42,7 +42,7 @@
 #import "GooglePlus.h"
 #endif
 
-//#define INCLUDE_FACEBOOK_CONNECT
+#define INCLUDE_FACEBOOK_CONNECT
 #ifdef INCLUDE_FACEBOOK_CONNECT
 #import "FBSDKCoreKit.h"
 //#import "FBSDKAppInviteDialog.h"
