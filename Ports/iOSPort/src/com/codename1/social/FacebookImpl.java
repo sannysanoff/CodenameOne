@@ -44,10 +44,12 @@ public class FacebookImpl extends FacebookConnect {
     
     @Override
     public boolean isFacebookSDKSupported() {
+        /*
         if (true) {
             System.out.println("Returning native IOS Facebook is not supported.");
             return false;
         }
+        */
         String v = Display.getInstance().getProperty("OSVer", "6");
         return !v.startsWith("5");
     }
