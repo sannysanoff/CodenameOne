@@ -6420,7 +6420,10 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
                             public void onTick(long millisUntilFinished) {
                                 if (customizer != null && customizer.shouldCancel()) {
                                     pickInstance.cancel();
-                                    alertDialog.dismiss();
+                                    if (alertDialog.isShowing()) {
+                                        alertDialog.dismiss();
+                                        customizer.cancelled();
+                                    }
                                     this.cancel();
                                 }
                             }

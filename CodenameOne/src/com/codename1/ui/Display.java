@@ -3952,6 +3952,7 @@ hi.show();}</pre></noscript>
 
     public interface PickerCustomizer {
         boolean shouldCancel();
+        void cancelled();
     }
 
     /**
