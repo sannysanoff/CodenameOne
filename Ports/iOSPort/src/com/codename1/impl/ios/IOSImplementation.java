@@ -7339,7 +7339,7 @@ public class IOSImplementation extends CodenameOneImplementation {
     }
     
     @Override
-    public Object showNativePicker(final int type, final Component source, final Object currentValue, final Object data) {
+    public Object showNativePicker(final int type, final Component source, final Object currentValue, final Object data, final Display.PickerCustomizer custom) {
         datePickerResult = -2;
         int x = 0, y = 0, w = 20, h = 20, preferredHeight = 0, preferredWidth = 0;
         
