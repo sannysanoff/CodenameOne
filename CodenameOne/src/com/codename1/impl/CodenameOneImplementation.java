@@ -29,15 +29,7 @@ import com.codename1.components.FileTreeModel;
 import com.codename1.contacts.Contact;
 import com.codename1.db.Cursor;
 import com.codename1.db.Database;
-import com.codename1.db.Row;
-import com.codename1.io.ConnectionRequest;
-import com.codename1.io.Cookie;
-import com.codename1.io.FileSystemStorage;
-import com.codename1.io.Log;
-import com.codename1.io.NetworkManager;
-import com.codename1.io.Preferences;
-import com.codename1.io.Storage;
-import com.codename1.io.Util;
+import com.codename1.io.*;
 import com.codename1.io.tar.TarEntry;
 import com.codename1.io.tar.TarInputStream;
 import com.codename1.l10n.L10NManager;
@@ -59,21 +51,12 @@ import com.codename1.ui.geom.Shape;
 import com.codename1.ui.layouts.BorderLayout;
 import com.codename1.ui.plaf.Style;
 import com.codename1.ui.util.ImageIO;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.io.Writer;
+
+import java.io.*;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-
 import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.Vector;
 
 /**
@@ -6100,7 +6083,7 @@ public abstract class CodenameOneImplementation {
     public boolean isNativePickerTypeSupported(int pickerType) {
         return false;
     }
-    
+
     /**
      * Shows a native modal dialog allowing us to perform the picking for the given type 
      * which can include one of PICKER_TYPE_DATE_AND_TIME, PICKER_TYPE_TIME, PICKER_TYPE_DATE
@@ -6111,7 +6094,7 @@ public abstract class CodenameOneImplementation {
      * @param data additional meta data specific to the picker type when applicable
      * @return the value from the picker or null if the operation was canceled.
      */
-    public Object showNativePicker(int type, Component source, Object currentValue, Object data) {
+    public Object showNativePicker(int type, Component source, Object currentValue, Object data, Display.PickerCustomizer customizer) {
         return null;
     }
     

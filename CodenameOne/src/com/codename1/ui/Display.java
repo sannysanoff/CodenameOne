@@ -3949,7 +3949,11 @@ hi.show();}</pre></noscript>
     public boolean isNativePickerTypeSupported(int pickerType) {
         return impl.isNativePickerTypeSupported(pickerType);
     }
-    
+
+    public interface PickerCustomizer {
+        boolean shouldCancel();
+    }
+
     /**
      * Shows a native modal dialog allowing us to perform the picking for the given type 
      * which can include one of PICKER_TYPE_DATE_AND_TIME, PICKER_TYPE_TIME, PICKER_TYPE_DATE
@@ -3960,8 +3964,8 @@ hi.show();}</pre></noscript>
      * @param data additional meta data specific to the picker type when applicable
      * @return the value from the picker or null if the operation was canceled.
      */
-    public Object showNativePicker(int type, Component source, Object currentValue, Object data) {
-        return impl.showNativePicker(type, source, currentValue, data);
+    public Object showNativePicker(int type, Component source, Object currentValue, Object data, PickerCustomizer customizer) {
+        return impl.showNativePicker(type, source, currentValue, data, customizer);
     }
 
     /**

@@ -26,6 +26,7 @@ import android.Manifest;
 import com.codename1.location.AndroidLocationManager;
 import android.app.*;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.CountDownTimer;
 import android.view.MotionEvent;
 import com.codename1.codescan.ScanResult;
 import com.codename1.media.Media;
@@ -6188,12 +6189,12 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         }
         return pickerType == Display.PICKER_TYPE_DATE || pickerType == Display.PICKER_TYPE_TIME;
     }
-    
+
     @Override
-    public Object showNativePicker(final int type, final Component source, final Object currentValue, final Object data) {
+    public Object showNativePicker(final int type, final Component source, final Object currentValue, final Object data, final Display.PickerCustomizer customizer) {
         final boolean [] canceled = new boolean[1];
         final boolean [] dismissed = new boolean[1];
-        
+
         if(type == Display.PICKER_TYPE_TIME) {
             
             class TimePick implements TimePickerDialog.OnTimeSetListener, TimePickerDialog.OnCancelListener, Runnable {
@@ -6212,6 +6213,9 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
                             try {
                                 wait(50);
                             } catch(InterruptedException er) {}
+                        }
+                        if (customizer != null && !dismissed[0]) {
+                            dismissed[0] = canceled[0] = customizer.shouldCancel();
                         }
                     }
                 }
@@ -6281,6 +6285,9 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
                             try {
                                 wait(50);
                             } catch(InterruptedException er) {}
+                        }
+                        if (customizer != null && !dismissed[0]) {
+                            dismissed[0] = canceled[0] = customizer.shouldCancel();
                         }
                     }
                 }
@@ -6406,7 +6413,24 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
                                             pickInstance.cancel();
                                         }
                                     });
-                    AlertDialog alertDialog = alertDialogBuilder.create();
+                    final AlertDialog alertDialog = alertDialogBuilder.create();
+
+                    if (customizer != null) {
+                        new CountDownTimer(Long.MAX_VALUE, 100) {
+                            public void onTick(long millisUntilFinished) {
+                                if (customizer != null && customizer.shouldCancel()) {
+                                    pickInstance.cancel();
+                                    alertDialog.dismiss();
+                                    this.cancel();
+                                }
+                            }
+
+                            public void onFinish() {
+                                // Should never happen
+                            }
+                        }.start();
+                    }
+
                     alertDialog.show();
                 }
             });

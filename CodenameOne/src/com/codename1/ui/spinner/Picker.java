@@ -62,7 +62,9 @@ public class Picker extends Button {
     private SimpleDateFormat formatter;
     private int preferredPopupWidth;
     private int preferredPopupHeight;
-    
+
+    private Display.PickerCustomizer pickerCustomizer;
+
     /**
      * Default constructor
      */
@@ -72,7 +74,7 @@ public class Picker extends Button {
             public void actionPerformed(ActionEvent evt) {
                 if(!Display.getInstance().getPlatformName().equals("ios") &&  Display.getInstance().isNativePickerTypeSupported(type)) {
                     setEnabled(false);
-                    Object val = Display.getInstance().showNativePicker(type, Picker.this, value, metaData);
+                    Object val = Display.getInstance().showNativePicker(type, Picker.this, value, metaData, pickerCustomizer);
                     if(val != null) {
                         value = val;
                         updateValue();
@@ -457,4 +459,13 @@ public class Picker extends Button {
     public int getPreferredPopupHeight() {
         return preferredPopupHeight;
     }
+
+    public Display.PickerCustomizer getPickerCustomizer() {
+        return pickerCustomizer;
+    }
+
+    public void setPickerCustomizer(Display.PickerCustomizer pickerCustomizer) {
+        this.pickerCustomizer = pickerCustomizer;
+    }
+
 }
